@@ -1,5 +1,19 @@
 "use client";
-import { ArrowUp, Check, ChevronDown, Glasses, ImagePlus, LoaderCircle, Scissors, X, type LucideIcon } from "lucide-react";
+import {
+  ArrowUp,
+  Camera,
+  Check,
+  ChevronDown,
+  Glasses,
+  ImagePlus,
+  LoaderCircle,
+  Scissors,
+  Sparkles,
+  SunMedium,
+  WandSparkles,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type RefObject } from "react";
 
 import { ImageLightbox } from "@/components/image-lightbox";
@@ -87,6 +101,66 @@ const HAIRSTYLE_PROMPT = `
 【彻底避免】不要改变用户身份，不要换脸，不要改变五官，不要磨皮美颜，不要改变穿搭，不要通过化妆或服装提升效果。不要生成夸张发型、杀马特、二次元造型、舞台造型、过度油头、过度漂染。不要让多个发型方案看起来不像同一个人。不要完全照搬参考图的排版。不要参考普通发型合集图，而要做一张高完成度、专业又有一点感性的个人发型造型升级报告。
 `.trim();
 
+const NATURAL_BEAUTY_PROMPT = `
+请对上传的人像照片做自然、真实的轻度美颜精修，目标是像专业摄影师完成的自然修图，而不是明显滤镜或换脸效果。
+
+请严格保留同一个人的身份相似度、五官结构、脸型比例、年龄感、发型轮廓、表情、服装、背景和原始构图。不要改变脸型，不要瘦脸，不要改变眼睛、鼻子、嘴唇的形状，不要让人看起来不像本人。
+
+优化重点：
+1. 轻微均匀肤色，降低暗沉、泛红和油光，只去除临时瑕疵、痘印、浮粉和明显斑驳。
+2. 保留真实皮肤纹理、毛孔、细纹和自然绒毛，避免塑料感、蜡像感、过度磨皮。
+3. 轻微提亮眼神和面部重点区域，保持自然高光与阴影，不制造夸张妆感。
+4. 让嘴唇、眉毛、睫毛和发丝更清晰干净，但不要重画五官或添加浓妆。
+5. 优化整体白平衡、曝光、对比度和肤色，让照片更通透、干净、自然。
+
+输出效果：真实摄影、人像精修、自然肤质、清爽干净、高清细节、保留本人特征。彻底避免：换脸、五官变形、过度美颜、网红脸、磨皮过强、假毛孔、过锐化、HDR 过重、肤色发灰或发橙。
+`.trim();
+
+const PHOTO_ENHANCE_PROMPT = `
+请对上传照片做专业摄影后期优化，使它看起来像原照片被更好的相机、更好的镜头和更稳的后期处理呈现出来。
+
+请保持原始主体、人物身份、场景内容、构图、服装、姿态和背景不变，不要新增人物或物体，不要替换背景，不要改变照片含义。
+
+优化重点：
+1. 修正曝光、白平衡、色温和色偏，让主体更清晰、色彩更自然。
+2. 增强局部清晰度、微对比和材质细节，保留皮肤、头发、布料、建筑、植物等真实纹理。
+3. 降低噪点、压缩痕迹、模糊感和灰雾感，但不要造成涂抹、假锐化或边缘光晕。
+4. 恢复高光和阴影层次，避免过曝死白、暗部死黑和不自然 HDR。
+5. 进行自然的摄影级调色：干净、通透、真实、有质感，不要浓重滤镜。
+
+输出效果：真实照片增强、高清、自然色彩、细节清楚、层次丰富。彻底避免：AI感、插画感、换背景、改变身份、脸部变形、过度锐化、过饱和、油画感、塑料皮肤。
+`.trim();
+
+const BACKLIGHT_REPAIR_PROMPT = `
+请修复这张暗光、逆光或曝光不均的照片，让主体更清楚，同时保留现场真实氛围。
+
+请保持人物身份、五官结构、肤色基调、服装、背景、姿态和构图不变，不要重塑脸部，不要替换场景，不要添加不属于原图的光效。
+
+优化重点：
+1. 提亮面部和主体区域，恢复暗部细节，让人脸更自然可见。
+2. 压回过曝高光，保留天空、窗户、灯光、皮肤高光等区域的层次。
+3. 平衡冷暖色温，修正偏黄、偏绿、偏蓝或手机夜景模式造成的色偏。
+4. 降低暗部噪点和压缩颗粒，同时保留皮肤、头发、衣物和背景纹理。
+5. 让整体光影更柔和自然，像经过摄影后期修复的真实照片。
+
+输出效果：自然补光、真实曝光、清晰主体、层次丰富、照片质感。彻底避免：过亮发灰、HDR 过重、脸部蜡像、肤色失真、强行换天、添加镜头光斑、改变原场景。
+`.trim();
+
+const DETAIL_RESTORE_PROMPT = `
+请对上传照片做高清细节修复和轻度去模糊处理，让它更清晰、更干净，但仍然像同一张真实照片。
+
+请严格保持原始人物身份、脸部比例、五官形状、年龄感、发型、服装、场景和构图。不要改变表情，不要替换背景，不要把照片重新画成插画或写真模板。
+
+优化重点：
+1. 提升整体分辨率和边缘清晰度，修复轻微手抖、失焦、压缩造成的模糊。
+2. 恢复真实细节：眼睛高光、睫毛、眉毛、发丝、皮肤纹理、衣物纹理和背景材质。
+3. 降低噪点、色块、马赛克和压缩痕迹，避免涂抹感。
+4. 保持自然颗粒和镜头质感，不要让细节变成假纹理。
+5. 适度优化亮度、对比和色彩，让照片清晰但不刺眼。
+
+输出效果：真实高清修复、自然锐化、细节增强、同一张照片更清楚。彻底避免：换脸、五官重绘、假毛孔、过度锐化光晕、AI插画感、塑料皮肤、过度降噪涂抹。
+`.trim();
+
 type ImagePromptPreset = {
   id: string;
   title: string;
@@ -117,6 +191,42 @@ const promptPresetOptions: ImagePromptPreset[] = [
     imageSize: "4:3",
     imageCount: "1",
     icon: Scissors,
+  },
+  {
+    id: "natural-beauty",
+    title: "自然美颜精修",
+    description: "保留本人五官 + 轻度肤质优化",
+    prompt: NATURAL_BEAUTY_PROMPT,
+    mode: "edit",
+    imageCount: "1",
+    icon: Sparkles,
+  },
+  {
+    id: "photo-enhance",
+    title: "照片质感优化",
+    description: "曝光色彩 + 清晰度整体增强",
+    prompt: PHOTO_ENHANCE_PROMPT,
+    mode: "edit",
+    imageCount: "1",
+    icon: Camera,
+  },
+  {
+    id: "backlight-repair",
+    title: "暗光逆光修复",
+    description: "自然补光 + 高光阴影恢复",
+    prompt: BACKLIGHT_REPAIR_PROMPT,
+    mode: "edit",
+    imageCount: "1",
+    icon: SunMedium,
+  },
+  {
+    id: "detail-restore",
+    title: "高清细节修复",
+    description: "去糊去噪 + 保留真实纹理",
+    prompt: DETAIL_RESTORE_PROMPT,
+    mode: "edit",
+    imageCount: "1",
+    icon: WandSparkles,
   },
 ];
 
@@ -266,7 +376,7 @@ export function ImageComposer({
           </div>
         ) : null}
 
-        <div className="mb-3 grid gap-2 px-1 sm:grid-cols-2">
+        <div className="mb-3 grid gap-2 px-1 sm:grid-cols-2 lg:grid-cols-3">
           {promptPresetOptions.map((preset) => {
             const active = preset.id === activePresetId;
             const PresetIcon = preset.icon;

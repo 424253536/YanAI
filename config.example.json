@@ -1,0 +1,20 @@
+{
+  "auth-key": "change_me_to_a_long_random_secret",
+  "refresh_account_interval_minute": 60,
+  "image_retention_days": 15,
+  "auto_remove_rate_limited_accounts": false,
+  "auto_remove_invalid_accounts": true,
+  "log_levels": [
+    "info",
+    "warning",
+    "error"
+  ],
+  "proxy": "",
+  "base_url": "",
+  "allow_user_registration": true,
+  "new_user_initial_quota": 0,
+  "image_model_mappings": {
+    "gpt-image-2": "gpt-5-5",
+    "codex-gpt-image-2": "codex-gpt-image-2"
+  }
+}

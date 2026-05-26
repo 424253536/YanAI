@@ -1,7 +1,7 @@
-<h1 align="center">ChatGPT2API</h1>
+<h1 align="center">颜AI</h1>
 
 
-<p align="center">ChatGPT2API 主要是对 ChatGPT 官网相关能力进行逆向整理与封装，提供面向 ChatGPT 图片生成、图片编辑、多图组图编辑场景的 OpenAI 兼容图片 API / 代理，并集成在线画图、号池管理、多种账号导入方式与 Docker 自托管部署能力。</p>
+<p align="center">颜AI 是一个围绕 ChatGPT 图片能力封装的自托管图片创作与管理系统，提供 OpenAI 兼容图片 API、在线画图工作台、图生图预设、账号池轮询、个人用户额度、渠道管理、图片归档、日志与 Docker 部署能力。</p>
 
 > [!WARNING]
 > 免责声明：
@@ -25,11 +25,37 @@
 已发布镜像支持 `linux/amd64` 与 `linux/arm64`，在 x86 服务器和 Apple Silicon / ARM Linux 设备上都会自动拉取匹配架构的版本。
 
 ```bash
-git clone git@github.com:basketikun/chatgpt2api.git
-# 按需编辑 config.json 的密钥和 `refresh_account_interval_minute`
-# 也可以直接通过环境变量 CHATGPT2API_AUTH_KEY 覆盖 auth-key
-docker compose up -d
+git clone git@github.com:huaiyuechusan/YanAI.git
+cd YanAI
+docker build -t your-registry/yanai:latest .
+docker push your-registry/yanai:latest
 ```
+
+当前仓库的 Docker 镜像不会包含 `config.json`、`data/`、`.env`、数据库文件或本地虚拟环境。服务器部署时请通过宿主机挂载提供运行时配置和数据：
+
+```yaml
+volumes:
+  - ./data:/app/data
+  - ./config.json:/app/config.json
+```
+
+服务器上准备配置和数据目录：
+
+```bash
+cp config.example.json config.json
+# 编辑 config.json，将 auth-key 改成你自己的长随机密钥
+mkdir -p data
+YANAI_IMAGE=your-registry/yanai:latest docker compose up -d
+```
+
+也可以用环境变量 `CHATGPT2API_AUTH_KEY` 覆盖 `config.json` 中的 `auth-key`，但不要把真实密钥写进 Dockerfile、镜像构建参数或公开 compose 文件。
+
+本地直接用当前代码启动容器可运行：
+
+```bash
+docker compose -f docker-compose.local.yml up -d --build
+```
+
 本地开发启动
 ```bash
 cd D:\Desktop\颜AI
@@ -61,21 +87,19 @@ environment:
 
 - 兼容 `POST /v1/images/generations` 图片生成接口
 - 兼容 `POST /v1/images/edits` 图片编辑接口
-- 兼容面向图片场景的 `POST /v1/chat/completions`
-- 兼容面向图片场景的 `POST /v1/responses`
-- `GET /v1/models` 返回 `gpt-image-2`、`codex-gpt-image-2`、`auto`、`gpt-5`、`gpt-5-1`、`gpt-5-2`、`gpt-5-3`、`gpt-5-3-mini`、
-  `gpt-5-mini`
-- 支持通过 `n` 返回多张生成结果
-- 支持 Codex 中的画图接口逆向，仅 `Plus` / `Team` / `Pro` 订阅可用，模型别名为 `codex-gpt-image-2`，如有需要可自行在其他场景映射回 `gpt-image-2`，用于和官网画图区分；也就意味着同一账号会同时有官网和 Codex 两份生图额度
+- 管理员密钥可调用 `POST /v1/chat/completions`、`POST /v1/responses` 与 `POST /v1/messages`
+- `GET /v1/models` 会返回上游模型列表，并补充内置图片模型 `gpt-image-2`、`codex-gpt-image-2`
+- 图片接口支持 `n=1-4`，前端工作台会按张数拆分任务执行
+- 支持内置账号池与 OpenAI 图片兼容外部渠道，按模型、权重、优先级进行路由
+- 支持 Codex 中的画图接口逆向，仅 `Plus` / `Team` / `Pro` 订阅可用，模型别名为 `codex-gpt-image-2`，用于和官网画图区分
 
 ### 在线画图功能
 
-- 内置在线画图工作台，支持生成、图片编辑与多图组图编辑
-- 支持 `gpt-image-2`、`codex-gpt-image-2`、`auto`、`gpt-5`、`gpt-5-1`、`gpt-5-2`、`gpt-5-3`、`gpt-5-3-mini`、`gpt-5-mini` 模型选择
-- 编辑模式支持参考图上传
-- 前端支持多图生成交互
-- 本地保存图片会话历史，支持回看、删除和清空
-- 支持服务端缓存图片URL
+- 内置「画图」工作台，支持文生图、图生图和多参考图编辑
+- 提供眼镜搭配、发型报告、自然美颜、照片增强、暗光修复、高清细节修复等预设提示词
+- 支持参考图上传、粘贴图片、图片比例选择和多张任务队列
+- 本地保存图片会话历史，支持回看、删除、清空和从结果图继续编辑
+- 服务端可缓存生成图片，并在「图片管理 / 我的图片」中按日期筛选、预览和复制地址
 
 ### 号池管理功能
 
@@ -87,6 +111,13 @@ environment:
 - 支持搜索、筛选、批量刷新、导出、手动编辑和清理账号
 - 支持四种导入方式：本地 CPA JSON 文件导入、远程 CPA 服务器导入、`sub2api` 服务器导入、`access_token` 导入
 - 支持在设置页配置 `sub2api` 服务器，筛选并批量导入其中的 OpenAI OAuth 账号
+
+### 管理台功能
+
+- 管理员可创建个人用户、调整额度、禁用账号、重置密码
+- 支持个人用户注册、登录、兑换码领取额度，以及个人图片记录查看
+- 支持 OpenAI 图片兼容渠道管理，可设置 Base URL、API Key、模型、权重、优先级和超时时间
+- 支持系统日志查看、图片访问地址配置、自动清理天数、账号刷新间隔和模型映射配置
 
 ### 注册机邮箱 Provider
 
@@ -105,22 +136,23 @@ environment:
 
 `api_base` 可以改为你自部署的 MoeMail 地址；`expiry_time` 单位为毫秒，`3600000` 表示 1 小时。
 
-### 实验性 / 规划中
+### 实验性 / 注意事项
 
-- `/v1/complete` 文本补全与流式输出已实现，但仍在测试，目前会出现对话重复的问题，请谨慎测试使用
+- 文本类兼容接口主要面向管理员密钥和调试场景，个人用户仅开放图片相关能力
+- 流式图片与文本输出仍建议谨慎测试
 - 详细状态说明见：[功能清单](./docs/feature-status.en.md)
 
-## Screenshots
+## 截图
 
-文生图界面：
+画图工作台：
 
-![image](assets/image.png)
+![image-20260526172427870](README.assets/image-20260526172427870.png)
 
-编辑图：
+图生图与预设提示词：
 
-![image](assets/image_edit.png)
+![image-20260526172409948](README.assets/image-20260526172409948.png)
 
-Cherry Studio 中使用，支持作为绘图接口接入：
+系统设置：
 
 ![image](assets/chery_studio.png)
 
@@ -128,7 +160,7 @@ Cherry Studio 中使用，支持作为绘图接口接入：
 
 ![image](assets/account_pool.png)
 
-New Api 接入：
+渠道管理：
 
 ![image](assets/new_api.png)
 
@@ -144,7 +176,7 @@ Authorization: Bearer <auth-key>
 <summary><code>GET /v1/models</code></summary>
 <br>
 
-返回当前暴露的图片模型列表。
+返回上游模型列表，并补充当前内置图片模型。
 
 ```bash
 curl http://localhost:8000/v1/models \
@@ -155,10 +187,10 @@ curl http://localhost:8000/v1/models \
 <summary>说明</summary>
 <br>
 
-| 字段   | 说明                                                                                                         |
-|:-----|:-----------------------------------------------------------------------------------------------------------|
-| 返回模型 | `gpt-image-2`、`codex-gpt-image-2`、`auto`、`gpt-5`、`gpt-5-1`、`gpt-5-2`、`gpt-5-3`、`gpt-5-3-mini`、`gpt-5-mini` |
-| 接入场景 | 可接入 Cherry Studio、New API 等上游或客户端                                                                          |
+| 字段   | 说明                                                       |
+|:-----|:---------------------------------------------------------|
+| 返回模型 | 上游模型列表，并补充 `gpt-image-2`、`codex-gpt-image-2` 图片模型 |
+| 接入场景 | 可接入 Cherry Studio、New API 等上游或客户端                        |
 
 <br>
 </details>
@@ -304,14 +336,18 @@ curl http://localhost:8000/v1/responses \
 
 学 AI , 上 L 站：[LinuxDO](https://linux.do)
 
+## 致谢
+
+感谢 [basketikun/chatgpt2api](https://github.com/basketikun/chatgpt2api) 项目在 ChatGPT 官网能力逆向整理、OpenAI 兼容接口封装和自托管部署思路上的探索与开源分享。颜AI 的项目方向与部分实现思路受其启发。
+
 ## Contributors
 
 感谢所有为本项目做出贡献的开发者：
 
-<a href="https://github.com/basketikun/chatgpt2api/graphs/contributors">
-  <img alt="Contributors" src="https://contrib.rocks/image?repo=basketikun/chatgpt2api" />
+<a href="https://github.com/huaiyuechusan/YanAI/graphs/contributors">
+  <img alt="Contributors" src="https://contrib.rocks/image?repo=huaiyuechusan/YanAI" />
 </a>
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/chart?repos=basketikun/chatgpt2api&type=date&legend=top-left)](https://www.star-history.com/?repos=basketikun%2Fchatgpt2api&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/chart?repos=huaiyuechusan/YanAI&type=date&legend=top-left)](https://www.star-history.com/?repos=huaiyuechusan%2FYanAI&type=date&legend=top-left)
