@@ -41,3 +41,5 @@ web/out/
 web/coverage/
 web/.vercel/
 web/*.tsbuildinfo
+
+Plan.md

@@ -145,10 +145,10 @@ environment:
 ## 截图
 
 ### 画图功能
-
+![image-20260528003118319](README.assets/image-20260528003118319.png)
 
 ### 用户管理
-
+![image-20260527225749892](README.assets/image-20260527225749892.png)
 
 ### 账号池管理（添加RT的获取）
 ![image-20260527225645511](README.assets/image-20260527225645511.png)
