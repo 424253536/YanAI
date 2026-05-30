@@ -63,7 +63,12 @@ const imageConversationStorage = localforage.createInstance({
 });
 
 const IMAGE_CONVERSATIONS_KEY = "items";
+export const IMAGE_CONVERSATIONS_CHANGED_EVENT = "chatgpt2api:image-conversations-changed";
 let imageConversationWriteQueue: Promise<void> = Promise.resolve();
+
+export type ImageConversationsChangedDetail = {
+  ownerKey: string;
+};
 
 function encodeStorageSegment(value: string) {
   return encodeURIComponent(value.trim());
@@ -76,6 +81,18 @@ function normalizeOwnerKey(ownerKey?: string | null) {
 function getImageConversationsStorageKey(ownerKey?: string | null) {
   const normalizedOwnerKey = normalizeOwnerKey(ownerKey);
   return normalizedOwnerKey ? `${IMAGE_CONVERSATIONS_KEY}:${normalizedOwnerKey}` : IMAGE_CONVERSATIONS_KEY;
+}
+
+function emitImageConversationsChanged(ownerKey: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent<ImageConversationsChangedDetail>(IMAGE_CONVERSATIONS_CHANGED_EVENT, {
+      detail: { ownerKey },
+    }),
+  );
 }
 
 export function getImageConversationOwnerKey(owner: ImageConversationOwner | null | undefined) {
@@ -256,6 +273,7 @@ export async function saveImageConversations(conversations: ImageConversation[],
       getImageConversationsStorageKey(normalizedOwnerKey),
       sortImageConversations([...conversationMap.values()]),
     );
+    emitImageConversationsChanged(normalizedOwnerKey);
   });
 }
 
@@ -271,6 +289,7 @@ export async function saveImageConversation(conversation: ImageConversation, own
       ...items.filter((item) => item.id !== persistedConversation.id),
     ]);
     await imageConversationStorage.setItem(getImageConversationsStorageKey(normalizedOwnerKey), nextItems);
+    emitImageConversationsChanged(normalizedOwnerKey);
   });
 }
 
@@ -282,12 +301,15 @@ export async function deleteImageConversation(id: string, ownerKey = ""): Promis
       getImageConversationsStorageKey(normalizedOwnerKey),
       items.filter((item) => item.id !== id),
     );
+    emitImageConversationsChanged(normalizedOwnerKey);
   });
 }
 
 export async function clearImageConversations(ownerKey = ""): Promise<void> {
   await queueImageConversationWrite(async () => {
-    await imageConversationStorage.removeItem(getImageConversationsStorageKey(ownerKey));
+    const normalizedOwnerKey = normalizeOwnerKey(ownerKey);
+    await imageConversationStorage.removeItem(getImageConversationsStorageKey(normalizedOwnerKey));
+    emitImageConversationsChanged(normalizedOwnerKey);
   });
 }
 

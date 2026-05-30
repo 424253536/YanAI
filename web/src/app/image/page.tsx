@@ -24,9 +24,11 @@ import {
   deleteImageConversation,
   getImageConversationOwnerKey,
   getImageConversationStats,
+  IMAGE_CONVERSATIONS_CHANGED_EVENT,
   listImageConversations,
   saveImageConversation,
   saveImageConversations,
+  type ImageConversationsChangedDetail,
   type ImageConversation,
   type ImageConversationMode,
   type ImageTurn,
@@ -120,9 +122,14 @@ function sortImageConversations(conversations: ImageConversation[]) {
   return [...conversations].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-async function recoverConversationHistory(items: ImageConversation[], ownerKey: string) {
+async function recoverConversationHistory(
+  items: ImageConversation[],
+  ownerKey: string,
+  options: { isConversationQueueActive?: (conversationId: string) => boolean } = {},
+) {
   const normalized = items.map((conversation) => {
     let changed = false;
+    const isConversationQueueActive = options.isConversationQueueActive?.(conversation.id) ?? false;
 
     const turns = conversation.turns.map((turn) => {
       if (turn.status !== "queued" && turn.status !== "generating") {
@@ -130,7 +137,7 @@ async function recoverConversationHistory(items: ImageConversation[], ownerKey: 
       }
 
       const loadingCount = turn.images.filter((image) => image.status === "loading").length;
-      if (loadingCount > 0) {
+      if (turn.status === "generating" && loadingCount > 0 && !isConversationQueueActive) {
         const message = "页面刷新或任务中断，未完成的图片已标记为失败";
         changed = true;
         return {
@@ -141,6 +148,10 @@ async function recoverConversationHistory(items: ImageConversation[], ownerKey: 
             image.status === "loading" ? { ...image, status: "error" as const, error: message } : image,
           ),
         };
+      }
+
+      if (loadingCount > 0) {
+        return turn;
       }
 
       const failedCount = turn.images.filter((image) => image.status === "error").length;
@@ -241,18 +252,27 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
   useEffect(() => {
     let cancelled = false;
 
-    const loadHistory = async () => {
-      conversationsRef.current = [];
-      setIsLoadingHistory(true);
-      setConversations([]);
-      setSelectedConversationId(null);
+    const isConversationQueueActive = (conversationId: string) =>
+      activeConversationQueueIds.has(`${imageConversationOwnerKey}:${conversationId}`);
+
+    const loadHistory = async ({ resetBeforeLoad = false }: { resetBeforeLoad?: boolean } = {}) => {
+      if (resetBeforeLoad) {
+        conversationsRef.current = [];
+        setIsLoadingHistory(true);
+        setConversations([]);
+        setSelectedConversationId(null);
+      }
 
       try {
-        const storedSize = typeof window !== "undefined" ? window.localStorage.getItem(imageSizeStorageKey) : null;
-        setImageSize(storedSize || "");
+        if (resetBeforeLoad) {
+          const storedSize = typeof window !== "undefined" ? window.localStorage.getItem(imageSizeStorageKey) : null;
+          setImageSize(storedSize || "");
+        }
 
         const items = await listImageConversations(imageConversationOwnerKey);
-        const normalizedItems = await recoverConversationHistory(items, imageConversationOwnerKey);
+        const normalizedItems = await recoverConversationHistory(items, imageConversationOwnerKey, {
+          isConversationQueueActive,
+        });
         if (cancelled) {
           return;
         }
@@ -261,11 +281,19 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
         setConversations(normalizedItems);
         const storedConversationId =
           typeof window !== "undefined" ? window.localStorage.getItem(activeConversationStorageKey) : null;
-        const nextSelectedConversationId =
-          (storedConversationId && normalizedItems.some((conversation) => conversation.id === storedConversationId)
-            ? storedConversationId
-            : null) ?? pickFallbackConversationId(normalizedItems);
-        setSelectedConversationId(nextSelectedConversationId);
+        setSelectedConversationId((currentConversationId) => {
+          if (
+            currentConversationId &&
+            normalizedItems.some((conversation) => conversation.id === currentConversationId)
+          ) {
+            return currentConversationId;
+          }
+          return (
+            (storedConversationId && normalizedItems.some((conversation) => conversation.id === storedConversationId)
+              ? storedConversationId
+              : null) ?? pickFallbackConversationId(normalizedItems)
+          );
+        });
       } catch (error) {
         const message = error instanceof Error ? error.message : "读取会话记录失败";
         toast.error(message);
@@ -276,9 +304,19 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
       }
     };
 
-    void loadHistory();
+    const handleConversationsChanged = (event: Event) => {
+      const detail = (event as CustomEvent<ImageConversationsChangedDetail>).detail;
+      if (detail?.ownerKey !== imageConversationOwnerKey) {
+        return;
+      }
+      void loadHistory();
+    };
+
+    window.addEventListener(IMAGE_CONVERSATIONS_CHANGED_EVENT, handleConversationsChanged);
+    void loadHistory({ resetBeforeLoad: true });
     return () => {
       cancelled = true;
+      window.removeEventListener(IMAGE_CONVERSATIONS_CHANGED_EVENT, handleConversationsChanged);
     };
   }, [activeConversationStorageKey, imageConversationOwnerKey, imageSizeStorageKey]);
 
