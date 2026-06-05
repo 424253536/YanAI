@@ -5,12 +5,14 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  CloudUpload,
   Copy,
   ImageIcon,
   LoaderCircle,
   Maximize2,
   RefreshCw,
   Search,
+  Settings,
   Trash2,
   X,
 } from "lucide-react";
@@ -30,9 +32,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { WebDAVSettingsDialog } from "@/components/webdav-settings-dialog";
 import {
   deleteManagedImages,
+  fetchImagesWebDAVConfig,
   fetchManagedImages,
+  syncImagesToWebDAV,
+  updateImagesWebDAVConfig,
+  type ImageWebDAVConfig,
+  type ImageWebDAVConfigPayload,
   type ManagedImage,
   type ManagedImageDeleteTarget,
 } from "@/lib/api";
@@ -72,9 +80,14 @@ function ImageManagerContent() {
   const [dimensions, setDimensions] = useState<Record<string, string>>({});
   const [selectedItems, setSelectedItems] = useState<Record<string, ManagedImageDeleteTarget>>({});
   const [deleteTarget, setDeleteTarget] = useState<ManagedImageDeleteTarget[] | null>(null);
+  const [webdavConfig, setWebdavConfig] = useState<ImageWebDAVConfig | null>(null);
+  const [webdavOpen, setWebdavOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingWebDAV, setIsSavingWebDAV] = useState(false);
+  const [isSyncingWebDAV, setIsSyncingWebDAV] = useState(false);
   const pageSize = 12;
+
   const lightboxImages = items.map((item) => ({
     id: item.name,
     src: item.url,
@@ -83,21 +96,19 @@ function ImageManagerContent() {
   }));
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(page, pageCount);
-  const currentRows = items;
   const selectedTargets = useMemo(() => Object.values(selectedItems), [selectedItems]);
   const selectedCount = selectedTargets.length;
-  const allCurrentSelected = currentRows.length > 0 && currentRows.every((item) => selectedItems[imageKey(item)]);
-  const someCurrentSelected = currentRows.some((item) => selectedItems[imageKey(item)]);
+  const allCurrentSelected = items.length > 0 && items.every((item) => selectedItems[imageKey(item)]);
+  const someCurrentSelected = items.some((item) => selectedItems[imageKey(item)]);
   const dateGroups = useMemo(() => {
     const groups = new Map<string, ManagedImage[]>();
-    currentRows.forEach((item) => {
+    items.forEach((item) => {
       const date = imageDate(item);
       groups.set(date, [...(groups.get(date) || []), item]);
     });
     return Array.from(groups, ([date, rows]) => ({ date, rows }));
-  }, [currentRows]);
+  }, [items]);
   const deleteCount = deleteTarget?.length ?? 0;
-  const deleteDescription = `确认删除选中的 ${deleteCount} 张图片吗？删除后图片文件和管理记录将无法恢复。`;
 
   const loadImages = async () => {
     setIsLoading(true);
@@ -123,6 +134,54 @@ function ImageManagerContent() {
       toast.error(error instanceof Error ? error.message : "加载图片失败");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadWebDAVConfig = async () => {
+    try {
+      const data = await fetchImagesWebDAVConfig();
+      setWebdavConfig(data.webdav);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "加载 WebDAV 配置失败");
+    }
+  };
+
+  const saveWebDAVConfig = async (payload: ImageWebDAVConfigPayload) => {
+    setIsSavingWebDAV(true);
+    try {
+      const data = await updateImagesWebDAVConfig(payload);
+      setWebdavConfig(data.webdav);
+      setWebdavOpen(false);
+      toast.success("WebDAV 配置已保存");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "保存 WebDAV 配置失败");
+    } finally {
+      setIsSavingWebDAV(false);
+    }
+  };
+
+  const syncToWebDAV = async () => {
+    if (!webdavConfig?.enabled) {
+      setWebdavOpen(true);
+      toast.error("请先启用 WebDAV 配置");
+      return;
+    }
+    setIsSyncingWebDAV(true);
+    try {
+      const data = await syncImagesToWebDAV({
+        start_date: startDate,
+        end_date: endDate,
+        user_id: userId.trim(),
+        channel: channel.trim(),
+      });
+      const result = data.result;
+      toast.success(`已同步 ${result.uploaded} 张，跳过 ${result.skipped} 张，失败 ${result.failed} 张`);
+      await loadImages();
+      await loadWebDAVConfig();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "同步到 WebDAV 失败");
+    } finally {
+      setIsSyncingWebDAV(false);
     }
   };
 
@@ -193,6 +252,10 @@ function ImageManagerContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, userId, channel, page]);
 
+  useEffect(() => {
+    void loadWebDAVConfig();
+  }, []);
+
   return (
     <section className="space-y-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -228,8 +291,16 @@ function ImageManagerContent() {
             placeholder="渠道"
             className="h-10 w-40 rounded-xl border-stone-200 bg-white"
           />
+          <Button variant="outline" onClick={() => setWebdavOpen(true)} className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700">
+            <Settings className="size-4" />
+            WebDAV
+          </Button>
+          <Button variant="outline" onClick={() => void syncToWebDAV()} disabled={isSyncingWebDAV} className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700">
+            {isSyncingWebDAV ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
+            同步
+          </Button>
           <Button variant="outline" onClick={clearFilters} className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700">
-            清除筛选条件
+            清除筛选
           </Button>
           <Button onClick={() => void loadImages()} disabled={isLoading} className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800">
             {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}
@@ -252,9 +323,9 @@ function ImageManagerContent() {
               <div className="flex h-8 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-600">
                 <Checkbox
                   checked={allCurrentSelected ? true : someCurrentSelected ? "indeterminate" : false}
-                  onCheckedChange={(checked) => toggleRows(currentRows, checked === true)}
+                  onCheckedChange={(checked) => toggleRows(items, checked === true)}
                   aria-label="选择本页图片"
-                  disabled={currentRows.length === 0 || isLoading}
+                  disabled={items.length === 0 || isLoading}
                 />
                 本页全选
               </div>
@@ -283,7 +354,7 @@ function ImageManagerContent() {
             <div className="flex h-56 items-center justify-center">
               <LoaderCircle className="size-5 animate-spin text-stone-400" />
             </div>
-          ) : currentRows.length === 0 ? (
+          ) : items.length === 0 ? (
             <div className="px-6 py-14 text-center text-sm text-stone-500">没有找到图片</div>
           ) : (
             <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -325,7 +396,7 @@ function ImageManagerContent() {
                             type="button"
                             className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-lg bg-stone-100 text-left"
                             onClick={() => {
-                              setLightboxIndex(currentRows.findIndex((row) => imageKey(row) === key));
+                              setLightboxIndex(items.findIndex((row) => imageKey(row) === key));
                               setLightboxOpen(true);
                             }}
                           >
@@ -373,6 +444,7 @@ function ImageManagerContent() {
                               <span className="truncate">{item.owner_email || item.owner_name || item.owner_user_id || "系统"}</span>
                               <span className="shrink-0">{item.channel || "-"}</span>
                             </div>
+                            {item.webdav_status === "synced" ? <div className="text-stone-400">WebDAV 已同步</div> : null}
                           </div>
                         </div>
                       );
@@ -404,11 +476,20 @@ function ImageManagerContent() {
         onOpenChange={setLightboxOpen}
         onIndexChange={setLightboxIndex}
       />
+      <WebDAVSettingsDialog
+        open={webdavOpen}
+        onOpenChange={setWebdavOpen}
+        config={webdavConfig}
+        isSaving={isSavingWebDAV}
+        title="WebDAV 设置"
+        description="保存管理员图片到远程目录"
+        onSave={saveWebDAVConfig}
+      />
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => (!open ? setDeleteTarget(null) : null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{deleteCount === 1 ? "删除图片" : "批量删除图片"}</DialogTitle>
-            <DialogDescription>{deleteDescription}</DialogDescription>
+            <DialogDescription>确认删除选中的 {deleteCount} 张图片吗？删除后图片文件和管理记录将无法恢复。</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>

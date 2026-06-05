@@ -31,9 +31,19 @@ class ObservabilityTest(unittest.TestCase):
 
             with mock.patch("services.config.config", fake_config), request_id_context("req-log"):
                 for index in range(3):
-                    service.add(LOG_TYPE_CALL, f"call-{index}", {"status": "failed" if index == 1 else "success", "index": index})
+                    service.add(
+                        LOG_TYPE_CALL,
+                        f"call-{index}",
+                        {
+                            "status": "failed" if index == 1 else "success",
+                            "index": index,
+                            "user_id": f"user-{index}",
+                            "user_name": "Alice" if index == 1 else "Bob",
+                        },
+                    )
                 page = service.query(type=LOG_TYPE_CALL, request_id="req-log", page=1, page_size=2)
                 failed_page = service.query(type=LOG_TYPE_CALL, request_id="req-log", status="failed")
+                user_page = service.query(type=LOG_TYPE_CALL, request_id="req-log", user="alice")
 
             self.assertEqual(storage.repository_provider.system_logs.count(), 3)
             self.assertFalse(log_path.exists())
@@ -43,6 +53,8 @@ class ObservabilityTest(unittest.TestCase):
             self.assertEqual(page["items"][0]["detail"]["request_id"], "req-log")
             self.assertEqual(failed_page["total"], 1)
             self.assertEqual(failed_page["items"][0]["detail"]["status"], "failed")
+            self.assertEqual(user_page["total"], 1)
+            self.assertEqual(user_page["items"][0]["detail"]["user_id"], "user-1")
             storage.close()
 
     def test_file_system_logs_can_filter_by_status(self) -> None:
@@ -52,12 +64,15 @@ class ObservabilityTest(unittest.TestCase):
             fake_config = SimpleNamespace(get_repository_provider=lambda: None)
 
             with mock.patch("services.config.config", fake_config):
-                service.add(LOG_TYPE_CALL, "call-success", {"status": "success"})
-                service.add(LOG_TYPE_CALL, "call-failed", {"status": "failed"})
+                service.add(LOG_TYPE_CALL, "call-success", {"status": "success", "user_email": "alice@example.com"})
+                service.add(LOG_TYPE_CALL, "call-failed", {"status": "failed", "user_email": "bob@example.com"})
                 result = service.query(type=LOG_TYPE_CALL, status="failed")
+                user_result = service.query(type=LOG_TYPE_CALL, user="alice")
 
             self.assertEqual(result["total"], 1)
             self.assertEqual(result["items"][0]["summary"], "call-failed")
+            self.assertEqual(user_result["total"], 1)
+            self.assertEqual(user_result["items"][0]["summary"], "call-success")
 
     def test_audit_logs_have_dedicated_repository(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -76,11 +91,15 @@ class ObservabilityTest(unittest.TestCase):
                 }
             )
             result = repo.query(resource="user", request_id="req-audit")
+            actor_result = repo.query(user="admin")
+            target_result = repo.query(user="user-a")
 
             self.assertEqual(repo.count(), 1)
             self.assertEqual(result["total"], 1)
             self.assertEqual(result["items"][0]["action"], "users.quota.adjust")
             self.assertEqual(result["items"][0]["detail"]["amount"], 2)
+            self.assertEqual(actor_result["total"], 1)
+            self.assertEqual(target_result["total"], 1)
             storage.close()
 
     def test_request_id_links_image_records_and_health(self) -> None:

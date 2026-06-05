@@ -1,14 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Copy, ImageIcon, LoaderCircle, Maximize2, RefreshCw } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CloudUpload,
+  Copy,
+  ImageIcon,
+  LoaderCircle,
+  Maximize2,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { fetchMyImages, type ManagedImage } from "@/lib/api";
+import { WebDAVSettingsDialog } from "@/components/webdav-settings-dialog";
+import {
+  fetchMyImages,
+  fetchMyImagesWebDAVConfig,
+  syncMyImagesToWebDAV,
+  updateMyImagesWebDAVConfig,
+  type ImageWebDAVConfig,
+  type ImageWebDAVConfigPayload,
+  type ManagedImage,
+} from "@/lib/api";
 import { useAuthGuard } from "@/lib/use-auth-guard";
 
 function formatSize(size: number) {
@@ -24,7 +44,11 @@ function MyImagesContent() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [webdavConfig, setWebdavConfig] = useState<ImageWebDAVConfig | null>(null);
+  const [webdavOpen, setWebdavOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingWebDAV, setIsSavingWebDAV] = useState(false);
+  const [isSyncingWebDAV, setIsSyncingWebDAV] = useState(false);
   const pageSize = 12;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(page, pageCount);
@@ -51,10 +75,57 @@ function MyImagesContent() {
     }
   };
 
+  const loadWebDAVConfig = async () => {
+    try {
+      const data = await fetchMyImagesWebDAVConfig();
+      setWebdavConfig(data.webdav);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "加载 WebDAV 配置失败");
+    }
+  };
+
+  const saveWebDAVConfig = async (payload: ImageWebDAVConfigPayload) => {
+    setIsSavingWebDAV(true);
+    try {
+      const data = await updateMyImagesWebDAVConfig(payload);
+      setWebdavConfig(data.webdav);
+      setWebdavOpen(false);
+      toast.success("WebDAV 配置已保存");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "保存 WebDAV 配置失败");
+    } finally {
+      setIsSavingWebDAV(false);
+    }
+  };
+
+  const syncToWebDAV = async () => {
+    if (!webdavConfig?.enabled) {
+      setWebdavOpen(true);
+      toast.error("请先启用 WebDAV 配置");
+      return;
+    }
+    setIsSyncingWebDAV(true);
+    try {
+      const data = await syncMyImagesToWebDAV({ start_date: startDate, end_date: endDate });
+      const result = data.result;
+      toast.success(`已同步 ${result.uploaded} 张，跳过 ${result.skipped} 张，失败 ${result.failed} 张`);
+      await loadImages();
+      await loadWebDAVConfig();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "同步到 WebDAV 失败");
+    } finally {
+      setIsSyncingWebDAV(false);
+    }
+  };
+
   useEffect(() => {
     void loadImages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, page]);
+
+  useEffect(() => {
+    void loadWebDAVConfig();
+  }, []);
 
   return (
     <section className="space-y-5">
@@ -64,7 +135,23 @@ function MyImagesContent() {
           <h1 className="text-2xl font-semibold tracking-tight">我的图片</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <DateRangeFilter startDate={startDate} endDate={endDate} onChange={(start, end) => { setStartDate(start); setEndDate(end); setPage(1); }} />
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+              setPage(1);
+            }}
+          />
+          <Button variant="outline" onClick={() => setWebdavOpen(true)} className="h-10 rounded-xl border-rose-100 bg-white px-4 text-stone-700">
+            <Settings className="size-4" />
+            WebDAV
+          </Button>
+          <Button variant="outline" onClick={() => void syncToWebDAV()} disabled={isSyncingWebDAV} className="h-10 rounded-xl border-rose-100 bg-white px-4 text-stone-700">
+            {isSyncingWebDAV ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
+            同步
+          </Button>
           <Button variant="outline" onClick={() => { setStartDate(""); setEndDate(""); setPage(1); }} className="h-10 rounded-xl border-rose-100 bg-white px-4 text-stone-700">
             清除筛选
           </Button>
@@ -118,11 +205,16 @@ function MyImagesContent() {
                           void navigator.clipboard.writeText(item.url);
                           toast.success("图片地址已复制");
                         }}
+                        aria-label="复制图片地址"
+                        title="复制图片地址"
                       >
                         <Copy className="size-4" />
                       </Button>
                     </div>
-                    <div>{formatSize(item.size)}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span>{formatSize(item.size)}</span>
+                      <span>{item.webdav_status === "synced" ? "WebDAV 已同步" : ""}</span>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -147,6 +239,15 @@ function MyImagesContent() {
         open={lightboxOpen}
         onOpenChange={setLightboxOpen}
         onIndexChange={setLightboxIndex}
+      />
+      <WebDAVSettingsDialog
+        open={webdavOpen}
+        onOpenChange={setWebdavOpen}
+        config={webdavConfig}
+        isSaving={isSavingWebDAV}
+        title="WebDAV 设置"
+        description="保存我的图片到远程目录"
+        onSave={saveWebDAVConfig}
       />
     </section>
   );

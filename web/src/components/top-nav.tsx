@@ -48,6 +48,7 @@ const adminNavItems = [
 const userNavItems = [
   { href: "/image", label: "画图", icon: Sparkles },
   { href: "/my-images", label: "我的图片", icon: Image },
+  { href: "/prompt-manager", label: "我的提示词", icon: PenLine },
   { href: "/profile", label: "个人中心", icon: User },
 ] satisfies NavItem[];
 

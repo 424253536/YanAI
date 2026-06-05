@@ -1,7 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { Copy, ImagePlus, LoaderCircle, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  CheckCircle2,
+  Copy,
+  ImagePlus,
+  LoaderCircle,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Share2,
+  Trash2,
+  Upload,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,17 +24,29 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  approveAdminPrompt,
   createAdminPrompt,
+  createMyPrompt,
+  createPromptShare,
   deleteAdminPrompt,
+  deleteMyPrompt,
   fetchAdminPrompts,
+  fetchMyPrompts,
+  fetchPromptShare,
+  importPromptShare,
   type PromptLibraryItem,
   type PromptLibraryPayload,
+  rejectAdminPrompt,
+  submitMyPrompt,
   updateAdminPrompt,
+  updateMyPrompt,
+  uploadMyPromptExampleImage,
   uploadPromptExampleImage,
 } from "@/lib/api";
 import { resolveApiAssetUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 import { useAuthGuard } from "@/lib/use-auth-guard";
+import type { StoredAuthSession } from "@/store/auth";
 
 type PromptFormState = {
   title: string;
@@ -63,6 +88,50 @@ function modeLabel(value?: string) {
 
 function categoryLabel(item: PromptLibraryItem) {
   return [item.category, item.sub_category].filter(Boolean).join(" / ") || "未分类";
+}
+
+function promptStatus(item: PromptLibraryItem) {
+  return item.status || "public";
+}
+
+function statusLabel(status?: string) {
+  if (status === "personal") return "个人";
+  if (status === "submitted") return "待审核";
+  if (status === "rejected") return "已驳回";
+  if (status === "shared") return "分享";
+  return "公共";
+}
+
+function statusBadgeVariant(status?: string): "success" | "warning" | "danger" | "info" {
+  if (status === "submitted") return "warning";
+  if (status === "rejected") return "danger";
+  if (status === "personal") return "info";
+  return "success";
+}
+
+function canUserEdit(item: PromptLibraryItem) {
+  return ["personal", "submitted", "rejected"].includes(promptStatus(item));
+}
+
+function shareUrlFromId(shareId: string) {
+  if (typeof window === "undefined") {
+    return `/prompt-manager?share=${encodeURIComponent(shareId)}`;
+  }
+  return `${window.location.origin}/prompt-manager?share=${encodeURIComponent(shareId)}`;
+}
+
+function extractShareId(value: string) {
+  const text = value.trim();
+  if (!text) {
+    return "";
+  }
+  try {
+    const url = new URL(text);
+    return url.searchParams.get("share") || url.searchParams.get("shared") || "";
+  } catch {
+    const match = text.match(/(?:share|shared)=([a-zA-Z0-9_-]+)/);
+    return match?.[1] || text;
+  }
 }
 
 function toForm(item?: PromptLibraryItem): PromptFormState {
@@ -115,20 +184,31 @@ function summarizePrompt(prompt: string) {
   return cleaned.length > 108 ? `${cleaned.slice(0, 108)}...` : cleaned;
 }
 
-function PromptManagerContent() {
+function PromptManagerContent({ session }: { session: StoredAuthSession }) {
+  const isAdmin = session.role === "admin";
   const [items, setItems] = useState<PromptLibraryItem[]>([]);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("全部");
+  const [statusFilter, setStatusFilter] = useState("全部");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isImportingShare, setIsImportingShare] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareInput, setShareInput] = useState("");
+  const [sharePreview, setSharePreview] = useState<PromptLibraryItem | null>(null);
   const [editingItem, setEditingItem] = useState<PromptLibraryItem | null>(null);
   const [form, setForm] = useState<PromptFormState>(emptyForm);
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
   const categories = useMemo(() => {
     const values = Array.from(new Set(items.map(categoryLabel))).sort((a, b) => a.localeCompare(b, "zh-CN"));
+    return ["全部", ...values];
+  }, [items]);
+
+  const statusFilters = useMemo(() => {
+    const values = Array.from(new Set(items.map((item) => statusLabel(promptStatus(item)))));
     return ["全部", ...values];
   }, [items]);
 
@@ -139,19 +219,22 @@ function PromptManagerContent() {
       if (category !== "全部" && itemCategory !== category) {
         return false;
       }
+      if (statusFilter !== "全部" && statusLabel(promptStatus(item)) !== statusFilter) {
+        return false;
+      }
       if (!text) {
         return true;
       }
-      return [item.title, item.description, item.prompt, item.author, item.category, item.sub_category]
+      return [item.title, item.description, item.prompt, item.author, item.category, item.sub_category, item.owner_name]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(text));
     });
-  }, [category, items, query]);
+  }, [category, items, query, statusFilter]);
 
   const loadPrompts = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchAdminPrompts();
+      const data = isAdmin ? await fetchAdminPrompts() : await fetchMyPrompts();
       setItems(data.items);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "加载提示词失败");
@@ -163,6 +246,38 @@ function PromptManagerContent() {
   useEffect(() => {
     void loadPrompts();
   }, []);
+
+  const loadSharePreview = useCallback(async (value: string) => {
+    const shareId = extractShareId(value);
+    if (!shareId) {
+      toast.error("请输入分享链接或分享 ID");
+      return null;
+    }
+    setIsImportingShare(true);
+    try {
+      const data = await fetchPromptShare(shareId);
+      setShareInput(shareId);
+      setSharePreview(data.item);
+      return data.item;
+    } catch (error) {
+      setSharePreview(null);
+      toast.error(error instanceof Error ? error.message : "读取分享失败");
+      return null;
+    } finally {
+      setIsImportingShare(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shareId = params.get("share") || params.get("shared") || "";
+    if (!shareId) {
+      return;
+    }
+    setShareDialogOpen(true);
+    setShareInput(shareId);
+    void loadSharePreview(shareId);
+  }, [loadSharePreview]);
 
   const openCreateDialog = () => {
     setEditingItem(null);
@@ -188,7 +303,7 @@ function PromptManagerContent() {
     }
     setIsUploading(true);
     try {
-      const result = await uploadPromptExampleImage(file);
+      const result = isAdmin ? await uploadPromptExampleImage(file) : await uploadMyPromptExampleImage(file);
       setForm((current) => {
         if (!current.preview.trim()) {
           return { ...current, preview: result.url };
@@ -213,8 +328,12 @@ function PromptManagerContent() {
     setIsSaving(true);
     try {
       const data = editingItem
-        ? await updateAdminPrompt(editingItem.id, payload)
-        : await createAdminPrompt(payload);
+        ? isAdmin
+          ? await updateAdminPrompt(editingItem.id, payload)
+          : await updateMyPrompt(editingItem.id, payload)
+        : isAdmin
+          ? await createAdminPrompt(payload)
+          : await createMyPrompt(payload);
       setItems(data.items);
       setDialogOpen(false);
       toast.success(editingItem ? "提示词已更新" : "提示词已添加");
@@ -230,7 +349,7 @@ function PromptManagerContent() {
       return;
     }
     try {
-      const data = await deleteAdminPrompt(item.id);
+      const data = isAdmin ? await deleteAdminPrompt(item.id) : await deleteMyPrompt(item.id);
       setItems(data.items);
       toast.success("提示词已删除");
     } catch (error) {
@@ -242,6 +361,78 @@ function PromptManagerContent() {
     await navigator.clipboard.writeText(item.prompt);
     toast.success("提示词已复制");
   };
+
+  const sharePromptItem = async (item: PromptLibraryItem) => {
+    try {
+      const data = await createPromptShare({ ...toPayload(toForm(item)), source_prompt_id: item.id });
+      const shareUrl = shareUrlFromId(data.share_id);
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: item.title, text: item.description || item.title, url: shareUrl });
+          toast.success("分享已打开");
+          return;
+        } catch {
+          // Fall back to clipboard below when native sharing is cancelled or unavailable.
+        }
+      }
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("分享链接已复制");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "分享失败");
+    }
+  };
+
+  const handleSubmitForReview = async (item: PromptLibraryItem) => {
+    try {
+      const data = await submitMyPrompt(item.id);
+      setItems(data.items);
+      toast.success("已推送给管理员审核");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "提交失败");
+    }
+  };
+
+  const handleApprove = async (item: PromptLibraryItem) => {
+    try {
+      const data = await approveAdminPrompt(item.id);
+      setItems(data.items);
+      toast.success("已加入公共提示词库");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "审核失败");
+    }
+  };
+
+  const handleReject = async (item: PromptLibraryItem) => {
+    const reason = window.prompt(`驳回「${item.title}」的原因（可留空）`) || "";
+    try {
+      const data = await rejectAdminPrompt(item.id, reason);
+      setItems(data.items);
+      toast.success("已驳回");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "驳回失败");
+    }
+  };
+
+  const handleImportShare = async () => {
+    const shareId = extractShareId(shareInput);
+    if (!shareId) {
+      toast.error("请输入分享链接或分享 ID");
+      return;
+    }
+    setIsImportingShare(true);
+    try {
+      await importPromptShare(shareId, isAdmin ? "public" : "personal");
+      await loadPrompts();
+      setShareDialogOpen(false);
+      setShareInput("");
+      setSharePreview(null);
+      toast.success(isAdmin ? "已导入公共提示词库" : "已导入我的提示词");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "导入失败");
+    } finally {
+      setIsImportingShare(false);
+    }
+  };
   const formPreviewUrl = resolveApiAssetUrl(form.preview);
 
   return (
@@ -249,17 +440,27 @@ function PromptManagerContent() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
           <div className="text-xs font-semibold tracking-[0.18em] text-stone-500 uppercase">Prompts</div>
-          <h1 className="text-2xl font-semibold tracking-tight">提示词管理</h1>
-          <p className="text-sm text-stone-500">快捷提示词和更多提示词都在这里添加、修改和删除。</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{isAdmin ? "提示词管理" : "我的提示词"}</h1>
+          <p className="text-sm text-stone-500">
+            {isAdmin ? "审核用户提交的提示词，维护公共提示词库。" : "创建、分享和提交自己的提示词，审核通过后会进入公共库。"}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShareDialogOpen(true)}
+            className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700"
+          >
+            <Upload className="size-4" />
+            导入分享
+          </Button>
           <Button variant="outline" onClick={() => void loadPrompts()} disabled={isLoading} className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700">
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
             刷新
           </Button>
           <Button onClick={openCreateDialog} className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800">
             <Plus className="size-4" />
-            添加提示词
+            {isAdmin ? "添加公共提示词" : "添加提示词"}
           </Button>
         </div>
       </div>
@@ -294,6 +495,23 @@ function PromptManagerContent() {
             </button>
           ))}
         </div>
+        <div className="flex flex-wrap gap-2">
+          {statusFilters.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setStatusFilter(item)}
+              className={cn(
+                "h-9 rounded-full border px-3 text-xs font-medium transition",
+                statusFilter === item
+                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                  : "border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:text-stone-900",
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
@@ -309,6 +527,11 @@ function PromptManagerContent() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filteredItems.map((item) => {
             const previewUrl = resolveApiAssetUrl(item.preview);
+            const status = promptStatus(item);
+            const editable = isAdmin || canUserEdit(item);
+            const removable = isAdmin || canUserEdit(item);
+            const canSubmit = !isAdmin && (status === "personal" || status === "rejected");
+            const canReview = isAdmin && status === "submitted";
             return (
               <article key={item.id} className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
                 <div className="aspect-[4/3] bg-stone-100">
@@ -323,23 +546,66 @@ function PromptManagerContent() {
                 <div className="flex min-h-[230px] flex-col gap-3 p-4">
                   <div className="flex flex-wrap gap-2">
                     <Badge variant={normalizeMode(item.mode) === "edit" ? "info" : "success"}>{modeLabel(item.mode)}</Badge>
+                    <Badge variant={statusBadgeVariant(status)}>{statusLabel(status)}</Badge>
                     <Badge variant="outline">{categoryLabel(item)}</Badge>
                   </div>
                   <div className="min-w-0">
                     <h2 className="line-clamp-2 text-sm font-semibold leading-5 text-stone-950">{item.title}</h2>
                     {item.description ? <p className="mt-1 truncate text-xs text-stone-400">{item.description}</p> : null}
                     <p className="mt-2 line-clamp-4 text-xs leading-5 text-stone-500">{summarizePrompt(item.prompt)}</p>
+                    {status === "rejected" && item.rejection_reason ? (
+                      <p className="mt-2 line-clamp-2 rounded-lg bg-rose-50 px-2 py-1.5 text-xs leading-5 text-rose-600">
+                        {item.rejection_reason}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="mt-auto flex items-center justify-between gap-2">
-                    <div className="min-w-0 truncate text-xs text-stone-400">{item.author || "未署名"}</div>
+                    <div className="min-w-0 truncate text-xs text-stone-400">
+                      {item.owner_name ? `${item.owner_name} · ` : ""}
+                      {item.author || "未署名"}
+                    </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => void copyPrompt(item)}>
+                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => void copyPrompt(item)} aria-label="复制提示词" title="复制提示词">
                         <Copy className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => openEditDialog(item)}>
+                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => void sharePromptItem(item)} aria-label="分享提示词" title="分享提示词">
+                        <Share2 className="size-4" />
+                      </Button>
+                      {canSubmit ? (
+                        <Button variant="ghost" size="icon" className="size-8 rounded-lg text-amber-600 hover:bg-amber-50" onClick={() => void handleSubmitForReview(item)} aria-label="提交审核" title="提交审核">
+                          <Upload className="size-4" />
+                        </Button>
+                      ) : null}
+                      {canReview ? (
+                        <>
+                          <Button variant="ghost" size="icon" className="size-8 rounded-lg text-emerald-600 hover:bg-emerald-50" onClick={() => void handleApprove(item)} aria-label="通过审核" title="通过审核">
+                            <CheckCircle2 className="size-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="size-8 rounded-lg text-rose-600 hover:bg-rose-50" onClick={() => void handleReject(item)} aria-label="驳回提示词" title="驳回提示词">
+                            <XCircle className="size-4" />
+                          </Button>
+                        </>
+                      ) : null}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={!editable}
+                        className="size-8 rounded-lg text-stone-500 hover:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300"
+                        onClick={() => openEditDialog(item)}
+                        aria-label="编辑提示词"
+                        title="编辑提示词"
+                      >
                         <Pencil className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-rose-500 hover:bg-rose-50" onClick={() => void handleDelete(item)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={!removable}
+                        className="size-8 rounded-lg text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:text-stone-300"
+                        onClick={() => void handleDelete(item)}
+                        aria-label="删除提示词"
+                        title="删除提示词"
+                      >
                         <Trash2 className="size-4" />
                       </Button>
                     </div>
@@ -350,6 +616,69 @@ function PromptManagerContent() {
           })}
         </div>
       )}
+
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="w-[min(94vw,560px)] max-w-none rounded-lg p-0">
+          <DialogHeader className="border-b border-stone-200 px-5 pt-5 pb-4 sm:px-6">
+            <DialogTitle className="text-xl font-semibold text-stone-950">导入分享提示词</DialogTitle>
+            <DialogDescription className="text-stone-500">
+              粘贴别人分享的链接或分享 ID，确认后会导入到{isAdmin ? "公共提示词库" : "我的提示词"}。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 px-5 py-5 sm:px-6">
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-stone-500">分享链接 / ID</span>
+              <Input
+                value={shareInput}
+                onChange={(event) => {
+                  setShareInput(event.target.value);
+                  setSharePreview(null);
+                }}
+                placeholder="例如 https://.../prompt-manager?share=xxxx"
+                className="h-10 rounded-xl border-stone-200"
+              />
+            </label>
+            {sharePreview ? (
+              <div className="rounded-lg border border-rose-100 bg-rose-50/45 p-4">
+                <div className="mb-2 flex flex-wrap gap-2">
+                  <Badge variant={normalizeMode(sharePreview.mode) === "edit" ? "info" : "success"}>
+                    {modeLabel(sharePreview.mode)}
+                  </Badge>
+                  <Badge variant="outline">{categoryLabel(sharePreview)}</Badge>
+                </div>
+                <div className="text-sm font-semibold text-stone-950">{sharePreview.title}</div>
+                <p className="mt-2 line-clamp-3 text-xs leading-5 text-stone-500">
+                  {sharePreview.description || summarizePrompt(sharePreview.prompt)}
+                </p>
+              </div>
+            ) : null}
+          </div>
+          <div className="flex justify-end gap-2 border-t border-stone-200 px-5 py-4 sm:px-6">
+            <Button type="button" variant="outline" onClick={() => setShareDialogOpen(false)} className="h-10 rounded-xl border-stone-200 bg-white px-4">
+              取消
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void loadSharePreview(shareInput)}
+              disabled={isImportingShare || !shareInput.trim()}
+              className="h-10 rounded-xl border-stone-200 bg-white px-4"
+            >
+              {isImportingShare ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}
+              预览
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleImportShare()}
+              disabled={isImportingShare || !shareInput.trim()}
+              className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800"
+            >
+              {isImportingShare ? <LoaderCircle className="size-4 animate-spin" /> : null}
+              导入
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="flex max-h-[88vh] w-[min(94vw,860px)] max-w-none flex-col overflow-hidden rounded-lg p-0">
@@ -478,9 +807,9 @@ function PromptManagerContent() {
 }
 
 export default function PromptManagerPage() {
-  const { isCheckingAuth, session } = useAuthGuard(["admin"]);
-  if (isCheckingAuth || !session || session.role !== "admin") {
+  const { isCheckingAuth, session } = useAuthGuard();
+  if (isCheckingAuth || !session) {
     return <div className="flex min-h-[40vh] items-center justify-center"><LoaderCircle className="size-5 animate-spin text-stone-400" /></div>;
   }
-  return <PromptManagerContent />;
+  return <PromptManagerContent session={session} />;
 }

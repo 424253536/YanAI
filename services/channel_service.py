@@ -16,6 +16,8 @@ from services.repositories.storage_adapter import RepositoryStorageAdapter
 from services.storage.base import StorageBackend
 from utils.model_catalog import DEFAULT_INTERNAL_MODELS
 
+INTERNAL_POOL_ENABLED_KEY = "internal_pool_enabled"
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -23,6 +25,14 @@ def _now_iso() -> str:
 
 def _clean(value: object) -> str:
     return str(value or "").strip()
+
+
+def _bool(value: object, default: bool = True) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on", "enabled"}
+    return bool(value)
 
 
 def _normalize_models(value: object) -> list[str]:
@@ -34,9 +44,10 @@ def _normalize_models(value: object) -> list[str]:
 
 
 class ChannelService:
-    def __init__(self, storage: StorageBackend | RepositoryProvider):
+    def __init__(self, storage: StorageBackend | RepositoryProvider, config_store=None):
         self.repositories = storage if isinstance(storage, RepositoryProvider) else None
         self.storage = RepositoryStorageAdapter(storage) if isinstance(storage, RepositoryProvider) else storage
+        self.config_store = config_store or config
         self._lock = RLock()
         self._channels = self._load()
         self._enabled_cache: tuple[float, list[dict[str, object]]] | None = None
@@ -124,8 +135,10 @@ class ChannelService:
             "updated_at": channel.get("updated_at"),
         }
 
-    @staticmethod
-    def _internal_channel() -> dict[str, object]:
+    def is_internal_pool_enabled(self) -> bool:
+        return _bool(self.config_store.get().get(INTERNAL_POOL_ENABLED_KEY), True)
+
+    def _internal_channel(self) -> dict[str, object]:
         return {
             "id": "internal_pool",
             "name": "内置账号池",
@@ -135,7 +148,7 @@ class ChannelService:
             "weight": 1,
             "priority": -1000,
             "timeout": 0,
-            "enabled": True,
+            "enabled": self.is_internal_pool_enabled(),
             "has_api_key": False,
             "created_at": None,
             "updated_at": None,
@@ -180,6 +193,11 @@ class ChannelService:
 
     def update_channel(self, channel_id: str, updates: dict[str, object]) -> dict[str, object] | None:
         normalized_id = _clean(channel_id)
+        if normalized_id == "internal_pool":
+            if "enabled" in updates:
+                self.config_store.update({INTERNAL_POOL_ENABLED_KEY: _bool(updates.get("enabled"), True)})
+            self._invalidate_cache()
+            return self._internal_channel()
         with self._lock:
             channels = self._current_channels()
             for index, channel in enumerate(channels):

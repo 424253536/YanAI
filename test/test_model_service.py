@@ -77,6 +77,21 @@ class ModelServiceTest(unittest.TestCase):
                 self.assertIn(model, by_model)
                 self.assertGreaterEqual(by_model[model]["channel_count"], 1)
 
+    def test_internal_pool_enabled_state_is_configurable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            storage = JSONStorageBackend(Path(tmp_dir) / "accounts.json")
+            config_store = FakeConfigStore()
+            service = ChannelService(storage, config_store)
+
+            self.assertTrue(service.get_channel("internal_pool")["enabled"])
+
+            item = service.update_channel("internal_pool", {"enabled": False})
+
+            self.assertIsNotNone(item)
+            self.assertFalse(item["enabled"])
+            self.assertFalse(service.is_internal_pool_enabled())
+            self.assertFalse(service.list_channels()[0]["enabled"])
+
     def test_update_pricing_persists_and_estimates_token_cost(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             storage = JSONStorageBackend(Path(tmp_dir) / "accounts.json")

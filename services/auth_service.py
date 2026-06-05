@@ -150,6 +150,7 @@ class AuthService:
             "linuxdo_id": self._clean(raw.get("linuxdo_id")) or None,
             "linuxdo_username": self._clean(raw.get("linuxdo_username")) or None,
             "linuxdo_trust_level": int(raw.get("linuxdo_trust_level") or 0),
+            "webdav_config": raw.get("webdav_config") if isinstance(raw.get("webdav_config"), dict) else {},
             "created_at": self._clean(raw.get("created_at")) or _now_iso(),
             "updated_at": self._clean(raw.get("updated_at")) or _now_iso(),
             "last_login_at": self._clean(raw.get("last_login_at")) or None,

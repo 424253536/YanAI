@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   LoaderCircle,
   Menu,
@@ -46,6 +54,13 @@ import type { StoredAuthSession } from "@/store/auth";
 
 const ACTIVE_CONVERSATION_STORAGE_KEY = "chatgpt2api:image_active_conversation_id";
 const IMAGE_SIZE_STORAGE_KEY = "chatgpt2api:image_last_size";
+const COMPOSER_PANEL_WIDTH_STORAGE_KEY = "chatgpt2api:image_composer_panel_width";
+const COMPOSER_PANEL_DEFAULT_WIDTH = 420;
+const COMPOSER_PANEL_MIN_WIDTH = 360;
+const COMPOSER_PANEL_MAX_WIDTH = 720;
+const COMPOSER_GRID_LEFT_WIDTH = 300;
+const COMPOSER_GRID_GAP_WIDTH = 12;
+const COMPOSER_RESULTS_MIN_WIDTH = 520;
 const activeConversationQueueIds = new Set<string>();
 
 function getScopedStorageKey(baseKey: string, ownerKey: string) {
@@ -266,9 +281,12 @@ async function recoverConversationHistory(
 function ImagePageContent({ session }: { session: StoredAuthSession }) {
   const didLoadQuotaRef = useRef(false);
   const conversationsRef = useRef<ImageConversation[]>([]);
+  const imageStudioGridRef = useRef<HTMLElement>(null);
   const resultsViewportRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const composerPanelWidthRef = useRef(COMPOSER_PANEL_DEFAULT_WIDTH);
+  const composerPanelDragRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const [workspaceSearch, setWorkspaceSearch] = useState("");
   const [imagePrompt, setImagePrompt] = useState("");
@@ -286,6 +304,8 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "one"; id: string } | { type: "all" } | null>(null);
+  const [composerPanelWidth, setComposerPanelWidth] = useState(COMPOSER_PANEL_DEFAULT_WIDTH);
+  const [isComposerPanelResizing, setIsComposerPanelResizing] = useState(false);
 
   const isAdmin = session.role === "admin";
   const imageConversationOwnerKey = useMemo(() => getImageConversationOwnerKey(session), [session]);
@@ -323,9 +343,117 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
         ? "确认删除这条图片对话吗？删除后无法恢复。"
         : "";
 
+  const getComposerPanelWidthBounds = useCallback(() => {
+    const gridWidth =
+      imageStudioGridRef.current?.getBoundingClientRect().width ??
+      (typeof window !== "undefined" ? window.innerWidth : 0);
+    const maxByGrid =
+      gridWidth - COMPOSER_GRID_LEFT_WIDTH - COMPOSER_GRID_GAP_WIDTH * 2 - COMPOSER_RESULTS_MIN_WIDTH;
+    const maxWidth =
+      Number.isFinite(maxByGrid) && maxByGrid > 0
+        ? Math.min(COMPOSER_PANEL_MAX_WIDTH, Math.max(COMPOSER_PANEL_MIN_WIDTH, maxByGrid))
+        : COMPOSER_PANEL_MAX_WIDTH;
+
+    return {
+      min: COMPOSER_PANEL_MIN_WIDTH,
+      max: maxWidth,
+    };
+  }, []);
+
+  const clampComposerPanelWidth = useCallback(
+    (nextWidth: number) => {
+      const { min, max } = getComposerPanelWidthBounds();
+      return Math.round(Math.min(max, Math.max(min, nextWidth)));
+    },
+    [getComposerPanelWidthBounds],
+  );
+
+  const updateComposerPanelWidth = useCallback(
+    (nextWidth: number) => {
+      const clampedWidth = clampComposerPanelWidth(nextWidth);
+      composerPanelWidthRef.current = clampedWidth;
+      setComposerPanelWidth(clampedWidth);
+      return clampedWidth;
+    },
+    [clampComposerPanelWidth],
+  );
+
+  const imageStudioGridStyle = useMemo(
+    () =>
+      ({
+        "--image-composer-panel-width": `${composerPanelWidth}px`,
+      }) as CSSProperties,
+    [composerPanelWidth],
+  );
+
+  const handleComposerPanelResizeStart = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    composerPanelDragRef.current = {
+      startX: event.clientX,
+      startWidth: composerPanelWidthRef.current,
+    };
+    setIsComposerPanelResizing(true);
+  }, []);
+
   useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  useEffect(() => {
+    const storedWidth = Number(window.localStorage.getItem(COMPOSER_PANEL_WIDTH_STORAGE_KEY));
+    if (Number.isFinite(storedWidth) && storedWidth > 0) {
+      updateComposerPanelWidth(storedWidth);
+    }
+  }, [updateComposerPanelWidth]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      updateComposerPanelWidth(composerPanelWidthRef.current);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateComposerPanelWidth]);
+
+  useEffect(() => {
+    if (!isComposerPanelResizing) {
+      return;
+    }
+
+    const previousCursor = document.body.style.cursor;
+    const previousUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const dragState = composerPanelDragRef.current;
+      if (!dragState) {
+        return;
+      }
+
+      updateComposerPanelWidth(dragState.startWidth - (event.clientX - dragState.startX));
+    };
+
+    const handlePointerEnd = () => {
+      setIsComposerPanelResizing(false);
+      composerPanelDragRef.current = null;
+      window.localStorage.setItem(COMPOSER_PANEL_WIDTH_STORAGE_KEY, String(composerPanelWidthRef.current));
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerEnd);
+    window.addEventListener("pointercancel", handlePointerEnd);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerEnd);
+      window.removeEventListener("pointercancel", handlePointerEnd);
+      document.body.style.cursor = previousCursor;
+      document.body.style.userSelect = previousUserSelect;
+    };
+  }, [isComposerPanelResizing, updateComposerPanelWidth]);
 
   useEffect(() => {
     let cancelled = false;
@@ -955,7 +1083,11 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
 
   return (
     <>
-      <section className="grid h-full min-h-0 w-full grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-[300px_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[300px_minmax(0,1fr)_420px]">
+      <section
+        ref={imageStudioGridRef}
+        style={imageStudioGridStyle}
+        className="grid h-full min-h-0 w-full grid-cols-1 gap-3 overflow-y-auto lg:grid-cols-[300px_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[300px_minmax(0,1fr)_var(--image-composer-panel-width)]"
+      >
         <div className="yan-panel hidden min-h-0 overflow-hidden rounded-lg lg:row-span-2 lg:flex xl:row-span-1">
           <ImageStudioSidebar
             conversations={filteredConversations}
@@ -1068,7 +1200,19 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
           </div>
         </div>
 
-        <aside className="yan-panel min-h-0 overflow-hidden rounded-lg lg:col-span-2 xl:col-span-1">
+        <aside
+          className={`yan-panel relative min-h-0 overflow-hidden rounded-lg lg:col-span-2 xl:col-span-1 ${
+            isComposerPanelResizing ? "ring-2 ring-rose-100" : ""
+          }`}
+        >
+          <button
+            type="button"
+            aria-label="调整 Prompt 面板宽度"
+            onPointerDown={handleComposerPanelResizeStart}
+            className="group absolute top-0 bottom-0 left-0 z-20 hidden w-3 cursor-col-resize items-center justify-center outline-none xl:flex"
+          >
+            <span className="h-14 w-1 rounded-full bg-rose-200/70 opacity-70 transition group-hover:bg-rose-300 group-hover:opacity-100 group-focus-visible:bg-rose-400 group-focus-visible:opacity-100" />
+          </button>
           <ImageComposer
             mode={imageMode}
             prompt={imagePrompt}

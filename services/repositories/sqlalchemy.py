@@ -232,6 +232,38 @@ def _clean(value: Any) -> str:
     return str(value or "").strip()
 
 
+_USER_SEARCH_FIELDS = (
+    "key_id",
+    "key_name",
+    "user_id",
+    "user_name",
+    "user_email",
+    "email",
+    "name",
+    "owner_user_id",
+    "owner_name",
+    "owner_email",
+    "actor_id",
+    "actor_name",
+    "target_id",
+    "target_name",
+    "target_email",
+)
+
+
+def _log_matches_user(item: dict[str, Any], user: str) -> bool:
+    query = _clean(user).lower()
+    if not query:
+        return True
+    detail = item.get("detail")
+    detail_values = detail if isinstance(detail, dict) else {}
+    values: list[Any] = []
+    for key in _USER_SEARCH_FIELDS:
+        values.append(item.get(key))
+        values.append(detail_values.get(key))
+    return any(query in _clean(value).lower() for value in values if value is not None)
+
+
 def _hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
@@ -1402,11 +1434,13 @@ class SQLAlchemySystemLogRepository(SystemLogRepository):
         end_date: str = "",
         request_id: str = "",
         status: str = "",
+        user: str = "",
         page: int = 1,
         page_size: int = 200,
     ) -> dict[str, Any]:
         normalized_page, normalized_page_size = _normalize_page(page, page_size)
         normalized_status = _clean(status)
+        normalized_user = _clean(user)
         conditions = self._filter_conditions(
             type=type,
             start_date=start_date,
@@ -1414,7 +1448,7 @@ class SQLAlchemySystemLogRepository(SystemLogRepository):
             request_id=request_id,
         )
         with self._session_factory() as session:
-            if normalized_status:
+            if normalized_status or normalized_user:
                 rows = session.execute(
                     select(SystemLogRow)
                     .where(*conditions)
@@ -1423,7 +1457,8 @@ class SQLAlchemySystemLogRepository(SystemLogRepository):
                 filtered_items = [
                     item
                     for item in (self._to_item(row) for row in rows)
-                    if self._item_status(item) == normalized_status
+                    if (not normalized_status or self._item_status(item) == normalized_status)
+                    and (not normalized_user or _log_matches_user(item, normalized_user))
                 ]
                 total = len(filtered_items)
                 page_count = max(1, (total + normalized_page_size - 1) // normalized_page_size)
@@ -1563,10 +1598,12 @@ class SQLAlchemyAuditLogRepository(AuditLogRepository):
         start_date: str = "",
         end_date: str = "",
         request_id: str = "",
+        user: str = "",
         page: int = 1,
         page_size: int = 200,
     ) -> dict[str, Any]:
         normalized_page, normalized_page_size = _normalize_page(page, page_size)
+        normalized_user = _clean(user)
         conditions = self._filter_conditions(
             action=action,
             resource=resource,
@@ -1575,6 +1612,28 @@ class SQLAlchemyAuditLogRepository(AuditLogRepository):
             request_id=request_id,
         )
         with self._session_factory() as session:
+            if normalized_user:
+                rows = session.execute(
+                    select(AuditLogRow)
+                    .where(*conditions)
+                    .order_by(AuditLogRow.time.desc(), AuditLogRow.id.desc())
+                ).scalars()
+                filtered_items = [
+                    item
+                    for item in (self._to_item(row) for row in rows)
+                    if _log_matches_user(item, normalized_user)
+                ]
+                total = len(filtered_items)
+                page_count = max(1, (total + normalized_page_size - 1) // normalized_page_size)
+                safe_page = min(normalized_page, page_count)
+                start = (safe_page - 1) * normalized_page_size
+                return {
+                    "items": filtered_items[start:start + normalized_page_size],
+                    "total": total,
+                    "page": safe_page,
+                    "page_size": normalized_page_size,
+                    "page_count": page_count,
+                }
             total = int(
                 session.execute(
                     select(func.count()).select_from(AuditLogRow).where(*conditions)

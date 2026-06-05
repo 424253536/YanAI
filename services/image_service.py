@@ -9,6 +9,7 @@ from services.config import config
 from services.observability import get_current_request_id
 from services.repositories.base import ImageRecordRepository
 from services.storage.base import StorageBackend
+from services.webdav_service import sync_created_records_to_webdav
 
 
 def _clean(value: object) -> str:
@@ -69,6 +70,9 @@ def _record_to_item(record: dict[str, object], base_url: str) -> dict[str, objec
         "channel": record.get("channel"),
         "request_id": record.get("request_id"),
         "quota_cost": _int_or_zero(record.get("quota_cost")),
+        "webdav_url": record.get("webdav_url"),
+        "webdav_synced_at": record.get("webdav_synced_at"),
+        "webdav_status": record.get("webdav_status"),
     }
 
 
@@ -410,4 +414,5 @@ def record_image_result(
                 storage.insert(record)
         else:
             storage.save_image_records([*created, *[record for record in records if isinstance(record, dict)]])
+        sync_created_records_to_webdav(identity, created)
     return created

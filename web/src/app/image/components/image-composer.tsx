@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   Clapperboard,
+  Copy,
   ExternalLink,
   Glasses,
   ImagePlus,
@@ -15,6 +16,7 @@ import {
   Newspaper,
   NotebookPen,
   Search,
+  Share2,
   Scissors,
   Sparkles,
   SunMedium,
@@ -23,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type RefObject } from "react";
+import { toast } from "sonner";
 
 import { ImageLightbox } from "@/components/image-lightbox";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchPromptLibrary, type PromptLibraryItem } from "@/lib/api";
+import { createPromptShare, fetchPromptLibrary, type PromptLibraryItem, type PromptLibraryPayload } from "@/lib/api";
 import { resolveApiAssetUrl } from "@/lib/assets";
 import type { ImageConversationMode } from "@/store/image-conversations";
 import { cn } from "@/lib/utils";
@@ -682,6 +685,36 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
   });
 }
 
+function buildPromptShareTitle(prompt: string) {
+  const cleaned = prompt.replace(/\s+/g, " ").trim();
+  if (!cleaned) {
+    return "未命名提示词";
+  }
+  return cleaned.length > 24 ? `${cleaned.slice(0, 24)}...` : cleaned;
+}
+
+function shareUrlFromId(shareId: string) {
+  if (typeof window === "undefined") {
+    return `/prompt-manager?share=${encodeURIComponent(shareId)}`;
+  }
+  return `${window.location.origin}/prompt-manager?share=${encodeURIComponent(shareId)}`;
+}
+
+async function sharePromptPayload(payload: PromptLibraryPayload) {
+  const data = await createPromptShare(payload);
+  const shareUrl = shareUrlFromId(data.share_id);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: payload.title, text: payload.description || payload.title, url: shareUrl });
+      return "shared";
+    } catch {
+      // Fall back to clipboard below when native sharing is cancelled or unavailable.
+    }
+  }
+  await navigator.clipboard.writeText(shareUrl);
+  return "copied";
+}
+
 function isBananaPromptItem(value: unknown): value is PromptPickerItem {
   if (!value || typeof value !== "object") {
     return false;
@@ -806,6 +839,37 @@ export function ImageComposer({
   const handleClearPrompt = () => {
     onPromptChange("");
     window.requestAnimationFrame(() => textareaRef.current?.focus());
+  };
+
+  const handleCopyPrompt = async () => {
+    const cleaned = prompt.trim();
+    if (!cleaned) {
+      toast.error("没有可复制的提示词");
+      return;
+    }
+    await navigator.clipboard.writeText(cleaned);
+    toast.success("提示词已复制");
+  };
+
+  const handleSharePrompt = async () => {
+    const cleaned = prompt.trim();
+    if (!cleaned) {
+      toast.error("没有可分享的提示词");
+      return;
+    }
+    try {
+      const result = await sharePromptPayload({
+        title: buildPromptShareTitle(cleaned),
+        description: mode === "edit" ? "图生图提示词" : "文生图提示词",
+        prompt: cleaned,
+        mode,
+        image_size: imageSize,
+        image_count: imageCount,
+      });
+      toast.success(result === "shared" ? "分享已打开" : "分享链接已复制");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "分享失败");
+    }
   };
 
   useEffect(() => {
@@ -1003,6 +1067,26 @@ export function ImageComposer({
           <div className="flex flex-wrap justify-end gap-2">
             <button
               type="button"
+              onClick={() => void handleCopyPrompt()}
+              disabled={!prompt}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
+              aria-label="复制当前提示词"
+            >
+              <Copy className="size-4" />
+              复制
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSharePrompt()}
+              disabled={!prompt}
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
+              aria-label="分享当前提示词"
+            >
+              <Share2 className="size-4" />
+              分享
+            </button>
+            <button
+              type="button"
               onClick={handleClearPrompt}
               disabled={!prompt}
               className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
@@ -1193,7 +1277,7 @@ export function ImageComposer({
                   void onSubmit();
                 }
               }}
-              className="min-h-[170px] resize-none rounded-lg border-0 bg-transparent px-4 pt-4 pb-4 text-[15px] leading-7 text-stone-900 shadow-none placeholder:text-stone-400 focus-visible:ring-0"
+              className="min-h-[220px] resize-y rounded-lg border-0 bg-transparent px-4 pt-4 pb-4 text-[15px] leading-7 text-stone-900 shadow-none placeholder:text-stone-400 focus-visible:ring-0"
             />
 
             <div className="border-t border-rose-100 bg-white/80 px-3 py-3">

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fetchSystemLogs, type SystemLog } from "@/lib/api";
@@ -38,6 +39,15 @@ function getDetailText(item: SystemLog, key: string) {
   return typeof value === "string" || typeof value === "number" ? String(value) : "-";
 }
 
+function getUserText(item: SystemLog) {
+  const fields = ["user_email", "user_name", "key_name", "user_id", "key_id"];
+  for (const field of fields) {
+    const value = getDetailText(item, field);
+    if (value !== "-") return value;
+  }
+  return "-";
+}
+
 function formatDuration(item: SystemLog) {
   const value = item.detail?.duration_ms;
   return typeof value === "number" ? `${(value / 1000).toFixed(2)} s` : "-";
@@ -61,6 +71,7 @@ function LogsContent() {
   const [status, setStatus] = useState<string>(LogStatus.All);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [userQuery, setUserQuery] = useState("");
   const [detailLog, setDetailLog] = useState<SystemLog | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -84,6 +95,7 @@ function LogsContent() {
         status: isCallLog && status !== LogStatus.All ? status : undefined,
         start_date: startDate,
         end_date: endDate,
+        user: userQuery.trim(),
         page: nextPage,
         page_size: pageSize,
       });
@@ -102,6 +114,7 @@ function LogsContent() {
     setStatus(LogStatus.All);
     setStartDate("");
     setEndDate("");
+    setUserQuery("");
   };
 
   const openDetail = (item: SystemLog) => {
@@ -111,7 +124,7 @@ function LogsContent() {
 
   useEffect(() => {
     void loadLogs(1);
-  }, [type, status, startDate, endDate]);
+  }, [type, status, startDate, endDate, userQuery]);
 
   return (
     <section className="space-y-5">
@@ -139,6 +152,12 @@ function LogsContent() {
               </SelectContent>
             </Select>
           ) : null}
+          <Input
+            value={userQuery}
+            onChange={(event) => setUserQuery(event.target.value)}
+            placeholder="用户邮箱/昵称/ID"
+            className="h-10 w-52 rounded-xl border-stone-200 bg-white"
+          />
           <DateRangeFilter startDate={startDate} endDate={endDate} onChange={(start, end) => { setStartDate(start); setEndDate(end); }} />
           <Button variant="outline" onClick={clearFilters} className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700">
             清除筛选条件
@@ -165,7 +184,7 @@ function LogsContent() {
                 <TableRow>
                   <TableHead>时间</TableHead>
                   <TableHead>类型</TableHead>
-                  {isCallLog ? <TableHead>令牌名称</TableHead> : null}
+                  {isCallLog ? <TableHead>用户/令牌</TableHead> : null}
                   {isCallLog ? <TableHead>调用耗时</TableHead> : null}
                   {isCallLog ? <TableHead>状态</TableHead> : null}
                   <TableHead>简述</TableHead>
@@ -177,7 +196,7 @@ function LogsContent() {
                   <TableRow key={`${item.time}-${index}`} className="text-stone-600">
                     <TableCell className="whitespace-nowrap">{item.time}</TableCell>
                     <TableCell><Badge variant="secondary" className="rounded-md">{typeLabels[item.type] || item.type}</Badge></TableCell>
-                    {isCallLog ? <TableCell>{getDetailText(item, "key_name")}</TableCell> : null}
+                    {isCallLog ? <TableCell>{getUserText(item)}</TableCell> : null}
                     {isCallLog ? <TableCell>{formatDuration(item)}</TableCell> : null}
                     {isCallLog ? (
                       <TableCell>

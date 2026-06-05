@@ -11,6 +11,7 @@ from services.config import config
 from services.image_service import delete_images, list_images
 from services.log_service import LOG_TYPE_AUDIT, audit_service, log_service
 from services.proxy_service import test_proxy
+from services.webdav_service import get_webdav_config, save_webdav_config, sync_images_to_webdav
 
 
 class SettingsUpdateRequest(BaseModel):
@@ -36,6 +37,22 @@ class ImageDeleteRequest(BaseModel):
     ids: list[str] = Field(default_factory=list)
     urls: list[str] = Field(default_factory=list)
     items: list[ImageDeleteItem] = Field(default_factory=list)
+
+
+class WebDAVConfigRequest(BaseModel):
+    enabled: bool = False
+    url: str = ""
+    username: str = ""
+    password: str = ""
+    root_path: str = ""
+
+
+class ImagesWebDAVSyncRequest(BaseModel):
+    start_date: str = ""
+    end_date: str = ""
+    user_id: str = ""
+    channel: str = ""
+    request_id: str = ""
 
 
 def create_router(app_version: str) -> APIRouter:
@@ -179,6 +196,57 @@ def create_router(app_version: str) -> APIRouter:
         )
         return result
 
+    @router.get("/api/images/webdav")
+    async def get_images_webdav(authorization: str | None = Header(default=None)):
+        require_admin(authorization)
+        return {"webdav": get_webdav_config("admin")}
+
+    @router.post("/api/images/webdav")
+    async def save_images_webdav(body: WebDAVConfigRequest, authorization: str | None = Header(default=None)):
+        admin = require_admin(authorization)
+        try:
+            webdav = save_webdav_config("admin", body.model_dump(mode="python"))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail={"error": str(exc)}) from exc
+        audit_service.add(
+            actor=admin,
+            action="images.webdav.update",
+            resource="image_webdav",
+            detail={
+                "enabled": webdav.get("enabled"),
+                "url": webdav.get("url"),
+                "root_path": webdav.get("root_path"),
+                "password_set": webdav.get("password_set"),
+            },
+        )
+        return {"webdav": webdav}
+
+    @router.post("/api/images/webdav/sync")
+    async def sync_images_webdav(body: ImagesWebDAVSyncRequest, authorization: str | None = Header(default=None)):
+        admin = require_admin(authorization)
+        try:
+            result = await run_in_threadpool(
+                sync_images_to_webdav,
+                scope="admin",
+                identity=admin,
+                filters={
+                    "start_date": body.start_date.strip(),
+                    "end_date": body.end_date.strip(),
+                    "owner_user_id": body.user_id.strip(),
+                    "channel": body.channel.strip(),
+                    "request_id": body.request_id.strip(),
+                },
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail={"error": str(exc)}) from exc
+        audit_service.add(
+            actor=admin,
+            action="images.webdav.sync",
+            resource="image",
+            detail=result,
+        )
+        return {"result": result}
+
     @router.get("/api/logs")
     async def get_logs(
             type: str = "",
@@ -186,6 +254,7 @@ def create_router(app_version: str) -> APIRouter:
             end_date: str = "",
             request_id: str = "",
             status: str = "",
+            user: str = "",
             page: int = 1,
             page_size: int = 50,
             authorization: str | None = Header(default=None),
@@ -196,6 +265,7 @@ def create_router(app_version: str) -> APIRouter:
                 start_date=start_date.strip(),
                 end_date=end_date.strip(),
                 request_id=request_id.strip(),
+                user=user.strip(),
                 page=page,
                 page_size=page_size,
             )
@@ -205,6 +275,7 @@ def create_router(app_version: str) -> APIRouter:
             end_date=end_date.strip(),
             request_id=request_id.strip(),
             status=status.strip(),
+            user=user.strip(),
             page=page,
             page_size=page_size,
         )
@@ -216,6 +287,7 @@ def create_router(app_version: str) -> APIRouter:
             start_date: str = "",
             end_date: str = "",
             request_id: str = "",
+            user: str = "",
             page: int = 1,
             page_size: int = 50,
             authorization: str | None = Header(default=None),
@@ -227,6 +299,7 @@ def create_router(app_version: str) -> APIRouter:
             start_date=start_date.strip(),
             end_date=end_date.strip(),
             request_id=request_id.strip(),
+            user=user.strip(),
             page=page,
             page_size=page_size,
         )

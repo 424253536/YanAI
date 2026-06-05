@@ -21,6 +21,41 @@ LOG_TYPE_CALL = "call"
 LOG_TYPE_ACCOUNT = "account"
 LOG_TYPE_AUDIT = "audit"
 
+_USER_SEARCH_FIELDS = (
+    "key_id",
+    "key_name",
+    "user_id",
+    "user_name",
+    "user_email",
+    "email",
+    "name",
+    "owner_user_id",
+    "owner_name",
+    "owner_email",
+    "actor_id",
+    "actor_name",
+    "target_id",
+    "target_name",
+    "target_email",
+)
+
+
+def _clean_search(value: object) -> str:
+    return str(value or "").strip().lower()
+
+
+def _log_matches_user(item: dict[str, Any], user: str) -> bool:
+    query = _clean_search(user)
+    if not query:
+        return True
+    detail = item.get("detail")
+    detail_values = detail if isinstance(detail, dict) else {}
+    values: list[object] = []
+    for key in _USER_SEARCH_FIELDS:
+        values.append(item.get(key))
+        values.append(detail_values.get(key))
+    return any(query in _clean_search(value) for value in values if value is not None)
+
 
 class LogService:
     def __init__(self, path: Path):
@@ -74,6 +109,7 @@ class LogService:
         end_date: str = "",
         request_id: str = "",
         status: str = "",
+        user: str = "",
         page: int = 1,
         page_size: int = 200,
     ) -> dict[str, Any]:
@@ -86,12 +122,20 @@ class LogService:
                     end_date=end_date,
                     request_id=request_id,
                     status=status,
+                    user=user,
                     page=page,
                     page_size=page_size,
                 )
             except Exception:
                 pass
-        items = self._list_file(type=type, start_date=start_date, end_date=end_date, request_id=request_id, status=status)
+        items = self._list_file(
+            type=type,
+            start_date=start_date,
+            end_date=end_date,
+            request_id=request_id,
+            status=status,
+            user=user,
+        )
         normalized_page = max(1, int(page or 1))
         normalized_page_size = max(1, min(200, int(page_size or 200)))
         total = len(items)
@@ -114,6 +158,7 @@ class LogService:
         limit: int = 200,
         request_id: str = "",
         status: str = "",
+        user: str = "",
     ) -> list[dict[str, Any]]:
         return self.query(
             type=type,
@@ -121,6 +166,7 @@ class LogService:
             end_date=end_date,
             request_id=request_id,
             status=status,
+            user=user,
             page=1,
             page_size=limit,
         )["items"]
@@ -132,6 +178,7 @@ class LogService:
         end_date: str = "",
         request_id: str = "",
         status: str = "",
+        user: str = "",
     ) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []
@@ -152,6 +199,8 @@ class LogService:
                 continue
             detail_status = item_detail.get("status") if isinstance(item_detail, dict) else ""
             if normalized_status and str(item.get("status") or detail_status or "").strip() != normalized_status:
+                continue
+            if user and not _log_matches_user(item, user):
                 continue
             if start_date and day < start_date:
                 continue
@@ -220,6 +269,7 @@ class AuditService:
         start_date: str = "",
         end_date: str = "",
         request_id: str = "",
+        user: str = "",
         page: int = 1,
         page_size: int = 200,
     ) -> dict[str, Any]:
@@ -232,6 +282,7 @@ class AuditService:
                     start_date=start_date,
                     end_date=end_date,
                     request_id=request_id,
+                    user=user,
                     page=page,
                     page_size=page_size,
                 )
@@ -242,6 +293,7 @@ class AuditService:
             start_date=start_date,
             end_date=end_date,
             request_id=request_id,
+            user=user,
             page=page,
             page_size=page_size,
         )
@@ -376,6 +428,14 @@ class LoggedCall:
             "duration_ms": int((time.time() - self.started) * 1000),
             "status": status,
         }
+        if self.identity.get("role") == "user":
+            detail.update(
+                {
+                    "user_id": self.identity.get("id"),
+                    "user_name": self.identity.get("name"),
+                    "user_email": self.identity.get("email"),
+                }
+            )
         if error:
             detail["error"] = error
         collected_urls = [*(urls or []), *_collect_urls(result)]

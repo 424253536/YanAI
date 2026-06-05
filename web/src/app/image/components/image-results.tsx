@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, ImageIcon, LoaderCircle, Sparkles } from "lucide-react";
+import { Clock3, Copy, ImageIcon, LoaderCircle, Share2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { fetchPromptLibrary, type PromptLibraryItem } from "@/lib/api";
+import { createPromptShare, fetchPromptLibrary, type PromptLibraryItem, type PromptLibraryPayload } from "@/lib/api";
 import { resolveApiAssetUrl } from "@/lib/assets";
 import { cn } from "@/lib/utils";
 import type { ImageConversation, ImageTurnStatus, StoredImage, StoredReferenceImage } from "@/store/image-conversations";
@@ -66,6 +67,36 @@ const emptyStateExampleSources: EmptyStatePromptSource[] = [
   },
 ];
 
+function buildPromptShareTitle(prompt: string) {
+  const cleaned = prompt.replace(/\s+/g, " ").trim();
+  if (!cleaned) {
+    return "未命名提示词";
+  }
+  return cleaned.length > 24 ? `${cleaned.slice(0, 24)}...` : cleaned;
+}
+
+function shareUrlFromId(shareId: string) {
+  if (typeof window === "undefined") {
+    return `/prompt-manager?share=${encodeURIComponent(shareId)}`;
+  }
+  return `${window.location.origin}/prompt-manager?share=${encodeURIComponent(shareId)}`;
+}
+
+async function sharePromptPayload(payload: PromptLibraryPayload) {
+  const data = await createPromptShare(payload);
+  const shareUrl = shareUrlFromId(data.share_id);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: payload.title, text: payload.description || payload.title, url: shareUrl });
+      return "shared";
+    } catch {
+      // Fall back to clipboard below when native sharing is cancelled or unavailable.
+    }
+  }
+  await navigator.clipboard.writeText(shareUrl);
+  return "copied";
+}
+
 export function ImageResults({
   selectedConversation,
   onOpenLightbox,
@@ -112,6 +143,37 @@ export function ImageResults({
       }
       return { ...current, [id]: dimensions };
     });
+  };
+
+  const copyTurnPrompt = async (prompt: string) => {
+    const cleaned = prompt.trim();
+    if (!cleaned) {
+      toast.error("没有可复制的提示词");
+      return;
+    }
+    await navigator.clipboard.writeText(cleaned);
+    toast.success("提示词已复制");
+  };
+
+  const shareTurnPrompt = async (turn: { prompt: string; mode: string; size: string; count: number }) => {
+    const cleaned = turn.prompt.trim();
+    if (!cleaned) {
+      toast.error("没有可分享的提示词");
+      return;
+    }
+    try {
+      const result = await sharePromptPayload({
+        title: buildPromptShareTitle(cleaned),
+        description: turn.mode === "edit" ? "图生图提示词" : "文生图提示词",
+        prompt: cleaned,
+        mode: turn.mode,
+        image_size: turn.size,
+        image_count: String(turn.count),
+      });
+      toast.success(result === "shared" ? "分享已打开" : "分享链接已复制");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "分享失败");
+    }
   };
 
   if (!selectedConversation) {
@@ -189,8 +251,30 @@ export function ImageResults({
                   </div>
                   <p className="line-clamp-2 text-sm leading-6 text-stone-800">{turn.prompt}</p>
                 </div>
-                <div className="shrink-0 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-stone-600">
-                  {turn.count} 张
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-lg border-rose-100 bg-white/85 px-2.5 text-stone-700 hover:bg-white"
+                    onClick={() => void copyTurnPrompt(turn.prompt)}
+                  >
+                    <Copy className="size-4" />
+                    复制
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-lg border-rose-100 bg-white/85 px-2.5 text-stone-700 hover:bg-white"
+                    onClick={() => void shareTurnPrompt(turn)}
+                  >
+                    <Share2 className="size-4" />
+                    分享
+                  </Button>
+                  <div className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-stone-600">
+                    {turn.count} 张
+                  </div>
                 </div>
               </div>
             </div>

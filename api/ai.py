@@ -113,6 +113,13 @@ def create_router() -> APIRouter:
         )
         return count
 
+    def require_internal_pool_enabled() -> None:
+        if not channel_service.is_internal_pool_enabled():
+            raise HTTPException(
+                status_code=503,
+                detail={"error": "internal account pool is disabled and no external channel completed the request"},
+            )
+
     @router.get("/v1/models")
     async def list_models(authorization: str | None = Header(default=None)):
         require_identity(authorization)
@@ -154,6 +161,7 @@ def create_router() -> APIRouter:
                     )
                     finalize_quota(quota_request_id, count)
                     return result
+            require_internal_pool_enabled()
             result = await call.run(openai_v1_image_generations.handle, payload)
             count = 0
             if isinstance(result, dict):
@@ -233,6 +241,7 @@ def create_router() -> APIRouter:
                     )
                     finalize_quota(quota_request_id, count)
                     return result
+            require_internal_pool_enabled()
             result = await call.run(openai_v1_image_edit.handle, payload)
             count = 0
             if isinstance(result, dict):

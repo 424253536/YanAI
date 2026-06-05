@@ -16,6 +16,7 @@ from services.log_service import audit_service
 from services.model_service import model_service
 from services import linuxdo_oauth_service
 from services.registration_security import send_registration_verification_code, validate_registration_email
+from services.webdav_service import get_webdav_config, save_webdav_config, sync_images_to_webdav
 from utils.model_catalog import DEFAULT_INTERNAL_MODELS
 
 
@@ -32,6 +33,19 @@ class VerificationCodeRequest(BaseModel):
 
 class ProfileUpdateRequest(BaseModel):
     name: str | None = None
+
+
+class WebDAVConfigRequest(BaseModel):
+    enabled: bool = False
+    url: str = ""
+    username: str = ""
+    password: str = ""
+    root_path: str = ""
+
+
+class MyImagesWebDAVSyncRequest(BaseModel):
+    start_date: str = ""
+    end_date: str = ""
 
 
 class RedeemRequest(BaseModel):
@@ -256,6 +270,43 @@ def create_router() -> APIRouter:
             page=page,
             page_size=page_size,
         )
+
+    @router.get("/api/me/images/webdav")
+    async def get_my_images_webdav(authorization: str | None = Header(default=None)):
+        identity = require_identity(authorization)
+        if identity.get("role") != "user":
+            raise HTTPException(status_code=403, detail={"error": "user permission required"})
+        return {"webdav": get_webdav_config("user", user_id=str(identity.get("id") or ""))}
+
+    @router.post("/api/me/images/webdav")
+    async def save_my_images_webdav(body: WebDAVConfigRequest, authorization: str | None = Header(default=None)):
+        identity = require_identity(authorization)
+        if identity.get("role") != "user":
+            raise HTTPException(status_code=403, detail={"error": "user permission required"})
+        try:
+            webdav = save_webdav_config("user", body.model_dump(mode="python"), user_id=str(identity.get("id") or ""))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail={"error": str(exc)}) from exc
+        return {"webdav": webdav}
+
+    @router.post("/api/me/images/webdav/sync")
+    async def sync_my_images_webdav(body: MyImagesWebDAVSyncRequest, authorization: str | None = Header(default=None)):
+        identity = require_identity(authorization)
+        if identity.get("role") != "user":
+            raise HTTPException(status_code=403, detail={"error": "user permission required"})
+        try:
+            result = await run_in_threadpool(
+                sync_images_to_webdav,
+                scope="user",
+                identity=identity,
+                filters={
+                    "start_date": body.start_date.strip(),
+                    "end_date": body.end_date.strip(),
+                },
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail={"error": str(exc)}) from exc
+        return {"result": result}
 
     @router.get("/api/admin/users")
     async def admin_list_users(

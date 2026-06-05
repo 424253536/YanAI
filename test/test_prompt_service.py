@@ -104,6 +104,46 @@ class PromptLibraryServiceTests(unittest.TestCase):
 
             self.assertEqual([item["id"] for item in items], ["quick", "legacy"])
 
+    def test_user_submission_review_share_and_import(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            storage = JSONStorageBackend(root / "accounts.json")
+            service = PromptLibraryService(storage, bootstrap_paths=(), assets_dir=root / "assets")
+            user = {"id": "user-1", "name": "User One", "role": "user"}
+            admin = {"id": "admin", "name": "Admin", "role": "admin"}
+
+            personal = service.create_user_prompt(
+                {
+                    "title": "用户提示词",
+                    "prompt": "生成一张柔和光线的人像",
+                    "mode": "generate",
+                },
+                user,
+            )
+
+            self.assertEqual(personal["status"], "personal")
+            self.assertEqual(service.list_prompts(), [])
+            self.assertEqual(len(service.list_user_prompts(user)), 1)
+
+            submitted = service.submit_user_prompt(personal["id"], user)
+            self.assertIsNotNone(submitted)
+            self.assertEqual(submitted["status"], "submitted")
+            self.assertEqual(len(service.list_admin_prompts()), 1)
+
+            approved = service.approve_prompt(personal["id"], admin)
+            self.assertIsNotNone(approved)
+            self.assertEqual(approved["status"], "public")
+            self.assertEqual(len(service.list_prompts()), 1)
+
+            share = service.create_share(approved, user, source_prompt_id=approved["id"])
+            self.assertEqual(share["status"], "shared")
+            self.assertEqual(service.get_shared_prompt(share["share_id"])["title"], "用户提示词")
+
+            imported = service.import_shared_prompt(share["share_id"], admin)
+            self.assertIsNotNone(imported)
+            self.assertEqual(imported["status"], "public")
+            self.assertEqual(imported["imported_from_share_id"], share["share_id"])
+
 
 if __name__ == "__main__":
     unittest.main()

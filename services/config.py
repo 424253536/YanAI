@@ -16,8 +16,8 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 CONFIG_FILE = BASE_DIR / "config.json"
 VERSION_FILE = BASE_DIR / "VERSION"
-SYSTEM_SETTING_SECRET_KEYS = {"auth-key", "smtp_password", "linuxdo_client_secret"}
-SYSTEM_SETTING_TRANSIENT_KEYS = {"smtp_password_set", "linuxdo_client_secret_set"}
+SYSTEM_SETTING_SECRET_KEYS = {"auth-key", "smtp_password", "linuxdo_client_secret", "image_webdav_config"}
+SYSTEM_SETTING_TRANSIENT_KEYS = {"smtp_password_set", "linuxdo_client_secret_set", "image_webdav_password_set"}
 
 
 @dataclass(frozen=True)
@@ -205,6 +205,10 @@ class ConfigStore:
             return max(1, int(self._get_config_value("image_retention_days", 30)))
         except (TypeError, ValueError):
             return 30
+
+    @property
+    def internal_pool_enabled(self) -> bool:
+        return _bool(self._get_config_value("internal_pool_enabled"), True)
 
     @property
     def auto_remove_invalid_accounts(self) -> bool:
@@ -399,6 +403,7 @@ class ConfigStore:
         data["refresh_account_interval_minute"] = self.refresh_account_interval_minute
         data["account_lease_ttl_seconds"] = self.account_lease_ttl_seconds
         data["image_retention_days"] = self.image_retention_days
+        data["internal_pool_enabled"] = self.internal_pool_enabled
         data["auto_remove_invalid_accounts"] = self.auto_remove_invalid_accounts
         data["auto_remove_rate_limited_accounts"] = self.auto_remove_rate_limited_accounts
         data["log_levels"] = self.log_levels
@@ -424,6 +429,7 @@ class ConfigStore:
         data.pop("auth-key", None)
         data.pop("smtp_password", None)
         data.pop("linuxdo_client_secret", None)
+        data.pop("image_webdav_config", None)
         return data
 
     def get_proxy_settings(self) -> str:

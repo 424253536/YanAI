@@ -123,6 +123,9 @@ export type ManagedImage = {
   image_size?: string;
   channel?: string;
   quota_cost?: number;
+  webdav_url?: string;
+  webdav_synced_at?: string;
+  webdav_status?: string;
 };
 
 export type ManagedImageDeleteTarget = {
@@ -144,6 +147,39 @@ export type ImageListResponse = {
   pagination: ImageListPagination;
 };
 
+export type ImageWebDAVConfig = {
+  enabled: boolean;
+  url: string;
+  username: string;
+  root_path: string;
+  password_set: boolean;
+  last_sync_at?: string | null;
+  last_sync_result?: {
+    total?: number;
+    uploaded?: number;
+    skipped?: number;
+    failed?: number;
+  } | null;
+};
+
+export type ImageWebDAVConfigPayload = {
+  enabled: boolean;
+  url: string;
+  username: string;
+  password?: string;
+  root_path: string;
+};
+
+export type ImageWebDAVSyncResult = {
+  scope: "admin" | "user" | string;
+  total: number;
+  uploaded: number;
+  skipped: number;
+  failed: number;
+  bytes: number;
+  errors: Array<{ id?: string; name?: string; error: string }>;
+};
+
 export type PromptLibraryItem = {
   id: string;
   title: string;
@@ -163,6 +199,21 @@ export type PromptLibraryItem = {
   sub_category?: string;
   created?: string;
   updated_at?: string;
+  status?: "public" | "personal" | "submitted" | "rejected" | "shared" | string;
+  owner_id?: string;
+  owner_name?: string;
+  owner_email?: string;
+  owner_role?: string;
+  source_prompt_id?: string;
+  imported_from_share_id?: string;
+  submitted_at?: string;
+  reviewed_at?: string;
+  reviewed_by?: string;
+  reviewed_by_name?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
+  share_id?: string;
+  shared_at?: string;
 };
 
 export type PromptLibraryPayload = {
@@ -181,6 +232,7 @@ export type PromptLibraryPayload = {
   sort_order?: number | null;
   category?: string;
   sub_category?: string;
+  source_prompt_id?: string;
 };
 
 type PromptLibraryResponse = {
@@ -494,6 +546,30 @@ export async function deleteManagedImages(items: ManagedImageDeleteTarget[]) {
   );
 }
 
+export async function fetchImagesWebDAVConfig() {
+  return httpRequest<{ webdav: ImageWebDAVConfig }>("/api/images/webdav");
+}
+
+export async function updateImagesWebDAVConfig(payload: ImageWebDAVConfigPayload) {
+  return httpRequest<{ webdav: ImageWebDAVConfig }>("/api/images/webdav", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function syncImagesToWebDAV(filters: {
+  start_date?: string;
+  end_date?: string;
+  user_id?: string;
+  channel?: string;
+  request_id?: string;
+}) {
+  return httpRequest<{ result: ImageWebDAVSyncResult }>("/api/images/webdav/sync", {
+    method: "POST",
+    body: filters,
+  });
+}
+
 export async function fetchPromptLibrary() {
   return httpRequest<PromptLibraryResponse>("/api/prompts");
 }
@@ -502,8 +578,19 @@ export async function fetchAdminPrompts() {
   return httpRequest<PromptLibraryResponse>("/api/admin/prompts");
 }
 
+export async function fetchMyPrompts() {
+  return httpRequest<PromptLibraryResponse>("/api/me/prompts");
+}
+
 export async function createAdminPrompt(payload: PromptLibraryPayload) {
   return httpRequest<{ item: PromptLibraryItem } & PromptLibraryResponse>("/api/admin/prompts", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function createMyPrompt(payload: PromptLibraryPayload) {
+  return httpRequest<{ item: PromptLibraryItem } & PromptLibraryResponse>("/api/me/prompts", {
     method: "POST",
     body: payload,
   });
@@ -516,9 +603,65 @@ export async function updateAdminPrompt(promptId: string, payload: Partial<Promp
   });
 }
 
+export async function updateMyPrompt(promptId: string, payload: Partial<PromptLibraryPayload>) {
+  return httpRequest<{ item: PromptLibraryItem } & PromptLibraryResponse>(`/api/me/prompts/${promptId}`, {
+    method: "POST",
+    body: payload,
+  });
+}
+
 export async function deleteAdminPrompt(promptId: string) {
   return httpRequest<PromptLibraryResponse>(`/api/admin/prompts/${promptId}`, {
     method: "DELETE",
+  });
+}
+
+export async function deleteMyPrompt(promptId: string) {
+  return httpRequest<PromptLibraryResponse>(`/api/me/prompts/${promptId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function submitMyPrompt(promptId: string) {
+  return httpRequest<{ item: PromptLibraryItem } & PromptLibraryResponse>(`/api/me/prompts/${promptId}/submit`, {
+    method: "POST",
+  });
+}
+
+export async function approveAdminPrompt(promptId: string) {
+  return httpRequest<{ item: PromptLibraryItem } & PromptLibraryResponse>(`/api/admin/prompts/${promptId}/approve`, {
+    method: "POST",
+  });
+}
+
+export async function rejectAdminPrompt(promptId: string, reason = "") {
+  return httpRequest<{ item: PromptLibraryItem } & PromptLibraryResponse>(`/api/admin/prompts/${promptId}/reject`, {
+    method: "POST",
+    body: { reason },
+  });
+}
+
+export async function createPromptShare(payload: PromptLibraryPayload) {
+  return httpRequest<{ item: PromptLibraryItem; share_id: string }>("/api/prompts/share", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function sharePrompt(promptId: string) {
+  return httpRequest<{ item: PromptLibraryItem; share_id: string }>(`/api/prompts/${promptId}/share`, {
+    method: "POST",
+  });
+}
+
+export async function fetchPromptShare(shareId: string) {
+  return httpRequest<{ item: PromptLibraryItem; share_id: string }>(`/api/prompts/share/${shareId}`);
+}
+
+export async function importPromptShare(shareId: string, targetScope?: "public" | "personal") {
+  return httpRequest<{ item: PromptLibraryItem }>(`/api/prompts/share/${shareId}/import`, {
+    method: "POST",
+    body: { target_scope: targetScope || "" },
   });
 }
 
@@ -526,6 +669,15 @@ export async function uploadPromptExampleImage(file: File) {
   const formData = new FormData();
   formData.append("file", file);
   return httpRequest<{ url: string }>("/api/admin/prompt-assets", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function uploadMyPromptExampleImage(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return httpRequest<{ url: string }>("/api/me/prompt-assets", {
     method: "POST",
     body: formData,
   });
@@ -545,12 +697,34 @@ export async function fetchMyImages(filters: {
   return httpRequest<ImageListResponse>(`/api/me/images${params.toString() ? `?${params.toString()}` : ""}`);
 }
 
+export async function fetchMyImagesWebDAVConfig() {
+  return httpRequest<{ webdav: ImageWebDAVConfig }>("/api/me/images/webdav");
+}
+
+export async function updateMyImagesWebDAVConfig(payload: ImageWebDAVConfigPayload) {
+  return httpRequest<{ webdav: ImageWebDAVConfig }>("/api/me/images/webdav", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function syncMyImagesToWebDAV(filters: {
+  start_date?: string;
+  end_date?: string;
+}) {
+  return httpRequest<{ result: ImageWebDAVSyncResult }>("/api/me/images/webdav/sync", {
+    method: "POST",
+    body: filters,
+  });
+}
+
 export async function fetchSystemLogs(filters: {
   type?: string;
   start_date?: string;
   end_date?: string;
   request_id?: string;
   status?: string;
+  user?: string;
   page?: number;
   page_size?: number;
 }) {
@@ -560,6 +734,7 @@ export async function fetchSystemLogs(filters: {
   if (filters.end_date) params.set("end_date", filters.end_date);
   if (filters.request_id) params.set("request_id", filters.request_id);
   if (filters.status) params.set("status", filters.status);
+  if (filters.user) params.set("user", filters.user);
   if (filters.page) params.set("page", String(filters.page));
   if (filters.page_size) params.set("page_size", String(filters.page_size));
   return httpRequest<LogListResponse>(`/api/logs${params.toString() ? `?${params.toString()}` : ""}`);

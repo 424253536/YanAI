@@ -225,6 +225,7 @@ class SystemLogRepository(ABC):
         end_date: str = "",
         request_id: str = "",
         status: str = "",
+        user: str = "",
         page: int = 1,
         page_size: int = 200,
     ) -> dict[str, Any]:
@@ -257,6 +258,7 @@ class AuditLogRepository(ABC):
         start_date: str = "",
         end_date: str = "",
         request_id: str = "",
+        user: str = "",
         page: int = 1,
         page_size: int = 200,
     ) -> dict[str, Any]:
