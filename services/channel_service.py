@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from threading import RLock
 from typing import Any
 
+from curl_cffi import CurlMime
 from curl_cffi.requests import Session
 
 from services.config import config
@@ -332,6 +333,21 @@ class ChannelService:
             requested = _clean(model) or "default"
             return f"personal image channel does not support requested model: {requested}"
         return ""
+
+    def has_usable_personal_channel(
+            self,
+            model: str | None,
+            personal_channel: object = None,
+            *,
+            owner_user_id: str = "",
+    ) -> bool:
+        if not isinstance(personal_channel, dict) or not _bool(personal_channel.get("enabled"), False):
+            return False
+        return not self._personal_channel_error(
+            model,
+            personal_channel,
+            owner_user_id=owner_user_id,
+        )
 
     @staticmethod
     def _mark_personal_channel_error(payload: dict[str, Any], error: str) -> None:
@@ -750,18 +766,29 @@ class ChannelService:
         }
         if payload.get("size"):
             form_data["size"] = _clean(payload.get("size"))
-        files = []
+        multipart = CurlMime()
+        for key, value in form_data.items():
+            if value is None:
+                continue
+            multipart.addpart(key, data=str(value).encode("utf-8"))
         for index, image in enumerate(payload.get("images") or []):
             if not isinstance(image, tuple) or len(image) != 3:
                 continue
             data, filename, content_type = image
-            files.append(("image", (filename or f"image-{index}.png", data, content_type or "image/png")))
-        response = self._session(channel).post(
-            self._openai_compatible_url(channel, "/v1/images/edits"),
-            data=form_data,
-            files=files,
-            timeout=int(channel.get("timeout") or 60),
-        )
+            multipart.addpart(
+                "image",
+                filename=filename or f"image-{index}.png",
+                content_type=content_type or "image/png",
+                data=data,
+            )
+        try:
+            response = self._session(channel).post(
+                self._openai_compatible_url(channel, "/v1/images/edits"),
+                multipart=multipart,
+                timeout=int(channel.get("timeout") or 60),
+            )
+        finally:
+            multipart.close()
         return self._normalize_response(response, payload)
 
     def _session(self, channel: dict[str, object]) -> Session:

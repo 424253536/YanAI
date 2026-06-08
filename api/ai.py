@@ -78,6 +78,22 @@ def create_router() -> APIRouter:
             raise HTTPException(status_code=429, detail={"error": str(exc)}) from exc
         return request_id
 
+    def attach_personal_image_channel(identity: dict[str, object], payload: dict[str, object], model: str | None) -> bool:
+        if identity.get("role") != "user":
+            return False
+        user_id = str(identity.get("id") or "")
+        personal_channel = auth_service.get_user_image_channel_config(
+            user_id,
+            include_api_key=True,
+        )
+        payload["_owner_user_id"] = user_id
+        payload["_personal_image_channel"] = personal_channel
+        return channel_service.has_usable_personal_channel(
+            model,
+            personal_channel,
+            owner_user_id=user_id,
+        )
+
     def finalize_quota(request_id: str | None, count: int) -> None:
         if not request_id:
             return
@@ -108,7 +124,7 @@ def create_router() -> APIRouter:
             model=model,
             size=size,
             channel=channel,
-            quota_cost=1 if identity.get("role") == "user" else 0,
+            quota_cost=image_quota_cost(identity, channel),
             request_id=request_id,
         )
         return count
@@ -131,6 +147,13 @@ def create_router() -> APIRouter:
                 detail={"error": f"personal image channel failed: {personal_error}"},
             )
 
+    def image_quota_cost(identity: dict[str, object], channel: str) -> int:
+        if identity.get("role") != "user":
+            return 0
+        if str(channel or "").startswith("个人渠道/"):
+            return 0
+        return 1
+
     @router.get("/v1/models")
     async def list_models(authorization: str | None = Header(default=None)):
         require_identity(authorization)
@@ -149,17 +172,11 @@ def create_router() -> APIRouter:
         if identity.get("role") == "user" and body.stream:
             raise HTTPException(status_code=400, detail={"error": "stream is not supported for personal image tasks"})
         request_id = request_id_from_request(request)
-        quota_request_id = reserve_image_quota(identity, int(body.n or 1), request_id)
         payload = body.model_dump(mode="python")
         payload["base_url"] = resolve_image_base_url(request)
         payload["request_id"] = request_id
-        if identity.get("role") == "user":
-            user_id = str(identity.get("id") or "")
-            payload["_owner_user_id"] = user_id
-            payload["_personal_image_channel"] = auth_service.get_user_image_channel_config(
-                user_id,
-                include_api_key=True,
-            )
+        use_personal_quota_free = attach_personal_image_channel(identity, payload, body.model)
+        quota_request_id = None if use_personal_quota_free else reserve_image_quota(identity, int(body.n or 1), request_id)
         call = LoggedCall(identity, "/v1/images/generations", body.model, "文生图", request_id=request_id)
         try:
             if not body.stream:
@@ -229,7 +246,6 @@ def create_router() -> APIRouter:
                 raise HTTPException(status_code=400, detail={"error": "image file is empty"})
             images.append((image_data, upload.filename or "image.png", upload.content_type or "image/png"))
         request_id = request_id_from_request(request)
-        quota_request_id = reserve_image_quota(identity, int(n or 1), request_id)
         payload = {
             "prompt": prompt,
             "images": images,
@@ -241,13 +257,8 @@ def create_router() -> APIRouter:
             "base_url": resolve_image_base_url(request),
             "request_id": request_id,
         }
-        if identity.get("role") == "user":
-            user_id = str(identity.get("id") or "")
-            payload["_owner_user_id"] = user_id
-            payload["_personal_image_channel"] = auth_service.get_user_image_channel_config(
-                user_id,
-                include_api_key=True,
-            )
+        use_personal_quota_free = attach_personal_image_channel(identity, payload, model)
+        quota_request_id = None if use_personal_quota_free else reserve_image_quota(identity, int(n or 1), request_id)
         call = LoggedCall(identity, "/v1/images/edits", model, "图生图", request_id=request_id)
         try:
             if not stream:

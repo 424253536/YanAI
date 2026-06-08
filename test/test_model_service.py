@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from services.channel_service import ChannelService
 from services.model_service import FIXED_BILLING_MODE, ModelService, normalize_model_pricing
@@ -384,6 +385,81 @@ class ModelServiceTest(unittest.TestCase):
             self.assertIsNone(routed)
             self.assertEqual(calls, ["personal_image_channel:user-a"])
             self.assertIn("个人渠道/Mine: 连接被上游重置", payload["_personal_channel_error"])
+
+    def test_external_edit_channel_uses_curl_mime_multipart(self) -> None:
+        class FakeResponse:
+            ok = True
+            status_code = 200
+            text = ""
+
+            def json(self):
+                return {"created": 1, "data": [{"url": "https://a.example/image.png"}]}
+
+        calls: dict[str, object] = {}
+
+        class FakeSession:
+            def post(self, url, **kwargs):
+                calls["url"] = url
+                calls["kwargs"] = kwargs
+                return FakeResponse()
+
+        mime_instances = []
+
+        class FakeCurlMime:
+            def __init__(self):
+                self.parts = []
+                self.closed = False
+                mime_instances.append(self)
+
+            def addpart(self, name, **kwargs):
+                self.parts.append({"name": name, **kwargs})
+
+            def close(self):
+                self.closed = True
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            storage = JSONStorageBackend(Path(tmp_dir) / "accounts.json")
+            storage.save_channels(
+                [
+                    {
+                        "id": "channel-a",
+                        "name": "A",
+                        "base_url": "https://a.example",
+                        "api_key": "sk-test",
+                        "models": ["gpt-image-2"],
+                    }
+                ]
+            )
+            service = ChannelService(storage, FakeConfigStore())
+            service._session = lambda channel: FakeSession()  # type: ignore[method-assign]
+
+            with mock.patch("services.channel_service.CurlMime", FakeCurlMime):
+                routed = service.call_edit({
+                    "prompt": "draw",
+                    "model": "gpt-image-2",
+                    "n": 2,
+                    "size": "1024x1024",
+                    "response_format": "url",
+                    "images": [(b"image-bytes", "input.png", "image/png")],
+                })
+
+        self.assertIsNotNone(routed)
+        self.assertEqual(calls["url"], "https://a.example/v1/images/edits")
+        kwargs = calls["kwargs"]
+        self.assertNotIn("files", kwargs)
+        self.assertNotIn("data", kwargs)
+        self.assertIs(kwargs["multipart"], mime_instances[0])
+        self.assertTrue(mime_instances[0].closed)
+        parts = mime_instances[0].parts
+        self.assertIn({"name": "prompt", "data": b"draw"}, parts)
+        self.assertIn({"name": "model", "data": b"gpt-image-2"}, parts)
+        self.assertIn({"name": "n", "data": b"2"}, parts)
+        self.assertIn({"name": "size", "data": b"1024x1024"}, parts)
+        self.assertIn({"name": "response_format", "data": b"url"}, parts)
+        self.assertIn(
+            {"name": "image", "filename": "input.png", "content_type": "image/png", "data": b"image-bytes"},
+            parts,
+        )
 
     def test_channel_model_test_accepts_mapped_requested_model(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
