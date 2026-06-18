@@ -79,21 +79,21 @@ def sanitize_sub2api_servers(servers: list[dict]) -> list[dict]:
     return [sanitized for server in servers if (sanitized := sanitize_sub2api_server(server)) is not None]
 
 
-def start_limited_account_watcher(stop_event: Event) -> Thread:
+def start_account_refresh_watcher(stop_event: Event) -> Thread:
     interval_seconds = config.refresh_account_interval_minute * 60
 
     def worker() -> None:
         while not stop_event.is_set():
             try:
-                limited_tokens = account_service.list_limited_tokens()
-                if limited_tokens:
-                    print(f"[account-limited-watcher] checking {len(limited_tokens)} limited accounts")
-                    account_service.refresh_accounts(limited_tokens)
+                tokens = account_service.list_tokens()
+                if tokens:
+                    print(f"[account-refresh-watcher] checking {len(tokens)} accounts")
+                    account_service.refresh_accounts(tokens)
             except Exception as exc:
-                print(f"[account-limited-watcher] fail {exc}")
+                print(f"[account-refresh-watcher] fail {exc}")
             stop_event.wait(interval_seconds)
 
-    thread = Thread(target=worker, name="limited-account-watcher", daemon=True)
+    thread = Thread(target=worker, name="account-refresh-watcher", daemon=True)
     thread.start()
     return thread
 
