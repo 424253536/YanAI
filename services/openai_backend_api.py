@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Iterator, Optional
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 from curl_cffi import requests
 from PIL import Image
@@ -195,18 +197,127 @@ class OpenAIBackendAPI:
             headers["OpenAI-Sentinel-SO-Token"] = requirements.so_token
         return self._headers(path, headers)
 
+    @staticmethod
+    def _content_block_text(block: Any) -> str:
+        if isinstance(block, str):
+            return block
+        if not isinstance(block, dict):
+            return ""
+        if str(block.get("type") or "").strip() not in {"text", "input_text", "output_text"}:
+            return ""
+        return str(block.get("text") or block.get("input_text") or "")
+
+    @staticmethod
+    def _content_block_image_ref(block: Any) -> str:
+        if not isinstance(block, dict):
+            return ""
+        if str(block.get("type") or "").strip() not in {"image_url", "input_image"}:
+            return ""
+        image_url = block.get("image_url") or block.get("url")
+        if isinstance(image_url, dict):
+            image_url = image_url.get("url") or image_url.get("image_url")
+        image_ref = str(image_url or "").strip()
+        if image_ref:
+            return image_ref
+        file_id = str(block.get("file_id") or "").strip()
+        return f"file-service://{file_id}" if file_id else ""
+
+    @staticmethod
+    def _content_block_file_name(block: Any, index: int) -> str:
+        if isinstance(block, dict):
+            for key in ("file_name", "filename", "name"):
+                value = str(block.get(key) or "").strip()
+                if value:
+                    return value
+        return f"image_{index}.png"
+
+    @staticmethod
+    def _image_asset_part(item: Dict[str, Any]) -> Dict[str, Any]:
+        part: Dict[str, Any] = {
+            "content_type": "image_asset_pointer",
+            "asset_pointer": f"file-service://{item['file_id']}",
+        }
+        for source_key, target_key in (("width", "width"), ("height", "height"), ("file_size", "size_bytes")):
+            try:
+                value = int(item.get(source_key) or 0)
+            except (TypeError, ValueError):
+                value = 0
+            if value > 0:
+                part[target_key] = value
+        return part
+
+    @staticmethod
+    def _attachment_metadata(item: Dict[str, Any]) -> Dict[str, Any]:
+        attachment: Dict[str, Any] = {
+            "id": item["file_id"],
+            "mimeType": item.get("mime_type") or "image/png",
+            "name": item.get("file_name") or "image.png",
+        }
+        for key in ("file_size", "width", "height"):
+            try:
+                value = int(item.get(key) or 0)
+            except (TypeError, ValueError):
+                value = 0
+            if value > 0:
+                attachment["size" if key == "file_size" else key] = value
+        return attachment
+
+    def _uploaded_image_from_ref(self, image_ref: str, block: Any, index: int) -> Dict[str, Any]:
+        if image_ref.startswith("file-service://"):
+            block_data = block if isinstance(block, dict) else {}
+            return {
+                "file_id": image_ref.removeprefix("file-service://"),
+                "file_name": self._content_block_file_name(block, index),
+                "file_size": (
+                    block_data.get("file_size")
+                    or block_data.get("size")
+                    or block_data.get("size_bytes")
+                    or 0
+                ),
+                "mime_type": block_data.get("mime_type") or block_data.get("mimeType") or "image/png",
+                "width": block_data.get("width") or 0,
+                "height": block_data.get("height") or 0,
+            }
+        return self._upload_image(image_ref, self._content_block_file_name(block, index))
+
+    def _conversation_content_from_api_content(self, content: Any) -> tuple[Dict[str, Any], Dict[str, Any]]:
+        if isinstance(content, str):
+            return {"content_type": "text", "parts": [content]}, {}
+        if not isinstance(content, list):
+            return {"content_type": "text", "parts": [str(content or "")]}, {}
+
+        parts: list[Any] = []
+        attachments: list[Dict[str, Any]] = []
+        image_index = 1
+        for block in content:
+            image_ref = self._content_block_image_ref(block)
+            if image_ref:
+                uploaded = self._uploaded_image_from_ref(image_ref, block, image_index)
+                parts.append(self._image_asset_part(uploaded))
+                attachments.append(self._attachment_metadata(uploaded))
+                image_index += 1
+                continue
+            text = self._content_block_text(block)
+            if text:
+                parts.append(text)
+
+        if attachments:
+            return {"content_type": "multimodal_text", "parts": parts}, {"attachments": attachments}
+        return {"content_type": "text", "parts": ["".join(str(part) for part in parts)]}, {}
+
     def _api_messages_to_conversation_messages(self, messages: list[Dict[str, Any]]) -> list[Dict[str, Any]]:
         """把标准 chat messages 转成 web conversation 所需的 messages。"""
         conversation_messages = []
         for item in messages:
-            content = item.get("content", "")
-            if not isinstance(content, str):
-                raise RuntimeError("only string message content is supported")
-            conversation_messages.append({
+            content, metadata = self._conversation_content_from_api_content(item.get("content", ""))
+            message = {
                 "id": new_uuid(),
                 "author": {"role": item.get("role", "user")},
-                "content": {"content_type": "text", "parts": [content]},
-            })
+                "content": content,
+            }
+            if metadata:
+                message["metadata"] = metadata
+            conversation_messages.append(message)
         return conversation_messages
 
     def _conversation_payload(self, messages: list[Dict[str, Any]], model: str, timezone: str) -> Dict[str, Any]:
@@ -298,6 +409,12 @@ class OpenAIBackendAPI:
 
     def _decode_image_base64(self, image: str) -> bytes:
         """把 base64 图片字符串或本地路径解码成二进制。"""
+        if self._is_http_url(image):
+            return self._download_input_image_url(image)
+        if self._is_file_url(image):
+            file_path = self._path_from_file_url(image)
+            if file_path.exists() and file_path.is_file():
+                return file_path.read_bytes()
         if (
                 image
                 and len(image) < 512
@@ -311,9 +428,44 @@ class OpenAIBackendAPI:
         payload = image.split(",", 1)[1] if image.startswith("data:") and "," in image else image
         return base64.b64decode(payload)
 
+    @staticmethod
+    def _is_http_url(value: str) -> bool:
+        parsed = urlparse(str(value or "").strip())
+        return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+    @staticmethod
+    def _is_file_url(value: str) -> bool:
+        return urlparse(str(value or "").strip()).scheme == "file"
+
+    @staticmethod
+    def _path_from_file_url(value: str) -> Path:
+        parsed = urlparse(str(value or "").strip())
+        path = url2pathname(parsed.path)
+        if parsed.netloc:
+            path = f"//{parsed.netloc}{path}"
+        return Path(path)
+
+    def _download_input_image_url(self, url: str) -> bytes:
+        response = requests.get(
+            url,
+            headers={"User-Agent": self.user_agent, "Accept": "image/*,*/*;q=0.8"},
+            timeout=120,
+            **proxy_settings.build_session_kwargs(impersonate=self.fp["impersonate"], verify=True),
+        )
+        ensure_ok(response, "input_image_url_download")
+        return response.content
+
     def _upload_image(self, image: str, file_name: str = "image.png") -> Dict[str, Any]:
         """上传一张 base64 图片，返回底层文件元数据。"""
         data = self._decode_image_base64(image)
+        if self._is_http_url(image):
+            url_name = Path(urlparse(image).path).name
+            if url_name:
+                file_name = url_name
+        if self._is_file_url(image):
+            file_path = self._path_from_file_url(image)
+            if file_path.exists() and file_path.is_file():
+                file_name = file_path.name
         if (
                 image
                 and len(image) < 512

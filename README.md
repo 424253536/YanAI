@@ -153,6 +153,7 @@ python scripts/migrate_storage.py --from json --to postgres --verify-only
 - 兼容 `POST /v1/images/edits` 图片编辑接口
 - 管理员密钥可调用 `POST /v1/chat/completions`、`POST /v1/responses` 与 `POST /v1/messages`
 - `POST /v1/chat/completions` 和 `POST /v1/responses` 支持文本流式输出，并兼容 ChatGPT 上游多种 SSE 文本 patch 格式
+- `POST /v1/responses` 文本链路支持 `input_text` / `input_image` 多模态输入，会将 data URL、服务端本地路径或 HTTP(S) 图片地址转为 ChatGPT 上游可识别的图片附件
 - 流式接口会返回 `Cache-Control: no-cache, no-transform` 与 `X-Accel-Buffering: no`，便于通过 Nginx 等反向代理接入第三方客户端
 - `GET /v1/models` 会返回上游模型列表，并补充内置默认模型 `gpt-5`、`gpt-5-1`、`gpt-5-2`、`gpt-5-3`、`gpt-5-3-mini`、`gpt-5-5`、`gpt-5-mini`、`gpt-image-2`、`codex-gpt-image-2`、`auto`
 - 图片接口支持 `n=1-4`，前端工作台会按张数拆分任务执行
@@ -447,7 +448,7 @@ curl http://localhost:8000/v1/chat/completions \
 <summary><code>POST /v1/responses</code></summary>
 <br>
 
-Responses API 兼容接口。未传 `image_generation` 工具时走文本输出；传入图片生成工具时走图片工作流。
+Responses API 兼容接口。未传 `image_generation` 工具时走文本/视觉输出；传入图片生成工具时走图片工作流。
 
 ```bash
 curl http://localhost:8000/v1/responses \
@@ -457,6 +458,30 @@ curl http://localhost:8000/v1/responses \
     "model": "gpt-5",
     "input": "你好，请简单介绍一下你自己",
     "stream": true
+  }'
+```
+
+```bash
+curl http://localhost:8000/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <auth-key>" \
+  -d '{
+    "model": "gpt-5",
+    "input": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "输出截图里的内容"
+          },
+          {
+            "type": "input_image",
+            "image_url": "data:image/png;base64,<base64>"
+          }
+        ]
+      }
+    ]
   }'
 ```
 
@@ -482,7 +507,7 @@ curl http://localhost:8000/v1/responses \
 | 字段       | 说明                            |
 |:---------|:------------------------------|
 | `model`  | 文本链路按传入模型调用；图片工具链路会回显该模型字段 |
-| `input`  | 文本输入或 Responses 消息数组；图片工具链路需要能解析出图片生成提示词 |
+| `input`  | 文本输入或 Responses 消息数组；文本链路会保留并转发 `input_image`，`image_url` 可为 data URL、服务端可读取的本地路径或可下载的 HTTP(S) 图片地址；图片工具链路需要能解析出图片生成提示词 |
 | `instructions` | 可选系统指令，会合并到文本链路消息中 |
 | `tools`  | 包含 `image_generation` 时触发图片生成工具调用 |
 | `stream` | 支持流式输出；反向代理需关闭缓冲 |

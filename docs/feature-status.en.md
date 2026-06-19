@@ -7,7 +7,7 @@
 | OpenAI 兼容 `POST /v1/images/generations` | ✅  | 已支持，用于图片生成，并可通过 `n` 返回多张图片。 |
 | OpenAI 兼容 `POST /v1/images/edits` | ✅  | 已支持，可上传图片进行编辑。 |
 | `POST /v1/chat/completions` | ✅  | 已支持文本输出和图片工作流，流式文本兼容多种上游 SSE patch 格式。 |
-| `POST /v1/responses` | ✅  | 已支持文本输出和图片生成工具调用。 |
+| `POST /v1/responses` | ✅  | 已支持文本/视觉输出和图片生成工具调用；文本链路会保留并转发 `input_image`。 |
 | `GET /v1/models` 接口 | ✅  | 当前返回 `gpt-image-2`、`codex-gpt-image-2`、`auto`、`gpt-5`、`gpt-5-1`、`gpt-5-2`、`gpt-5-3`、`gpt-5-3-mini`、`gpt-5-mini`。 |
 | 同时生成多张图片 | ✅  | 已支持，后端与前端都可进行多图生成。 |
 | 前端图片工作台 | ✅  | 已支持图片生成、图片编辑、模型选择、历史记录与查看大图。 |

@@ -73,6 +73,10 @@ def save_image_bytes(image_data: bytes, base_url: str | None = None) -> str:
     return f"{(base_url or config.base_url)}/images/{relative_dir.as_posix()}/{filename}"
 
 
+TEXT_CONTENT_TYPES = {"text", "input_text", "output_text"}
+IMAGE_CONTENT_TYPES = {"image_url", "input_image"}
+
+
 def message_text(content: Any) -> str:
     if isinstance(content, str):
         return content
@@ -81,10 +85,68 @@ def message_text(content: Any) -> str:
         for item in content:
             if isinstance(item, str):
                 parts.append(item)
-            elif isinstance(item, dict) and str(item.get("type") or "") in {"text", "input_text", "output_text"}:
+            elif isinstance(item, dict) and str(item.get("type") or "") in TEXT_CONTENT_TYPES:
                 parts.append(str(item.get("text") or ""))
         return "".join(parts)
     return ""
+
+
+def _image_url_from_content_block(item: dict[str, Any]) -> tuple[str, str | None]:
+    image_url = item.get("image_url") or item.get("url")
+    detail = item.get("detail")
+    if isinstance(image_url, dict):
+        detail = image_url.get("detail") or detail
+        image_url = image_url.get("url") or image_url.get("image_url")
+    return str(image_url or "").strip(), str(detail).strip() if detail else None
+
+
+def normalize_content_block(item: Any) -> dict[str, Any] | None:
+    if isinstance(item, str):
+        return {"type": "text", "text": item}
+    if not isinstance(item, dict):
+        return None
+    item_type = str(item.get("type") or "").strip()
+    if item_type in TEXT_CONTENT_TYPES:
+        text = str(item.get("text") or item.get("input_text") or "").strip()
+        return {"type": "text", "text": text} if text else None
+    if item_type in IMAGE_CONTENT_TYPES:
+        image_url, detail = _image_url_from_content_block(item)
+        file_id = str(item.get("file_id") or "").strip()
+        block: dict[str, Any] = {"type": "input_image"}
+        if image_url:
+            block["image_url"] = image_url
+        if file_id:
+            block["file_id"] = file_id
+        if detail:
+            block["detail"] = detail
+        for key in (
+            "file_name",
+            "filename",
+            "name",
+            "mime_type",
+            "mimeType",
+            "file_size",
+            "size",
+            "size_bytes",
+            "width",
+            "height",
+        ):
+            if key in item:
+                block[key] = item[key]
+        return block if image_url or file_id else None
+    text = content_value_text(item)
+    return {"type": "text", "text": text} if text else None
+
+
+def normalize_message_content(content: Any) -> str | list[dict[str, Any]]:
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return message_text(content)
+    blocks = [block for item in content if (block := normalize_content_block(item)) is not None]
+    if any(str(block.get("type") or "") in IMAGE_CONTENT_TYPES for block in blocks):
+        return blocks
+    return message_text(blocks)
 
 
 def normalize_messages(messages: object, system: Any = None) -> list[dict[str, Any]]:
@@ -95,16 +157,23 @@ def normalize_messages(messages: object, system: Any = None) -> list[dict[str, A
     if isinstance(messages, list):
         for message in messages:
             if isinstance(message, dict):
-                normalized.append({"role": message.get("role", "user"), "content": message_text(message.get("content", ""))})
+                normalized.append({
+                    "role": message.get("role", "user"),
+                    "content": normalize_message_content(message.get("content", "")),
+                })
     return normalized
 
 
 def assistant_history_text(messages: list[dict[str, Any]]) -> str:
-    return "".join(str(item.get("content") or "") for item in messages if item.get("role") == "assistant")
+    return "".join(message_text(item.get("content", "")) for item in messages if item.get("role") == "assistant")
 
 
 def assistant_history_messages(messages: list[dict[str, Any]]) -> list[str]:
-    return [str(item.get("content") or "") for item in messages if item.get("role") == "assistant" and item.get("content")]
+    return [
+        text
+        for item in messages
+        if item.get("role") == "assistant" and (text := message_text(item.get("content", "")))
+    ]
 
 
 def build_image_prompt(prompt: str, size: str | None) -> str:
@@ -138,6 +207,8 @@ def count_message_tokens(messages: list[dict[str, Any]], model: str) -> int:
     for message in messages:
         total += 3
         for key, value in message.items():
+            if key == "content" and not isinstance(value, str):
+                value = message_text(value)
             if not isinstance(value, str):
                 continue
             total += len(encoding.encode(value))
