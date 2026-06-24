@@ -454,11 +454,11 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-1">
-          <div className="text-xs font-semibold tracking-[0.18em] text-stone-500 uppercase">Prompts</div>
-          <h1 className="text-2xl font-semibold tracking-tight">{isAdmin ? "提示词管理" : "我的提示词"}</h1>
-          <p className="text-sm text-stone-500">
+      <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Prompt library</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">{isAdmin ? "提示词管理" : "我的提示词"}</h1>
+          <p className="max-w-2xl text-sm leading-6 text-stone-500">
             {isAdmin ? "审核用户提交的提示词，维护公共提示词库。" : "创建、分享和提交自己的提示词，审核通过后会进入公共库。"}
           </p>
         </div>
@@ -482,7 +482,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
         </div>
       </div>
 
-      <div className="yan-panel flex flex-col gap-3 rounded-lg p-4">
+      <div className="yan-panel flex flex-col gap-3 rounded-2xl p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-stone-400" />

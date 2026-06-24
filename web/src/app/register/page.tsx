@@ -46,10 +46,13 @@ function RegisterPageContent() {
   return (
     <>
       <RegisterDataController />
-      <section className="mb-2 flex flex-col gap-1 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-1">
-          <div className="text-xs font-semibold tracking-[0.18em] text-stone-500 uppercase">Register</div>
-          <h1 className="text-2xl font-semibold tracking-tight">ChatGPT注册机</h1>
+      <section className="yan-panel-strong mb-5 flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Registration engine</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">ChatGPT注册机</h1>
+          <p className="max-w-2xl text-sm leading-6 text-stone-500">
+            配置批量注册、邮箱 provider 和运行状态，保留原有保存、启动与实时日志流程。
+          </p>
         </div>
       </section>
       <section>
