@@ -69,9 +69,9 @@ export function WebDAVSettingsDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-1">
-          <label className="flex items-center gap-3 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700">
+          <label className="flex items-center gap-3 rounded-xl border border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/70 px-3 py-2 text-sm text-stone-700">
             <Checkbox checked={enabled} onCheckedChange={(checked) => setEnabled(checked === true)} />
-            启用自动保存
+            <span className="font-medium">启用自动保存</span>
           </label>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-stone-700">WebDAV 地址</label>
@@ -79,7 +79,7 @@ export function WebDAVSettingsDialog({
               value={url}
               onChange={(event) => setUrl(event.target.value)}
               placeholder="https://example.com/remote.php/dav/files/name"
-              className="h-10 rounded-lg border-stone-200 bg-white"
+              className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -88,7 +88,7 @@ export function WebDAVSettingsDialog({
               <Input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                className="h-10 rounded-lg border-stone-200 bg-white"
+                className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
               />
             </div>
             <div className="space-y-1.5">
@@ -98,7 +98,7 @@ export function WebDAVSettingsDialog({
                 type="password"
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder={config?.password_set ? "留空则保持原密码" : ""}
-                className="h-10 rounded-lg border-stone-200 bg-white"
+                className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
               />
             </div>
           </div>
@@ -108,7 +108,7 @@ export function WebDAVSettingsDialog({
               value={rootPath}
               onChange={(event) => setRootPath(event.target.value)}
               placeholder="YanAI"
-              className="h-10 rounded-lg border-stone-200 bg-white"
+              className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
             />
           </div>
         </div>
