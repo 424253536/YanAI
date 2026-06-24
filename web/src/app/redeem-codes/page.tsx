@@ -134,18 +134,21 @@ function RedeemCodesContent() {
 
   return (
     <section className="space-y-5">
-      <div className="flex items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="text-xs font-semibold tracking-[0.18em] text-rose-400 uppercase">Redeem</div>
-          <h1 className="text-2xl font-semibold tracking-tight">兑换码管理</h1>
+      <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Credit instruments</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">兑换码管理</h1>
+          <p className="max-w-2xl text-sm leading-6 text-stone-500">
+            批量生成、导出和停用兑换码，统一管理额度发放入口。
+          </p>
         </div>
-        <Button variant="outline" className="h-10 rounded-xl border-rose-100 bg-white" onClick={() => void load()}>
+        <Button variant="outline" className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78" onClick={() => void load()}>
           <RefreshCw className="size-4" />
           刷新
         </Button>
       </div>
 
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
             <Plus className="size-4 text-rose-500" />
@@ -164,7 +167,7 @@ function RedeemCodesContent() {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center gap-3 border-b border-rose-50 px-5 py-3">
             <label className="flex items-center gap-2 text-sm text-stone-500">
@@ -207,7 +210,7 @@ function RedeemCodesContent() {
             <div className="px-6 py-14 text-center text-sm text-stone-500">暂无兑换码</div>
           ) : (
             items.map((item) => (
-              <div key={item.id} className="grid gap-3 border-b border-rose-50 px-5 py-4 text-sm last:border-0 lg:grid-cols-[44px_1.4fr_100px_100px_120px_160px_180px] lg:items-center">
+              <div key={item.id} className="grid gap-3 border-b border-[rgba(143,93,47,0.08)] px-5 py-4 text-sm transition hover:bg-[#efe6d8]/36 last:border-0 lg:grid-cols-[44px_1.4fr_100px_100px_120px_160px_180px] lg:items-center">
                 <Checkbox
                   checked={selectedIds.includes(item.id)}
                   onCheckedChange={(checked) => {

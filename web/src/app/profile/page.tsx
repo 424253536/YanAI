@@ -185,13 +185,18 @@ function ProfileContent() {
 
   return (
     <section className="mx-auto w-full max-w-5xl space-y-5">
-      <div className="space-y-1">
-        <div className="text-xs font-semibold tracking-[0.18em] text-rose-400 uppercase">Profile</div>
-        <h1 className="text-2xl font-semibold tracking-tight">个人中心</h1>
+      <div className="yan-panel-strong rounded-2xl px-5 py-5">
+        <div className="space-y-2">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Personal console</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">个人中心</h1>
+          <p className="max-w-2xl text-sm leading-6 text-stone-500">
+            管理资料、个人图像渠道和兑换码额度，所有操作沿用原有账号逻辑。
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm md:col-span-2">
+        <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm md:col-span-2">
           <CardContent className="space-y-5 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -212,7 +217,7 @@ function ProfileContent() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+        <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
           <CardContent className="space-y-2 p-6">
             <div className="rounded-2xl bg-rose-50 p-3 text-rose-500 w-fit">
               <Sparkles className="size-5" />
@@ -224,7 +229,7 @@ function ProfileContent() {
         </Card>
       </div>
 
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="space-y-5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
@@ -324,7 +329,7 @@ function ProfileContent() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="space-y-4 p-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
             <Gift className="size-4 text-rose-500" />
