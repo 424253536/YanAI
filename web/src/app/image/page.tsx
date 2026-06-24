@@ -1199,10 +1199,11 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
             </Button>
           </div>
 
-          <header className="yan-panel flex min-h-16 flex-col gap-3 rounded-lg px-4 py-3 md:flex-row md:items-center">
+          <header className="yan-panel-strong flex min-h-20 flex-col gap-3 rounded-2xl px-5 py-4 md:flex-row md:items-center">
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-2xl font-bold tracking-tight text-stone-950">月光影像创作台</h1>
-              <p className="mt-1 truncate text-sm text-stone-500">
+              <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Image atelier</div>
+              <h1 className="mt-1 truncate text-3xl font-bold tracking-tight text-stone-950">月光影像创作台</h1>
+              <p className="mt-1 truncate text-sm leading-6 text-stone-500">
                 gpt-image-2 · 创作队列 {workspaceStats.active} · 当前空间 颜AI Studio
               </p>
             </div>
@@ -1212,7 +1213,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
                 value={workspaceSearch}
                 onChange={(event) => setWorkspaceSearch(event.target.value)}
                 placeholder="搜索作品、提示词、会话"
-                className="h-10 w-full rounded-lg border border-[var(--yan-border)] bg-white/72 pl-9 pr-3 text-sm text-stone-700 outline-none transition placeholder:text-stone-400 focus:border-rose-200 focus:bg-white focus:ring-4 focus:ring-rose-100/60"
+                className="h-10 w-full rounded-xl border border-[var(--yan-border)] bg-[#fffaf2]/78 pl-9 pr-3 text-sm text-stone-700 outline-none transition placeholder:text-stone-400 focus:border-[rgba(143,93,47,0.36)] focus:bg-[#fffaf2] focus:ring-4 focus:ring-[rgba(181,138,82,0.22)]"
               />
             </label>
           </header>
@@ -1225,8 +1226,8 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
           </div>
 
           <div className="min-h-0 flex-1 overflow-hidden">
-            <div ref={resultsViewportRef} className="yan-panel h-full min-h-0 overflow-y-auto rounded-lg">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-rose-100/70 bg-white/72 px-4 py-3 backdrop-blur-xl">
+            <div ref={resultsViewportRef} className="yan-panel h-full min-h-0 overflow-y-auto rounded-2xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[rgba(143,93,47,0.12)] bg-[#fffaf2]/72 px-4 py-3 backdrop-blur-xl">
                 <div className="min-w-0">
                   <h2 className="text-base font-bold text-stone-950">生成画面</h2>
                   <p className="truncate text-sm text-stone-500">
@@ -1251,7 +1252,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
         </div>
 
         <aside
-          className={`yan-panel relative min-h-0 overflow-hidden rounded-lg lg:col-span-2 xl:col-span-1 ${
+          className={`yan-panel relative min-h-0 overflow-hidden rounded-2xl lg:col-span-2 xl:col-span-1 ${
             isComposerPanelResizing ? "ring-2 ring-rose-100" : ""
           }`}
         >

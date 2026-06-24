@@ -179,23 +179,23 @@ export function ImageResults({
   if (!selectedConversation) {
     return (
       <div className="grid min-h-[520px] items-center gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(280px,.92fr)]">
-        <div className="relative min-h-[420px] overflow-hidden rounded-lg border border-white/70 bg-white/52 shadow-sm">
+        <div className="relative min-h-[420px] overflow-hidden rounded-2xl border border-white/70 bg-white/52 shadow-[0_24px_80px_rgba(33,27,21,0.14)]">
           <img
             src={emptyStateHero.preview}
             alt={emptyStateHero.title}
             className="absolute inset-0 h-full w-full object-cover opacity-75"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#2d1d26]/70 via-[#2d1d26]/12 to-white/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#17120f]/76 via-[#17120f]/20 to-white/10" />
           <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-            <div className="inline-flex rounded-full bg-white/18 px-3 py-1 text-xs font-semibold backdrop-blur">示例预览</div>
+            <div className="inline-flex rounded-full border border-white/18 bg-white/18 px-3 py-1 text-xs font-semibold backdrop-blur">示例预览</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight">{emptyStateHero.title}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-white/78">{emptyStateHero.description}</p>
           </div>
         </div>
 
         <div className="grid gap-3">
-          <div className="rounded-lg border border-white/70 bg-white/58 p-4">
-            <div className="grid size-12 place-items-center rounded-lg bg-gradient-to-br from-rose-100 to-fuchsia-100 text-rose-500">
+          <div className="rounded-2xl border border-white/70 bg-[#fffaf2]/64 p-4 shadow-sm">
+            <div className="yan-mark-gradient grid size-12 place-items-center rounded-xl text-white shadow-[0_14px_32px_rgba(33,27,21,0.16)]">
               <ImageIcon className="size-5" />
             </div>
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-stone-950">从右侧创作台开始</h1>
@@ -205,8 +205,8 @@ export function ImageResults({
           </div>
           <div className="grid grid-cols-2 gap-3">
             {emptyStateExamples.map((item) => (
-              <div key={item.label} className="rounded-lg border border-white/70 bg-gradient-to-br from-white/76 to-rose-50/70 p-3">
-                <div className="h-20 overflow-hidden rounded-lg border border-white/70 bg-rose-50">
+              <div key={item.label} className="rounded-2xl border border-white/70 bg-gradient-to-br from-[#fffaf2]/76 to-[#efe6d8]/70 p-3 shadow-sm">
+                <div className="h-20 overflow-hidden rounded-xl border border-white/70 bg-[#efe6d8]">
                   <img src={item.preview} alt={`${item.label}示例`} className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className="mt-3 text-sm font-semibold text-stone-800">{item.label}</div>
