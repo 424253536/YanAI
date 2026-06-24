@@ -163,19 +163,22 @@ function ModelsContent() {
   };
 
   return (
-    <section className="h-full min-h-0 space-y-5 overflow-y-auto pr-1 pb-8 [scrollbar-color:rgba(244,114,182,.45)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-rose-300/55 [&::-webkit-scrollbar-track]:bg-transparent">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <div className="text-xs font-semibold tracking-[0.18em] text-rose-400 uppercase">Models</div>
-          <h1 className="text-2xl font-semibold tracking-tight">模型管理</h1>
+    <section className="h-full min-h-0 space-y-5 overflow-y-auto pr-1 pb-8 [scrollbar-color:rgba(143,93,47,.38)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#b58a52]/55 [&::-webkit-scrollbar-track]:bg-transparent">
+      <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Model tariff</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">模型管理</h1>
+          <p className="max-w-2xl text-sm leading-6 text-stone-500">
+            汇总渠道模型目录与计费标准，保持原有拉取、筛选和保存逻辑不变。
+          </p>
         </div>
-        <Button variant="outline" className="h-10 rounded-xl border-rose-100 bg-white" onClick={() => void load()}>
+        <Button variant="outline" className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78" onClick={() => void load()}>
           {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
           刷新
         </Button>
       </div>
 
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
             <ServerCog className="size-4 text-rose-500" />
@@ -183,7 +186,7 @@ function ModelsContent() {
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {channels.map((channel) => (
-              <div key={channel.id} className="grid gap-3 rounded-lg border border-rose-50 bg-white/70 p-4 text-sm">
+              <div key={channel.id} className="grid gap-3 rounded-2xl border border-[rgba(143,93,47,0.12)] bg-[#fffaf2]/62 p-4 text-sm shadow-sm">
                 <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="truncate font-medium text-stone-900">{channelLabel(channel)}</div>
@@ -210,7 +213,7 @@ function ModelsContent() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
@@ -243,7 +246,7 @@ function ModelsContent() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-rose-50 bg-white/70">
+          <div className="overflow-hidden rounded-2xl border border-[rgba(143,93,47,0.12)] bg-[#fffaf2]/62">
             <div className="hidden border-b border-rose-50 px-4 py-3 text-xs font-semibold text-stone-500 xl:grid xl:grid-cols-[minmax(190px,1.3fr)_minmax(150px,1fr)_116px_130px_130px_110px_120px_88px] xl:items-center xl:gap-3">
               <div>模型</div>
               <div>渠道</div>

@@ -356,18 +356,21 @@ function ChannelsContent() {
 
   return (
     <section className="space-y-5">
-      <div className="flex items-end justify-between gap-4">
-        <div className="space-y-1">
-          <div className="text-xs font-semibold tracking-[0.18em] text-rose-400 uppercase">Channels</div>
-          <h1 className="text-2xl font-semibold tracking-tight">渠道管理</h1>
+      <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Routing desk</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">渠道管理</h1>
+          <p className="max-w-2xl text-sm leading-6 text-stone-500">
+            管理内置账号池与 OpenAI 兼容渠道，调整模型路由、权重、优先级和可用性。
+          </p>
         </div>
-        <Button variant="outline" className="h-10 rounded-xl border-rose-100 bg-white" onClick={() => void load()}>
+        <Button variant="outline" className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78" onClick={() => void load()}>
           <RefreshCw className="size-4" />
           刷新
         </Button>
       </div>
 
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
@@ -426,7 +429,7 @@ function ChannelsContent() {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="p-0">
           <div className="hidden border-b border-rose-50 px-5 py-3 text-xs font-semibold text-stone-500 lg:grid lg:grid-cols-[1.05fr_1.4fr_1.6fr_1fr_90px_230px] lg:items-center">
             <div>名称 / 类型</div>
