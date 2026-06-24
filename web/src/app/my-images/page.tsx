@@ -273,10 +273,13 @@ function MyImagesContent() {
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-1">
-          <div className="text-xs font-semibold tracking-[0.18em] text-rose-400 uppercase">My Images</div>
-          <h1 className="text-2xl font-semibold tracking-tight">我的图片</h1>
+      <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Personal archive</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">我的图片</h1>
+          <p className="max-w-2xl text-sm leading-6 text-stone-500">
+            查看、下载和同步个人生成图片，保留原有批量选择与删除行为。
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <DateRangeFilter
@@ -306,7 +309,7 @@ function MyImagesContent() {
         </div>
       </div>
 
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-col gap-3 border-b border-rose-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-3 text-sm text-stone-600">
@@ -364,7 +367,7 @@ function MyImagesContent() {
                 const key = imageKey(item);
                 const selected = Boolean(selectedItems[key]);
                 return (
-                  <div key={`${item.url}-${index}`} className={`group relative border-r border-b border-rose-50 p-4 transition hover:bg-rose-50/40 ${selected ? "bg-rose-50/60 ring-1 ring-inset ring-rose-200" : ""}`}>
+                  <div key={`${item.url}-${index}`} className={`group relative border-r border-b border-[rgba(143,93,47,0.08)] p-4 transition hover:bg-[#efe6d8]/42 ${selected ? "bg-[#ead6b7]/38 ring-1 ring-inset ring-[#b58a52]/45" : ""}`}>
                     <div className="absolute top-6 left-6 z-10 rounded-md bg-white/90 p-1 shadow-sm">
                       <Checkbox
                         checked={selected}
@@ -375,7 +378,7 @@ function MyImagesContent() {
                     </div>
                     <button
                       type="button"
-                      className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-xl bg-rose-50 text-left"
+                      className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-[#efe6d8] text-left shadow-sm"
                       onClick={() => {
                         setLightboxIndex(index);
                         setLightboxOpen(true);
