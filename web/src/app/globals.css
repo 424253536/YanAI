@@ -143,6 +143,20 @@
     background: rgba(181, 138, 82, 0.28);
     color: #18120f;
   }
+
+  h1 {
+    letter-spacing: -0.035em;
+    font-weight: 750;
+  }
+
+  h2,
+  h3 {
+    letter-spacing: -0.018em;
+  }
+
+  label {
+    color: #4f4439;
+  }
 }
 
 @layer utilities {
