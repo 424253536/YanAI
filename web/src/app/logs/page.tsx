@@ -128,10 +128,11 @@ function LogsContent() {
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
-          <div className="text-xs font-semibold tracking-[0.18em] text-stone-500 uppercase">Logs</div>
-          <h1 className="text-2xl font-semibold tracking-tight">日志管理</h1>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Activity ledger</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">日志管理</h1>
+          <p className="text-sm leading-6 text-stone-500">按时间、类型、状态与用户维度审阅系统行为。</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Select value={type} onValueChange={setType}>
@@ -169,7 +170,7 @@ function LogsContent() {
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
         <CardContent className="p-0">
           <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4 text-sm text-stone-600">
             <span>共 {total} 条</span>
@@ -229,40 +230,45 @@ function LogsContent() {
         </CardContent>
       </Card>
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="w-[min(92vw,920px)] rounded-2xl p-6">
+        <DialogContent className="w-[min(92vw,920px)] rounded-2xl p-0">
           <DialogHeader>
-            <DialogTitle>日志详情</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-3 rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-600 md:grid-cols-2">
-            {Object.entries(detailLog?.detail || {})
-              .filter(([key, value]) => key !== "urls" && typeof value !== "object")
-              .map(([key, value]) => (
-                <div key={key} className="flex items-start justify-between gap-4">
-                  <span className="text-stone-400">{key}</span>
-                  <span className="text-right font-medium text-stone-700">{String(value)}</span>
-                </div>
-              ))}
-          </div>
-          {detailUrls.length ? (
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {detailUrls.map((url, index) => (
-                <button
-                  key={url}
-                  type="button"
-                  className="aspect-square overflow-hidden rounded-xl border border-stone-200 bg-stone-100"
-                  onClick={() => {
-                    setLightboxIndex(index);
-                    setLightboxOpen(true);
-                  }}
-                >
-                  <img src={url} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
+            <div className="border-b border-[rgba(143,93,47,0.14)] px-6 pt-6 pb-4">
+              <div className="text-[11px] font-semibold tracking-[0.22em] text-[#8f5d2f] uppercase">Log detail</div>
+              <DialogTitle className="mt-2">日志详情</DialogTitle>
             </div>
-          ) : null}
-          <pre className="max-h-[72vh] overflow-auto rounded-xl border border-stone-200 bg-stone-50 p-4 text-xs leading-6 text-stone-700">
-            {JSON.stringify(detailLog?.detail || {}, null, 2)}
-          </pre>
+          </DialogHeader>
+          <div className="max-h-[78vh] space-y-4 overflow-y-auto px-6 py-5">
+            <div className="grid gap-3 rounded-2xl border border-[rgba(143,93,47,0.14)] bg-[#fffaf2]/62 p-4 text-sm text-stone-600 md:grid-cols-2">
+              {Object.entries(detailLog?.detail || {})
+                .filter(([key, value]) => key !== "urls" && typeof value !== "object")
+                .map(([key, value]) => (
+                  <div key={key} className="flex items-start justify-between gap-4 rounded-xl bg-[#fffaf2]/58 px-3 py-2">
+                    <span className="text-stone-400">{key}</span>
+                    <span className="text-right font-medium text-stone-700">{String(value)}</span>
+                  </div>
+                ))}
+            </div>
+            {detailUrls.length ? (
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {detailUrls.map((url, index) => (
+                  <button
+                    key={url}
+                    type="button"
+                    className="aspect-square overflow-hidden rounded-2xl border border-[rgba(143,93,47,0.14)] bg-[#efe6d8]/64 shadow-sm"
+                    onClick={() => {
+                      setLightboxIndex(index);
+                      setLightboxOpen(true);
+                    }}
+                  >
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <pre className="max-h-[42vh] overflow-auto rounded-2xl border border-black/10 bg-[#201814] p-4 text-xs leading-6 text-[#f8f2e7] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+              {JSON.stringify(detailLog?.detail || {}, null, 2)}
+            </pre>
+          </div>
         </DialogContent>
       </Dialog>
       <ImageLightbox
