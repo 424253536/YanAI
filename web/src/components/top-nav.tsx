@@ -88,15 +88,15 @@ export function TopNav() {
   const roleLabel = session.role === "admin" ? "管理员" : "个人用户";
 
   return (
-    <header className="border-b border-rose-100/80 bg-white/48 backdrop-blur-xl">
-      <div className="flex min-h-16 items-center justify-between gap-3 px-3 sm:px-5">
-        <Link href="/image" className="group flex shrink-0 items-center gap-2.5 whitespace-nowrap">
-          <span className="yan-mark-gradient grid size-10 place-items-center rounded-lg text-sm font-black text-white shadow-[0_14px_30px_rgba(243,111,159,0.22)] transition group-hover:brightness-105">
+    <header className="border-b border-[rgba(143,93,47,0.14)] bg-[#fbf7ef]/64 backdrop-blur-2xl">
+      <div className="flex min-h-17 items-center justify-between gap-3 px-3 sm:px-5">
+        <Link href="/image" className="group flex shrink-0 items-center gap-3 whitespace-nowrap">
+          <span className="yan-mark-gradient grid size-11 place-items-center rounded-xl text-sm font-black text-white shadow-[0_16px_36px_rgba(33,27,21,0.22)] transition group-hover:brightness-110">
             颜
           </span>
           <span className="hidden leading-tight sm:block">
-            <span className="block text-[17px] font-bold tracking-tight text-stone-950">颜AI</span>
-            <span className="block text-xs font-medium text-stone-500">Image Studio</span>
+            <span className="block text-[17px] font-bold tracking-tight text-stone-950">颜AI Studio</span>
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Image atelier</span>
           </span>
         </Link>
 
@@ -109,10 +109,10 @@ export function TopNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-[13px] font-medium transition sm:text-sm",
+                  "relative inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-xl px-3 text-[13px] font-medium transition sm:text-sm",
                   active
-                    ? "bg-gradient-to-r from-rose-100 via-pink-50 to-fuchsia-50 text-stone-950 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.82)]"
-                    : "text-stone-500 hover:bg-white/62 hover:text-rose-700",
+                    ? "bg-[#201814] text-[#fff8ec] shadow-[inset_0_0_0_1px_rgba(255,244,220,0.14),0_10px_30px_rgba(33,27,21,0.16)]"
+                    : "text-stone-500 hover:bg-[#fffaf2]/70 hover:text-[#6f4a2b]",
                 )}
               >
                 <Icon className="size-4" />
@@ -123,15 +123,15 @@ export function TopNav() {
         </nav>
 
         <div className="flex shrink-0 items-center justify-end gap-2">
-          <span className="hidden rounded-lg border border-rose-100 bg-white/65 px-2.5 py-1 text-[11px] font-medium text-rose-600 sm:inline-block">
+          <span className="hidden rounded-xl border border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/72 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8f5d2f] sm:inline-block">
             {roleLabel}
           </span>
-          <span className="hidden rounded-lg border border-rose-100 bg-white/65 px-2.5 py-1 text-[11px] font-medium text-stone-400 sm:inline-block">
+          <span className="hidden rounded-xl border border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/72 px-2.5 py-1 text-[11px] font-medium text-stone-500 sm:inline-block">
             v{webConfig.appVersion}
           </span>
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-lg text-stone-400 transition hover:bg-white/65 hover:text-rose-600"
+            className="inline-flex size-9 items-center justify-center rounded-xl text-stone-500 transition hover:bg-[#fffaf2]/72 hover:text-[#8f5d2f]"
             onClick={() => void handleLogout()}
             aria-label="退出登录"
           >

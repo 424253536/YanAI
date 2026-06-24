@@ -76,19 +76,21 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-[calc(100vh-1rem)] w-full place-items-center px-4 py-6">
-      <Card className="w-full max-w-[460px] rounded-lg border-white/80 bg-white/90 shadow-[0_28px_90px_rgba(190,24,93,0.12)]">
+      <Card className="w-full max-w-[500px] overflow-hidden border-[rgba(143,93,47,0.14)] bg-[#fbf7ef]/92 shadow-[0_34px_120px_rgba(33,27,21,0.18)]">
+        <div className="h-1.5 bg-gradient-to-r from-[#17120f] via-[#8f5d2f] to-[#b58a52]" />
         <CardContent className="space-y-7 p-6 sm:p-8">
           <div className="space-y-4 text-center">
-            <div className="mx-auto inline-flex size-14 items-center justify-center rounded-[20px] bg-rose-500 text-white shadow-sm">
+            <div className="yan-mark-gradient mx-auto inline-flex size-14 items-center justify-center rounded-[22px] text-white shadow-[0_18px_42px_rgba(33,27,21,0.18)]">
               <Sparkles className="size-5" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-3xl font-semibold tracking-tight text-stone-950">颜AI</h1>
-              <p className="text-sm leading-6 text-stone-500">登录后开始创作和管理你的 AI 美图。</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8f5d2f]">Private image atelier</p>
+              <h1 className="text-3xl font-bold tracking-tight text-stone-950">颜AI</h1>
+              <p className="text-sm leading-6 text-stone-500">进入工作台，管理创作、素材与账号资源。</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 rounded-2xl bg-rose-50 p-1 text-sm font-medium">
+          <div className="grid grid-cols-2 rounded-2xl border border-[rgba(143,93,47,0.12)] bg-[#efe6d8]/70 p-1 text-sm font-semibold">
             {[
               { value: "user" as const, label: "个人登录", icon: Mail },
               { value: "admin" as const, label: "管理员", icon: KeyRound },
@@ -100,7 +102,7 @@ export default function LoginPage() {
                   type="button"
                   className={cn(
                     "flex h-10 items-center justify-center gap-2 rounded-xl transition",
-                    mode === item.value ? "bg-white text-rose-600 shadow-sm" : "text-stone-500 hover:text-stone-800",
+                    mode === item.value ? "bg-[#201814] text-[#fff8ec] shadow-sm" : "text-stone-500 hover:text-stone-800",
                   )}
                   onClick={() => setMode(item.value)}
                 >
@@ -118,7 +120,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="邮箱"
-                className="h-12 rounded-lg border-rose-100 bg-white px-4"
+                className="h-12 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4"
               />
               <Input
                 type="password"
@@ -128,7 +130,7 @@ export default function LoginPage() {
                   if (event.key === "Enter") void handleLogin();
                 }}
                 placeholder="密码"
-                className="h-12 rounded-lg border-rose-100 bg-white px-4"
+                className="h-12 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4"
               />
             </div>
           ) : (
@@ -141,13 +143,13 @@ export default function LoginPage() {
                   if (event.key === "Enter") void handleLogin();
                 }}
                 placeholder="管理员密钥"
-                className="h-12 rounded-lg border-rose-100 bg-white px-4"
+                className="h-12 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4"
               />
             </div>
           )}
 
           <Button
-            className="h-12 w-full rounded-2xl bg-rose-500 text-white hover:bg-rose-600"
+            className="h-12 w-full rounded-2xl"
             onClick={() => void handleLogin()}
             disabled={isSubmitting}
           >
@@ -159,7 +161,7 @@ export default function LoginPage() {
             <Button
               type="button"
               variant="outline"
-              className="h-12 w-full rounded-lg border-rose-100 bg-white text-stone-800 hover:bg-rose-50"
+              className="h-12 w-full rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 text-stone-800 hover:bg-[#fffaf2]"
               onClick={startLinuxDoOAuth}
             >
               使用 Linux DO 登录 / 注册

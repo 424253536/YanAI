@@ -44,47 +44,50 @@
 }
 
 :root {
-  --radius: 0.5rem;
-  --background: oklch(0.985 0.012 354);
-  --foreground: oklch(0.22 0.032 350);
-  --card: oklch(1 0 0 / 88%);
-  --card-foreground: oklch(0.22 0.032 350);
-  --popover: oklch(1 0 0 / 96%);
-  --popover-foreground: oklch(0.22 0.032 350);
-  --primary: oklch(0.68 0.19 354);
-  --primary-foreground: oklch(0.99 0.005 350);
-  --secondary: oklch(0.96 0.026 350);
-  --secondary-foreground: oklch(0.32 0.045 350);
-  --muted: oklch(0.96 0.018 350);
-  --muted-foreground: oklch(0.52 0.035 350);
-  --accent: oklch(0.95 0.043 342);
-  --accent-foreground: oklch(0.32 0.052 350);
+  --radius: 1.125rem;
+  --background: #191512;
+  --foreground: #241d18;
+  --card: rgba(252, 248, 240, 0.88);
+  --card-foreground: #241d18;
+  --popover: rgba(253, 250, 244, 0.98);
+  --popover-foreground: #241d18;
+  --primary: #8f5d2f;
+  --primary-foreground: #fffaf0;
+  --secondary: #efe6d8;
+  --secondary-foreground: #2a211b;
+  --muted: #eee5d7;
+  --muted-foreground: #776b5d;
+  --accent: #ead6b7;
+  --accent-foreground: #2a211b;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0.03 350);
-  --input: oklch(0.9 0.03 350);
-  --ring: oklch(0.76 0.12 350);
-  --chart-1: oklch(0.72 0.16 354);
-  --chart-2: oklch(0.78 0.1 322);
-  --chart-3: oklch(0.64 0.09 26);
-  --chart-4: oklch(0.78 0.12 83);
-  --chart-5: oklch(0.36 0.04 350);
-  --sidebar: oklch(1 0 0 / 80%);
-  --sidebar-foreground: oklch(0.22 0.032 350);
-  --sidebar-primary: oklch(0.68 0.19 354);
-  --sidebar-primary-foreground: oklch(0.99 0.005 350);
-  --sidebar-accent: oklch(0.95 0.043 342);
-  --sidebar-accent-foreground: oklch(0.32 0.052 350);
-  --sidebar-border: oklch(0.9 0.03 350);
-  --sidebar-ring: oklch(0.76 0.12 350);
-  --yan-petal: #f36f9f;
-  --yan-rose: #e7758f;
-  --yan-lavender: #caa4e8;
-  --yan-champagne: #d5aa61;
-  --yan-ink: #2a1822;
-  --yan-panel: rgba(255, 255, 255, 0.72);
-  --yan-panel-strong: rgba(255, 255, 255, 0.9);
-  --yan-border: rgba(113, 59, 83, 0.13);
-  --yan-shadow: 0 24px 70px rgba(84, 38, 62, 0.14);
+  --border: rgba(98, 78, 54, 0.18);
+  --input: rgba(98, 78, 54, 0.2);
+  --ring: rgba(181, 138, 82, 0.44);
+  --chart-1: #8f5d2f;
+  --chart-2: #355c54;
+  --chart-3: #9e3f4d;
+  --chart-4: #b58a52;
+  --chart-5: #2d2924;
+  --sidebar: rgba(249, 245, 236, 0.82);
+  --sidebar-foreground: #241d18;
+  --sidebar-primary: #8f5d2f;
+  --sidebar-primary-foreground: #fffaf0;
+  --sidebar-accent: #ead6b7;
+  --sidebar-accent-foreground: #2a211b;
+  --sidebar-border: rgba(98, 78, 54, 0.18);
+  --sidebar-ring: rgba(181, 138, 82, 0.44);
+  --yan-petal: #9e3f4d;
+  --yan-rose: #8f5d2f;
+  --yan-lavender: #355c54;
+  --yan-champagne: #b58a52;
+  --yan-ink: #191512;
+  --yan-porcelain: #f8f2e7;
+  --yan-paper: #fbf7ef;
+  --yan-panel: rgba(250, 245, 236, 0.74);
+  --yan-panel-strong: rgba(253, 250, 244, 0.92);
+  --yan-border: rgba(98, 78, 54, 0.18);
+  --yan-shadow: 0 28px 90px rgba(27, 22, 18, 0.18);
+  --yan-brass-shadow: 0 16px 42px rgba(143, 93, 47, 0.18);
 }
 
 .dark {
@@ -128,52 +131,160 @@
   body {
     @apply bg-background text-foreground;
     background:
-      linear-gradient(125deg, rgba(243, 111, 159, 0.16), transparent 34%),
-      linear-gradient(238deg, transparent 38%, rgba(202, 164, 232, 0.14) 73%, transparent 100%),
-      linear-gradient(180deg, #fff8fb 0%, #fff4f8 52%, #fff1f5 100%);
+      radial-gradient(circle at 16% 12%, rgba(181, 138, 82, 0.3), transparent 27rem),
+      radial-gradient(circle at 86% 8%, rgba(53, 92, 84, 0.24), transparent 31rem),
+      linear-gradient(112deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 100%),
+      linear-gradient(180deg, #201a16 0%, #17130f 48%, #241b15 100%);
+    background-size: auto, auto, 92px 92px, auto;
     letter-spacing: 0;
+  }
+
+  ::selection {
+    background: rgba(181, 138, 82, 0.28);
+    color: #18120f;
   }
 }
 
 @layer utilities {
   .yan-app-surface {
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    background: rgba(255, 255, 255, 0.56);
+    position: relative;
+    border: 1px solid rgba(255, 250, 240, 0.22);
+    background:
+      linear-gradient(180deg, rgba(255, 252, 245, 0.9), rgba(245, 236, 222, 0.82)),
+      radial-gradient(circle at 12% 0%, rgba(181, 138, 82, 0.12), transparent 30rem);
     box-shadow: var(--yan-shadow);
-    backdrop-filter: blur(24px);
+    backdrop-filter: blur(26px) saturate(1.05);
+  }
+
+  .yan-app-surface::before {
+    pointer-events: none;
+    content: "";
+    position: absolute;
+    inset: 12px;
+    z-index: 0;
+    border: 1px solid rgba(143, 93, 47, 0.1);
+    border-radius: inherit;
+  }
+
+  .yan-app-surface > * {
+    position: relative;
+    z-index: 1;
   }
 
   .yan-panel {
-    border: 1px solid rgba(255, 255, 255, 0.78);
-    background: var(--yan-panel);
-    box-shadow: 0 18px 48px rgba(84, 38, 62, 0.08);
-    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 252, 245, 0.72);
+    background:
+      linear-gradient(180deg, rgba(255, 252, 246, 0.82), rgba(244, 236, 224, 0.7)),
+      var(--yan-panel);
+    box-shadow: 0 18px 54px rgba(33, 27, 21, 0.1);
+    backdrop-filter: blur(18px) saturate(1.05);
   }
 
   .yan-panel-strong {
-    border: 1px solid rgba(255, 255, 255, 0.82);
-    background: var(--yan-panel-strong);
-    box-shadow: 0 22px 60px rgba(84, 38, 62, 0.1);
-    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 252, 245, 0.86);
+    background:
+      linear-gradient(180deg, rgba(255, 252, 246, 0.96), rgba(247, 239, 226, 0.9)),
+      var(--yan-panel-strong);
+    box-shadow: 0 24px 70px rgba(33, 27, 21, 0.12);
+    backdrop-filter: blur(22px) saturate(1.08);
   }
 
   .yan-gradient {
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.24), transparent 42%),
-      linear-gradient(135deg, #2d1d26, #9a5877 52%, #e7758f);
+      linear-gradient(135deg, rgba(255, 244, 220, 0.2), transparent 42%),
+      linear-gradient(135deg, #17120f, #72512f 58%, #b58a52);
   }
 
   .yan-mark-gradient {
     background:
-      linear-gradient(145deg, rgba(255, 255, 255, 0.38), transparent 44%),
-      linear-gradient(135deg, var(--yan-petal), var(--yan-lavender));
+      linear-gradient(145deg, rgba(255, 244, 220, 0.34), transparent 44%),
+      linear-gradient(135deg, #17120f, #8f5d2f 58%, #b58a52);
   }
 
   .yan-soft-grid {
     background-image:
-      linear-gradient(rgba(42, 24, 34, 0.055) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(42, 24, 34, 0.055) 1px, transparent 1px);
-    background-size: 42px 42px;
+      linear-gradient(rgba(143, 93, 47, 0.09) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(143, 93, 47, 0.075) 1px, transparent 1px),
+      radial-gradient(circle at 0 0, rgba(255, 250, 240, 0.28), transparent 34rem);
+    background-size: 44px 44px, 44px 44px, auto;
+  }
+
+  .rounded-md {
+    border-radius: 14px;
+  }
+
+  .rounded-lg {
+    border-radius: 18px;
+  }
+
+  .rounded-xl {
+    border-radius: 22px;
+  }
+
+  .rounded-2xl {
+    border-radius: 26px;
+  }
+
+  .bg-rose-50,
+  .bg-pink-50,
+  .bg-fuchsia-50,
+  [class~="bg-rose-50/35"],
+  [class~="bg-rose-50/40"],
+  [class~="bg-rose-50/45"],
+  [class~="bg-rose-50/60"],
+  [class~="bg-rose-50/80"],
+  [class~="bg-pink-50/80"] {
+    background-color: rgba(239, 230, 216, 0.82) !important;
+  }
+
+  .bg-rose-100,
+  [class~="bg-rose-100/80"] {
+    background-color: rgba(234, 214, 183, 0.86) !important;
+  }
+
+  .bg-rose-500,
+  .bg-rose-600 {
+    background-color: #8f5d2f !important;
+  }
+
+  .hover\:bg-rose-50:hover {
+    background-color: rgba(239, 230, 216, 0.94) !important;
+  }
+
+  .hover\:bg-rose-600:hover,
+  .hover\:bg-rose-700:hover {
+    background-color: #76502e !important;
+  }
+
+  .border-rose-50,
+  [class~="border-rose-50"] {
+    border-color: rgba(143, 93, 47, 0.08) !important;
+  }
+
+  .border-rose-100,
+  [class~="border-rose-100/60"],
+  [class~="border-rose-100/70"],
+  [class~="border-rose-100/80"] {
+    border-color: rgba(143, 93, 47, 0.16) !important;
+  }
+
+  .border-rose-200 {
+    border-color: rgba(143, 93, 47, 0.28) !important;
+  }
+
+  .text-rose-400,
+  .text-rose-500,
+  .text-rose-600,
+  .text-rose-700,
+  .text-fuchsia-700 {
+    color: #8f5d2f !important;
+  }
+
+  .ring-rose-100,
+  [class~="ring-rose-100/60"],
+  [class~="focus:ring-rose-100/60"]:focus,
+  [class~="focus-visible:ring-rose-100/80"]:focus-visible {
+    --tw-ring-color: rgba(181, 138, 82, 0.24) !important;
   }
 
   .hide-scrollbar {

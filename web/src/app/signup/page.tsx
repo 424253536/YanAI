@@ -84,33 +84,35 @@ export default function SignupPage() {
 
   return (
     <div className="grid min-h-[calc(100vh-1rem)] w-full place-items-center px-4 py-6">
-      <Card className="w-full max-w-[460px] rounded-lg border-white/80 bg-white/90 shadow-[0_28px_90px_rgba(190,24,93,0.12)]">
+      <Card className="w-full max-w-[500px] overflow-hidden border-[rgba(143,93,47,0.14)] bg-[#fbf7ef]/92 shadow-[0_34px_120px_rgba(33,27,21,0.18)]">
+        <div className="h-1.5 bg-gradient-to-r from-[#17120f] via-[#8f5d2f] to-[#b58a52]" />
         <CardContent className="space-y-6 p-6 sm:p-8">
           <div className="space-y-4 text-center">
-            <div className="mx-auto inline-flex size-14 items-center justify-center rounded-[20px] bg-rose-500 text-white shadow-sm">
+            <div className="yan-mark-gradient mx-auto inline-flex size-14 items-center justify-center rounded-[22px] text-white shadow-[0_18px_42px_rgba(33,27,21,0.18)]">
               <Sparkles className="size-5" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-3xl font-semibold tracking-tight text-stone-950">创建颜AI账号</h1>
-              <p className="text-sm leading-6 text-stone-500">注册后可通过兑换码获得画图额度。</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#8f5d2f]">Studio access</p>
+              <h1 className="text-3xl font-bold tracking-tight text-stone-950">创建颜AI账号</h1>
+              <p className="text-sm leading-6 text-stone-500">注册后可通过兑换码获得创作额度。</p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="昵称" className="h-12 rounded-lg border-rose-100 bg-white px-4" />
-            <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="邮箱" className="h-12 rounded-lg border-rose-100 bg-white px-4" />
+            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="昵称" className="h-12 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4" />
+            <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="邮箱" className="h-12 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4" />
             {registerOptions?.email_verification_enabled ? (
               <div className="flex gap-2">
                 <Input
                   value={verificationCode}
                   onChange={(event) => setVerificationCode(event.target.value)}
                   placeholder="邮箱验证码"
-                  className="h-12 min-w-0 flex-1 rounded-lg border-rose-100 bg-white px-4"
+                  className="h-12 min-w-0 flex-1 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4"
                 />
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-12 shrink-0 rounded-lg border-rose-100 bg-white px-4 text-rose-600"
+                  className="h-12 shrink-0 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4 text-[#8f5d2f]"
                   onClick={() => void handleSendCode()}
                   disabled={isSendingCode}
                 >
@@ -127,12 +129,12 @@ export default function SignupPage() {
                 if (event.key === "Enter") void handleSignup();
               }}
               placeholder="密码，至少 6 位"
-              className="h-12 rounded-lg border-rose-100 bg-white px-4"
+              className="h-12 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 px-4"
             />
           </div>
 
           <Button
-            className="h-12 w-full rounded-2xl bg-rose-500 text-white hover:bg-rose-600"
+            className="h-12 w-full rounded-2xl"
             onClick={() => void handleSignup()}
             disabled={isSubmitting}
           >
@@ -144,7 +146,7 @@ export default function SignupPage() {
             <Button
               type="button"
               variant="outline"
-              className="h-12 w-full rounded-lg border-rose-100 bg-white text-stone-800 hover:bg-rose-50"
+              className="h-12 w-full rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/86 text-stone-800 hover:bg-[#fffaf2]"
               onClick={startLinuxDoOAuth}
             >
               使用 Linux DO 注册 / 登录

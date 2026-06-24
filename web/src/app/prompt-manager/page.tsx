@@ -19,7 +19,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -199,6 +199,9 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
   const [shareInput, setShareInput] = useState("");
   const [sharePreview, setSharePreview] = useState<PromptLibraryItem | null>(null);
   const [editingItem, setEditingItem] = useState<PromptLibraryItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PromptLibraryItem | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<PromptLibraryItem | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [form, setForm] = useState<PromptFormState>(emptyForm);
   const uploadInputRef = useRef<HTMLInputElement>(null);
 
@@ -344,13 +347,18 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
     }
   };
 
-  const handleDelete = async (item: PromptLibraryItem) => {
-    if (!window.confirm(`删除「${item.title}」？`)) {
+  const handleDelete = (item: PromptLibraryItem) => {
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) {
       return;
     }
     try {
-      const data = isAdmin ? await deleteAdminPrompt(item.id) : await deleteMyPrompt(item.id);
+      const data = isAdmin ? await deleteAdminPrompt(deleteTarget.id) : await deleteMyPrompt(deleteTarget.id);
       setItems(data.items);
+      setDeleteTarget(null);
       toast.success("提示词已删除");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "删除失败");
@@ -402,11 +410,20 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
     }
   };
 
-  const handleReject = async (item: PromptLibraryItem) => {
-    const reason = window.prompt(`驳回「${item.title}」的原因（可留空）`) || "";
+  const handleReject = (item: PromptLibraryItem) => {
+    setRejectTarget(item);
+    setRejectReason("");
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) {
+      return;
+    }
     try {
-      const data = await rejectAdminPrompt(item.id, reason);
+      const data = await rejectAdminPrompt(rejectTarget.id, rejectReason.trim());
       setItems(data.items);
+      setRejectTarget(null);
+      setRejectReason("");
       toast.success("已驳回");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "驳回失败");
@@ -616,6 +633,50 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
           })}
         </div>
       )}
+
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => (!open ? setDeleteTarget(null) : null)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>删除提示词</DialogTitle>
+            <DialogDescription>
+              确认删除「{deleteTarget?.title}」？删除后该提示词将不再出现在当前列表中。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              取消
+            </Button>
+            <Button variant="destructive" onClick={() => void confirmDelete()}>
+              确认删除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(rejectTarget)} onOpenChange={(open) => (!open ? setRejectTarget(null) : null)}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>驳回提示词</DialogTitle>
+            <DialogDescription>
+              为「{rejectTarget?.title}」填写驳回原因，留空也可以直接驳回。
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={rejectReason}
+            onChange={(event) => setRejectReason(event.target.value)}
+            placeholder="例如：内容不够具体、示例图不匹配，或需要补充使用场景。"
+            className="min-h-28"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectTarget(null)}>
+              取消
+            </Button>
+            <Button onClick={() => void confirmReject()}>
+              确认驳回
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="w-[min(94vw,560px)] max-w-none rounded-lg p-0">

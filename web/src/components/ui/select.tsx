@@ -29,7 +29,7 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "border-input bg-white/78 data-[placeholder]:text-muted-foreground flex h-11 w-full items-center justify-between gap-2 rounded-lg border px-4 py-2 text-sm whitespace-nowrap shadow-sm outline-none focus-visible:border-rose-200 focus-visible:ring-[3px] focus-visible:ring-rose-100/80 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+        "border-input bg-[#fffaf2]/78 data-[placeholder]:text-muted-foreground flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-4 py-2 text-sm whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.62)] outline-none focus-visible:border-[rgba(143,93,47,0.36)] focus-visible:bg-[#fffdf8] focus-visible:ring-[3px] focus-visible:ring-[rgba(181,138,82,0.22)] disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
         className,
       )}
       {...props}
@@ -89,7 +89,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out relative z-50 max-h-96 min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-lg border border-white/80 shadow-[0_20px_60px_-30px_rgba(84,38,62,0.35)]",
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out relative z-50 max-h-96 min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-[rgba(143,93,47,0.14)] shadow-[0_24px_70px_-30px_rgba(23,18,15,0.42)]",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className,
@@ -135,7 +135,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-xl py-2 pr-8 pl-3 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center gap-2 rounded-lg py-2 pr-8 pl-3 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}
