@@ -1262,7 +1262,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
             onPointerDown={handleComposerPanelResizeStart}
             className="group absolute top-0 bottom-0 left-0 z-20 hidden w-3 cursor-col-resize items-center justify-center outline-none xl:flex"
           >
-            <span className="h-14 w-1 rounded-full bg-rose-200/70 opacity-70 transition group-hover:bg-rose-300 group-hover:opacity-100 group-focus-visible:bg-rose-400 group-focus-visible:opacity-100" />
+            <span className="h-14 w-1 rounded-full bg-[rgba(181,138,82,0.42)] opacity-70 transition group-hover:bg-[#b58a52] group-hover:opacity-100 group-focus-visible:bg-[#8f5d2f] group-focus-visible:opacity-100" />
           </button>
           <ImageComposer
             mode={imageMode}
@@ -1341,7 +1341,7 @@ function ImageStudioSidebar({
 }) {
   return (
     <aside className="flex h-full min-h-0 w-full flex-col bg-white/32">
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-color:rgba(244,114,182,.45)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-rose-300/55 [&::-webkit-scrollbar-track]:bg-transparent">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-color:rgba(181,138,82,.45)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(181,138,82,0.55)] [&::-webkit-scrollbar-track]:bg-transparent">
         <div className="min-h-[320px]">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div>

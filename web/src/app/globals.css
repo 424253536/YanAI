@@ -252,6 +252,8 @@
   }
 
   .bg-rose-100,
+  [class~="bg-rose-200/70"],
+  [class~="bg-rose-300/55"],
   [class~="bg-rose-100/80"] {
     background-color: rgba(234, 214, 183, 0.86) !important;
   }
@@ -315,6 +317,13 @@
     border-color: rgba(143, 93, 47, 0.28) !important;
   }
 
+  .border-fuchsia-100,
+  .border-fuchsia-200,
+  [class~="border-fuchsia-100"],
+  [class~="border-fuchsia-200"] {
+    border-color: rgba(143, 93, 47, 0.2) !important;
+  }
+
   .border-white,
   [class~="border-white/70"],
   [class~="border-white/72"],
@@ -337,7 +346,10 @@
   .text-rose-500,
   .text-rose-600,
   .text-rose-700,
-  .text-fuchsia-700 {
+  .text-pink-600,
+  .text-fuchsia-500,
+  .text-fuchsia-700,
+  .text-fuchsia-900 {
     color: #8f5d2f !important;
   }
 
