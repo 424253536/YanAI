@@ -90,9 +90,9 @@ const metricCards = [
   { key: "total", label: "账户总数", color: "text-stone-900", icon: UserRound },
   { key: "active", label: "正常账户", color: "text-emerald-600", icon: CheckCircle2 },
   { key: "limited", label: "限流账户", color: "text-orange-500", icon: CircleAlert },
-  { key: "abnormal", label: "异常账户", color: "text-rose-500", icon: CircleOff },
+  { key: "abnormal", label: "异常账户", color: "text-red-600", icon: CircleOff },
   { key: "disabled", label: "禁用账户", color: "text-stone-500", icon: Ban },
-  { key: "quota", label: "剩余额度", color: "text-[#8f5d2f]", icon: RefreshCw },
+  { key: "quota", label: "剩余额度", color: "text-[#2563eb]", icon: RefreshCw },
 ] as const;
 
 function isUnlimitedImageQuotaAccount(account: Account) {
@@ -403,9 +403,9 @@ function AccountsPageContent() {
         return;
       }
       await navigator.clipboard.writeText(`${JSON.stringify(item, null, 2)}\n`);
-      toast.success("完整账号 JSON 已复制");
+      toast.success("完整账号数据已复制");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "复制完整账号 JSON 失败";
+      const message = error instanceof Error ? error.message : "复制完整账号数据失败";
       toast.error(message);
     } finally {
       setIsCopyingAccountJson(false);
@@ -501,22 +501,22 @@ function AccountsPageContent() {
   );
 
   return (
-    <section className="h-full min-h-0 space-y-5 overflow-y-auto pr-1 pb-8 [scrollbar-color:rgba(143,93,47,.38)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#b58a52]/55 [&::-webkit-scrollbar-track]:bg-transparent">
+    <section className="h-full min-h-0 space-y-5 overflow-y-auto pr-1 pb-8 [scrollbar-color:rgba(37,99,235,.38)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#60a5fa]/55 [&::-webkit-scrollbar-track]:bg-transparent">
       <section className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">
             Account Pool
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-stone-950">号池管理</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
-            统一维护账号资源、OAuth 凭据状态与额度表现，保留原有刷新、导入和导出流程。
+            统一维护账号资源、上游凭据状态与额度表现，保留原有刷新、导入和导出流程。
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
-            className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78 px-4 text-stone-700 hover:bg-[#fffaf2]"
+            className="h-10 rounded-xl px-4"
             onClick={() => void loadAccounts()}
             disabled={isLoading || isRefreshing || isDeleting}
           >
@@ -525,7 +525,7 @@ function AccountsPageContent() {
           </Button>
           <Button
             variant="outline"
-            className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78 px-4 text-stone-700 hover:bg-[#fffaf2]"
+            className="h-10 rounded-xl px-4"
             onClick={() => void handleRefreshAccounts(accounts.map((item) => item.access_token))}
             disabled={isLoading || isRefreshing || isDeleting || accounts.length === 0}
           >
@@ -542,12 +542,12 @@ function AccountsPageContent() {
           />
           <Button
             variant="outline"
-            className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78 px-4 text-stone-700 hover:bg-[#fffaf2]"
+            className="h-10 rounded-xl px-4"
             onClick={() => downloadTokens(accounts)}
             disabled={accounts.length === 0}
           >
             <Download className="size-4" />
-            导出全部 Token
+            导出全部凭据
           </Button>
         </div>
       </section>
@@ -564,7 +564,7 @@ function AccountsPageContent() {
             <div className="rounded-xl border border-stone-200 bg-stone-50/80 p-4">
               <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
-                  <div className="text-sm font-medium text-stone-700">OAuth 凭据</div>
+                  <div className="text-sm font-medium text-stone-700">上游凭据</div>
                   <div className="mt-1 text-xs text-stone-500">显示保存状态和脱敏摘要，完整值仍只保存在后端。</div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -578,14 +578,14 @@ function AccountsPageContent() {
                     disabled={isCopyingAccountJson || copyingExportField !== null}
                   >
                     {isCopyingAccountJson ? <LoaderCircle className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
-                    复制完整 JSON
+                    复制完整数据
                   </Button>
                 </div>
               </div>
               <div className="grid gap-2 sm:grid-cols-3">
                 {[
-                  ["refresh_token", "refresh_token", editingAccount?.oauthCredentials?.refreshToken],
-                  ["id_token", "id_token", editingAccount?.oauthCredentials?.idToken],
+                  ["刷新凭据", "refresh_token", editingAccount?.oauthCredentials?.refreshToken],
+                  ["身份凭据", "id_token", editingAccount?.oauthCredentials?.idToken],
                   ["password", "password", editingAccount?.oauthCredentials?.password],
                 ].map(([label, field, value]) => {
                   const credential = value as CredentialPreview | undefined;
@@ -613,8 +613,8 @@ function AccountsPageContent() {
               <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
                 <div className="rounded-lg bg-white px-3 py-2">
                   <div className="flex items-center justify-between gap-2 text-stone-400">
-                    <span>access_token</span>
-                    {renderVisibleCopyButton("access_token", editingAccount?.access_token)}
+                    <span>访问凭据</span>
+                    {renderVisibleCopyButton("访问凭据", editingAccount?.access_token)}
                   </div>
                   <div className="mt-1 truncate font-mono text-stone-700">
                     {maskToken(editingAccount?.access_token)}
@@ -649,8 +649,8 @@ function AccountsPageContent() {
                 </div>
                 <div className="rounded-lg bg-white px-3 py-2">
                   <div className="flex items-center justify-between gap-2 text-stone-400">
-                    <span>chatgpt_account_id</span>
-                    {renderVisibleCopyButton("chatgpt_account_id", editingAccount?.oauthCredentials?.chatgptAccountId)}
+                    <span>上游账号 ID</span>
+                    {renderVisibleCopyButton("上游账号 ID", editingAccount?.oauthCredentials?.chatgptAccountId)}
                   </div>
                   <div className="mt-1 truncate font-mono text-stone-700">
                     {editingAccount?.oauthCredentials?.chatgptAccountId || "—"}
@@ -658,9 +658,9 @@ function AccountsPageContent() {
                 </div>
                 <div className="rounded-lg bg-white px-3 py-2">
                   <div className="flex items-center justify-between gap-2 text-stone-400">
-                    <span>chatgpt_user_id</span>
+                    <span>上游用户 ID</span>
                     {renderVisibleCopyButton(
-                      "chatgpt_user_id",
+                      "上游用户 ID",
                       editingAccount?.oauthCredentials?.chatgptUserId || editingAccount?.user_id,
                     )}
                   </div>
@@ -723,7 +723,7 @@ function AccountsPageContent() {
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="h-10 rounded-xl px-5"
               onClick={() => void handleUpdateAccount()}
               disabled={isUpdating}
             >
@@ -740,7 +740,7 @@ function AccountsPageContent() {
             const Icon = item.icon;
             const value = summary[item.key];
             return (
-              <Card key={item.key} className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+              <Card key={item.key} className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
                 <CardContent className="p-4">
                   <div className="mb-4 flex items-start justify-between">
                     <span className="text-xs font-medium text-stone-400">{item.label}</span>
@@ -777,7 +777,7 @@ function AccountsPageContent() {
                   setPage(1);
                 }}
                 placeholder="搜索邮箱"
-                className="h-10 rounded-xl border-stone-200 bg-white/85 pl-10"
+                className="h-10 pl-10"
               />
             </div>
             <Select
@@ -787,7 +787,7 @@ function AccountsPageContent() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="h-10 w-full rounded-xl border-stone-200 bg-white/85 lg:w-[150px]">
+              <SelectTrigger className="h-10 w-full lg:w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -805,7 +805,7 @@ function AccountsPageContent() {
                 setPage(1);
               }}
             >
-              <SelectTrigger className="h-10 w-full rounded-xl border-stone-200 bg-white/85 lg:w-[150px]">
+              <SelectTrigger className="h-10 w-full lg:w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -820,9 +820,9 @@ function AccountsPageContent() {
         </div>
 
         {isLoading && accounts.length === 0 ? (
-          <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+          <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
             <CardContent className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
-              <div className="rounded-xl bg-stone-100 p-3 text-stone-500">
+              <div className="rounded-xl bg-[#eff6ff] p-3 text-[#2563eb]">
                 <LoaderCircle className="size-5 animate-spin" />
               </div>
               <div className="space-y-1">
@@ -835,12 +835,12 @@ function AccountsPageContent() {
 
         <Card
           className={cn(
-            "overflow-hidden rounded-lg border-white/80 bg-white/80 shadow-sm",
+            "overflow-hidden rounded-2xl border-[#e2e8f0] bg-white/88 shadow-sm",
             isLoading && accounts.length === 0 ? "hidden" : "",
           )}
         >
           <CardContent className="space-y-0 p-0">
-            <div className="flex flex-col gap-3 border-b border-stone-100 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 border-b border-[#e2e8f0] bg-[#f8fbff] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
                 <Button
                   variant="ghost"
@@ -862,7 +862,7 @@ function AccountsPageContent() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-lg px-3 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                  className="h-8 rounded-lg px-3 text-red-600 hover:bg-red-50 hover:text-red-700"
                   onClick={() => void handleDeleteTokens(abnormalTokens)}
                   disabled={abnormalTokens.length === 0 || isDeleting}
                 >
@@ -871,7 +871,7 @@ function AccountsPageContent() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="h-8 rounded-lg px-3 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+                  className="h-8 rounded-lg px-3 text-red-600 hover:bg-red-50 hover:text-red-700"
                   onClick={() => void handleDeleteTokens(selectedTokens)}
                   disabled={selectedTokens.length === 0 || isDeleting}
                 >
@@ -888,7 +888,7 @@ function AccountsPageContent() {
 
             <div className="overflow-x-auto">
               <table className="w-full min-w-[920px] text-left">
-                <thead className="border-b border-stone-100 text-[11px] text-stone-400 uppercase tracking-[0.18em]">
+                <thead className="border-b border-[#e2e8f0] bg-[#f8fbff] text-[11px] text-stone-500 uppercase tracking-[0.18em]">
                   <tr>
                     <th className="w-12 px-4 py-3">
                       <Checkbox
@@ -915,7 +915,7 @@ function AccountsPageContent() {
                     return (
                       <tr
                         key={account.id}
-                        className="border-b border-stone-100/80 text-sm text-stone-600 transition-colors hover:bg-stone-50/70"
+                        className="border-b border-[#e2e8f0] text-sm text-stone-600 transition-colors hover:bg-[#f8fbff]"
                       >
                         <td className="px-4 py-3">
                           <Checkbox
@@ -1001,7 +1001,7 @@ function AccountsPageContent() {
                             </button>
                             <button
                               type="button"
-                              className="rounded-lg p-2 transition hover:bg-rose-50 hover:text-rose-500"
+                              className="rounded-lg p-2 transition hover:bg-red-50 hover:text-red-600"
                               onClick={() => void handleDeleteTokens([account.access_token])}
                               disabled={isDeleting}
                             >
@@ -1017,7 +1017,7 @@ function AccountsPageContent() {
 
               {!isLoading && currentRows.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
-                  <div className="rounded-xl bg-stone-100 p-3 text-stone-500">
+                  <div className="rounded-xl bg-[#eff6ff] p-3 text-[#2563eb]">
                     <Search className="size-5" />
                   </div>
                   <div className="space-y-1">
@@ -1028,7 +1028,7 @@ function AccountsPageContent() {
               ) : null}
             </div>
 
-            <div className="border-t border-stone-100 px-4 py-4">
+            <div className="border-t border-[#e2e8f0] bg-[#f8fbff] px-4 py-4">
               <div className="flex items-center justify-center gap-3 overflow-x-auto whitespace-nowrap">
                 <div className="shrink-0 text-sm text-stone-500">
                 显示第 {filteredAccounts.length === 0 ? 0 : startIndex + 1} -{" "}
@@ -1046,7 +1046,7 @@ function AccountsPageContent() {
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger className="h-10 w-[108px] shrink-0 rounded-lg border-stone-200 bg-white text-sm leading-none">
+                  <SelectTrigger className="h-10 w-[108px] shrink-0 rounded-lg text-sm leading-none">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1059,7 +1059,7 @@ function AccountsPageContent() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="size-10 shrink-0 rounded-lg border-stone-200 bg-white"
+                  className="size-10 shrink-0 rounded-lg"
                   disabled={safePage <= 1}
                   onClick={() => setPage((prev) => Math.max(1, prev - 1))}
                 >
@@ -1077,8 +1077,8 @@ function AccountsPageContent() {
                       className={cn(
                         "h-10 min-w-10 shrink-0 rounded-lg px-3",
                         item === safePage
-                          ? "bg-stone-950 text-white hover:bg-stone-800"
-                          : "border-stone-200 bg-white text-stone-700",
+                          ? "bg-[#2563eb] text-white hover:bg-[#1d4ed8]"
+                          : "border-[#e2e8f0] bg-white text-stone-700",
                       )}
                       onClick={() => setPage(item)}
                     >
@@ -1109,8 +1109,8 @@ export default function AccountsPage() {
 
   if (isCheckingAuth || !session || session.role !== "admin") {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-stone-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }

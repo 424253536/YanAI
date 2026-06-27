@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -272,10 +273,10 @@ function MyImagesContent() {
   }, []);
 
   return (
-    <section className="space-y-5">
+    <section className="min-h-full space-y-5 pb-8">
       <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Personal archive</div>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Personal archive</div>
           <h1 className="text-3xl font-bold tracking-tight text-stone-950">我的图片</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
             查看、下载和同步个人生成图片，保留原有批量选择与删除行为。
@@ -291,36 +292,36 @@ function MyImagesContent() {
               setPage(1);
             }}
           />
-          <Button variant="outline" onClick={() => setWebdavOpen(true)} className="h-10 rounded-xl border-rose-100 bg-white px-4 text-stone-700">
+          <Button variant="outline" onClick={() => setWebdavOpen(true)} className="h-10 rounded-xl border-[#dbeafe] bg-white px-4 text-stone-700">
             <Settings className="size-4" />
             WebDAV
           </Button>
-          <Button variant="outline" onClick={() => void syncToWebDAV()} disabled={isSyncingWebDAV} className="h-10 rounded-xl border-rose-100 bg-white px-4 text-stone-700">
+          <Button variant="outline" onClick={() => void syncToWebDAV()} disabled={isSyncingWebDAV} className="h-10 rounded-xl border-[#dbeafe] bg-white px-4 text-stone-700">
             {isSyncingWebDAV ? <LoaderCircle className="size-4 animate-spin" /> : <CloudUpload className="size-4" />}
             同步
           </Button>
-          <Button variant="outline" onClick={() => { setStartDate(""); setEndDate(""); setPage(1); }} className="h-10 rounded-xl border-rose-100 bg-white px-4 text-stone-700">
+          <Button variant="outline" onClick={() => { setStartDate(""); setEndDate(""); setPage(1); }} className="h-10 rounded-xl border-[#dbeafe] bg-white px-4 text-stone-700">
             清除筛选
           </Button>
-          <Button onClick={() => void loadImages()} disabled={isLoading} className="h-10 rounded-xl bg-rose-500 px-4 text-white hover:bg-rose-600">
+          <Button onClick={() => void loadImages()} disabled={isLoading} className="h-10 rounded-xl px-4">
             <RefreshCw className={`size-4 ${isLoading ? "animate-spin" : ""}`} />
             刷新
           </Button>
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-[#e2e8f0] bg-white/88 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-col gap-3 border-b border-rose-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-b border-[#e2e8f0] bg-[#f8fbff] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-3 text-sm text-stone-600">
               <span className="flex items-center gap-2">
-                <ImageIcon className="size-4 text-rose-500" />
+                <ImageIcon className="size-4 text-[#2563eb]" />
                 共 {total} 张
               </span>
-              {selectedCount > 0 ? <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700">已选 {selectedCount} 张</span> : null}
+              {selectedCount > 0 ? <span className="rounded-full bg-[#eff6ff] px-2.5 py-1 text-xs font-medium text-[#2563eb]">已选 {selectedCount} 张</span> : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex h-8 items-center gap-2 rounded-lg border border-rose-100 bg-white px-3 text-sm text-stone-600">
+              <div className="flex h-8 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white px-3 text-sm text-stone-600">
                 <Checkbox
                   checked={allCurrentSelected ? true : someCurrentSelected ? "indeterminate" : false}
                   onCheckedChange={(checked) => toggleRows(checked === true)}
@@ -337,7 +338,7 @@ function MyImagesContent() {
               ) : null}
               <Button
                 variant="outline"
-                className="h-8 rounded-lg border-rose-100 bg-white px-3 text-stone-600"
+                className="h-8 rounded-lg border-[#dbeafe] bg-white px-3 text-stone-600"
                 onClick={() => void downloadSelectedImages()}
                 disabled={selectedCount === 0 || isLoading || isDownloading}
               >
@@ -357,28 +358,36 @@ function MyImagesContent() {
           </div>
           {isLoading ? (
             <div className="flex h-56 items-center justify-center">
-              <LoaderCircle className="size-5 animate-spin text-rose-400" />
+              <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
             </div>
           ) : items.length === 0 ? (
-            <div className="px-6 py-14 text-center text-sm text-stone-500">还没有生成过图片</div>
+            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+              <div className="grid size-12 place-items-center rounded-2xl bg-[#eff6ff] text-[#2563eb]">
+                <ImageIcon className="size-5" />
+              </div>
+              <div className="mt-4 text-base font-semibold text-slate-950">还没有生成过图片</div>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                在创作台完成生成后，图片会自动出现在这里，方便下载、同步和批量管理。
+              </p>
+            </div>
           ) : (
             <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {items.map((item, index) => {
                 const key = imageKey(item);
                 const selected = Boolean(selectedItems[key]);
                 return (
-                  <div key={`${item.url}-${index}`} className={`group relative border-r border-b border-[rgba(143,93,47,0.08)] p-4 transition hover:bg-[#efe6d8]/42 ${selected ? "bg-[#ead6b7]/38 ring-1 ring-inset ring-[#b58a52]/45" : ""}`}>
+                  <div key={`${item.url}-${index}`} className={`group relative border-r border-b border-[rgba(37,99,235,0.08)] p-4 transition hover:bg-[#eff6ff]/42 ${selected ? "bg-[#dbeafe]/38 ring-1 ring-inset ring-[#60a5fa]/45" : ""}`}>
                     <div className="absolute top-6 left-6 z-10 rounded-md bg-white/90 p-1 shadow-sm">
                       <Checkbox
                         checked={selected}
                         onCheckedChange={(checked) => toggleImage(item, checked === true)}
                         aria-label="选择图片"
-                        className="size-5 border-rose-200 bg-white"
+                        className="size-5 border-[#dbeafe] bg-white"
                       />
                     </div>
                     <button
                       type="button"
-                      className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-[#efe6d8] text-left shadow-sm"
+                      className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-[#eff6ff] text-left shadow-sm"
                       onClick={() => {
                         setLightboxIndex(index);
                         setLightboxOpen(true);
@@ -399,7 +408,7 @@ function MyImagesContent() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 rounded-lg text-stone-400 hover:bg-rose-50 hover:text-rose-600"
+                            className="size-8 rounded-lg text-stone-400 hover:bg-[#eff6ff] hover:text-[#2563eb]"
                             onClick={() => {
                               downloadUrl(item);
                               toast.success("已开始下载图片");
@@ -412,7 +421,7 @@ function MyImagesContent() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 rounded-lg text-stone-400 hover:bg-rose-50 hover:text-rose-600"
+                            className="size-8 rounded-lg text-stone-400 hover:bg-[#eff6ff] hover:text-[#2563eb]"
                             onClick={() => {
                               void navigator.clipboard.writeText(item.url);
                               toast.success("图片地址已复制");
@@ -435,12 +444,12 @@ function MyImagesContent() {
             </div>
           )}
           {!isLoading && total > 0 ? (
-            <div className="flex items-center justify-end gap-2 border-t border-rose-50 px-4 py-3 text-sm text-stone-500">
+            <div className="flex items-center justify-end gap-2 border-t border-[#e2e8f0] px-4 py-3 text-sm text-stone-500">
               <span>第 {safePage} / {pageCount} 页，共 {total} 张</span>
-              <Button variant="outline" size="icon" className="size-9 rounded-lg border-rose-100 bg-white" disabled={safePage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+              <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#dbeafe] bg-white" disabled={safePage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>
                 <ChevronLeft className="size-4" />
               </Button>
-              <Button variant="outline" size="icon" className="size-9 rounded-lg border-rose-100 bg-white" disabled={safePage >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>
+              <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#dbeafe] bg-white" disabled={safePage >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>
                 <ChevronRight className="size-4" />
               </Button>
             </div>
@@ -466,6 +475,9 @@ function MyImagesContent() {
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => (!open ? setDeleteTarget(null) : null)}>
         <DialogContent>
           <DialogHeader>
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <AlertTriangle className="size-5" />
+            </div>
             <DialogTitle>{deleteCount === 1 ? "删除图片" : "批量删除图片"}</DialogTitle>
             <DialogDescription>确认删除选中的 {deleteCount} 张图片吗？删除后图片文件和记录将无法恢复。</DialogDescription>
           </DialogHeader>
@@ -488,8 +500,8 @@ export default function MyImagesPage() {
   const { isCheckingAuth, session } = useAuthGuard(["user"]);
   if (isCheckingAuth || !session) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-rose-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }

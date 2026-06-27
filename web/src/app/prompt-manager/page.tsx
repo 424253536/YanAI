@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
+  AlertTriangle,
   CheckCircle2,
   Copy,
   ImagePlus,
@@ -83,7 +84,7 @@ function normalizeMode(value?: string): "generate" | "edit" {
 }
 
 function modeLabel(value?: string) {
-  return normalizeMode(value) === "edit" ? "图生图" : "文生图";
+  return normalizeMode(value) === "edit" ? "参考图编辑" : "文字生成";
 }
 
 function categoryLabel(item: PromptLibraryItem) {
@@ -240,7 +241,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       const data = isAdmin ? await fetchAdminPrompts() : await fetchMyPrompts();
       setItems(data.items);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "加载提示词失败");
+      toast.error(error instanceof Error ? error.message : "加载创作模板失败");
     } finally {
       setIsLoading(false);
     }
@@ -325,7 +326,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
   const handleSubmit = async () => {
     const payload = toPayload(form);
     if (!payload.title || !payload.prompt) {
-      toast.error("请填写标题和提示词");
+      toast.error("请填写标题和创作描述");
       return;
     }
     setIsSaving(true);
@@ -339,7 +340,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
           : await createMyPrompt(payload);
       setItems(data.items);
       setDialogOpen(false);
-      toast.success(editingItem ? "提示词已更新" : "提示词已添加");
+      toast.success(editingItem ? "创作模板已更新" : "创作模板已添加");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "保存失败");
     } finally {
@@ -359,7 +360,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       const data = isAdmin ? await deleteAdminPrompt(deleteTarget.id) : await deleteMyPrompt(deleteTarget.id);
       setItems(data.items);
       setDeleteTarget(null);
-      toast.success("提示词已删除");
+      toast.success("创作模板已删除");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "删除失败");
     }
@@ -367,7 +368,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
 
   const copyPrompt = async (item: PromptLibraryItem) => {
     await navigator.clipboard.writeText(item.prompt);
-    toast.success("提示词已复制");
+    toast.success("创作描述已复制");
   };
 
   const sharePromptItem = async (item: PromptLibraryItem) => {
@@ -404,7 +405,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
     try {
       const data = await approveAdminPrompt(item.id);
       setItems(data.items);
-      toast.success("已加入公共提示词库");
+      toast.success("已加入公共模板库");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "审核失败");
     }
@@ -443,7 +444,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       setShareDialogOpen(false);
       setShareInput("");
       setSharePreview(null);
-      toast.success(isAdmin ? "已导入公共提示词库" : "已导入我的提示词");
+      toast.success(isAdmin ? "已导入公共模板库" : "已导入我的模板");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "导入失败");
     } finally {
@@ -453,13 +454,13 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
   const formPreviewUrl = resolveApiAssetUrl(form.preview);
 
   return (
-    <section className="space-y-5">
+    <section className="min-h-full space-y-5 pb-8">
       <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Prompt library</div>
-          <h1 className="text-3xl font-bold tracking-tight text-stone-950">{isAdmin ? "提示词管理" : "我的提示词"}</h1>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Template library</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">{isAdmin ? "创作模板管理" : "我的创作模板"}</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
-            {isAdmin ? "审核用户提交的提示词，维护公共提示词库。" : "创建、分享和提交自己的提示词，审核通过后会进入公共库。"}
+            {isAdmin ? "审核用户提交的创作模板，维护公共模板库。" : "创建、分享和提交自己的创作模板，审核通过后会进入公共库。"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -475,9 +476,9 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
             <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
             刷新
           </Button>
-          <Button onClick={openCreateDialog} className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800">
+          <Button onClick={openCreateDialog} className="h-10 rounded-xl px-4">
             <Plus className="size-4" />
-            {isAdmin ? "添加公共提示词" : "添加提示词"}
+            {isAdmin ? "添加公共模板" : "添加模板"}
           </Button>
         </div>
       </div>
@@ -489,7 +490,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="搜索标题、作者、分类或提示词内容"
+              placeholder="搜索标题、作者、分类或描述内容"
               className="h-10 rounded-xl border-stone-200 bg-stone-50 pl-9 shadow-none focus-visible:bg-white"
             />
           </div>
@@ -504,7 +505,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
               className={cn(
                 "h-9 rounded-full border px-3 text-xs font-medium transition",
                 category === item
-                  ? "border-stone-900 bg-stone-950 text-white"
+                  ? "border-[#2563eb] bg-[#2563eb] text-white"
                   : "border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:text-stone-900",
               )}
             >
@@ -521,7 +522,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
               className={cn(
                 "h-9 rounded-full border px-3 text-xs font-medium transition",
                 statusFilter === item
-                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                  ? "border-[#2563eb] bg-[#2563eb] text-white"
                   : "border-stone-200 bg-white text-stone-600 hover:border-stone-300 hover:text-stone-900",
               )}
             >
@@ -534,11 +535,11 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       {isLoading ? (
         <div className="flex min-h-[320px] items-center justify-center text-sm text-stone-500">
           <LoaderCircle className="mr-2 size-4 animate-spin" />
-          正在加载提示词
+          正在加载创作模板
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="flex min-h-[320px] items-center justify-center rounded-lg border border-dashed border-rose-100 bg-white/60 text-sm text-stone-500">
-          没有找到提示词
+        <div className="flex min-h-[320px] items-center justify-center rounded-lg border border-dashed border-[#dbeafe] bg-white/60 text-sm text-stone-500">
+          没有找到创作模板
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -571,7 +572,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
                     {item.description ? <p className="mt-1 truncate text-xs text-stone-400">{item.description}</p> : null}
                     <p className="mt-2 line-clamp-4 text-xs leading-5 text-stone-500">{summarizePrompt(item.prompt)}</p>
                     {status === "rejected" && item.rejection_reason ? (
-                      <p className="mt-2 line-clamp-2 rounded-lg bg-rose-50 px-2 py-1.5 text-xs leading-5 text-rose-600">
+                      <p className="mt-2 line-clamp-2 rounded-lg bg-red-50 px-2 py-1.5 text-xs leading-5 text-red-600">
                         {item.rejection_reason}
                       </p>
                     ) : null}
@@ -582,10 +583,10 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
                       {item.author || "未署名"}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => void copyPrompt(item)} aria-label="复制提示词" title="复制提示词">
+                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => void copyPrompt(item)} aria-label="复制创作描述" title="复制创作描述">
                         <Copy className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => void sharePromptItem(item)} aria-label="分享提示词" title="分享提示词">
+                      <Button variant="ghost" size="icon" className="size-8 rounded-lg text-stone-500 hover:bg-stone-100" onClick={() => void sharePromptItem(item)} aria-label="分享创作模板" title="分享创作模板">
                         <Share2 className="size-4" />
                       </Button>
                       {canSubmit ? (
@@ -598,7 +599,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
                           <Button variant="ghost" size="icon" className="size-8 rounded-lg text-emerald-600 hover:bg-emerald-50" onClick={() => void handleApprove(item)} aria-label="通过审核" title="通过审核">
                             <CheckCircle2 className="size-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="size-8 rounded-lg text-rose-600 hover:bg-rose-50" onClick={() => void handleReject(item)} aria-label="驳回提示词" title="驳回提示词">
+                          <Button variant="ghost" size="icon" className="size-8 rounded-lg text-red-600 hover:bg-red-50" onClick={() => void handleReject(item)} aria-label="驳回创作模板" title="驳回创作模板">
                             <XCircle className="size-4" />
                           </Button>
                         </>
@@ -609,8 +610,8 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
                         disabled={!editable}
                         className="size-8 rounded-lg text-stone-500 hover:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300"
                         onClick={() => openEditDialog(item)}
-                        aria-label="编辑提示词"
-                        title="编辑提示词"
+                        aria-label="编辑创作模板"
+                        title="编辑创作模板"
                       >
                         <Pencil className="size-4" />
                       </Button>
@@ -618,10 +619,10 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
                         variant="ghost"
                         size="icon"
                         disabled={!removable}
-                        className="size-8 rounded-lg text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:text-stone-300"
+                        className="size-8 rounded-lg text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:text-stone-300"
                         onClick={() => void handleDelete(item)}
-                        aria-label="删除提示词"
-                        title="删除提示词"
+                        aria-label="删除创作模板"
+                        title="删除创作模板"
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -637,9 +638,12 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => (!open ? setDeleteTarget(null) : null)}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>删除提示词</DialogTitle>
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <AlertTriangle className="size-5" />
+            </div>
+            <DialogTitle>删除创作模板</DialogTitle>
             <DialogDescription>
-              确认删除「{deleteTarget?.title}」？删除后该提示词将不再出现在当前列表中。
+              确认删除「{deleteTarget?.title}」？删除后该模板将不再出现在当前列表中。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -656,7 +660,10 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       <Dialog open={Boolean(rejectTarget)} onOpenChange={(open) => (!open ? setRejectTarget(null) : null)}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>驳回提示词</DialogTitle>
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <AlertTriangle className="size-5" />
+            </div>
+            <DialogTitle>驳回创作模板</DialogTitle>
             <DialogDescription>
               为「{rejectTarget?.title}」填写驳回原因，留空也可以直接驳回。
             </DialogDescription>
@@ -671,7 +678,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
             <Button variant="outline" onClick={() => setRejectTarget(null)}>
               取消
             </Button>
-            <Button onClick={() => void confirmReject()}>
+            <Button variant="destructive" onClick={() => void confirmReject()}>
               确认驳回
             </Button>
           </DialogFooter>
@@ -679,11 +686,11 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       </Dialog>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent className="w-[min(94vw,560px)] max-w-none rounded-lg p-0">
+        <DialogContent className="w-[min(94vw,560px)] max-w-none rounded-2xl p-0">
           <DialogHeader className="border-b border-stone-200 px-5 pt-5 pb-4 sm:px-6">
-            <DialogTitle className="text-xl font-semibold text-stone-950">导入分享提示词</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-stone-950">导入分享模板</DialogTitle>
             <DialogDescription className="text-stone-500">
-              粘贴别人分享的链接或分享 ID，确认后会导入到{isAdmin ? "公共提示词库" : "我的提示词"}。
+              粘贴别人分享的链接或分享 ID，确认后会导入到{isAdmin ? "公共模板库" : "我的模板"}。
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 px-5 py-5 sm:px-6">
@@ -700,7 +707,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
               />
             </label>
             {sharePreview ? (
-              <div className="rounded-lg border border-rose-100 bg-rose-50/45 p-4">
+              <div className="rounded-lg border border-[#dbeafe] bg-[#eff6ff]/55 p-4">
                 <div className="mb-2 flex flex-wrap gap-2">
                   <Badge variant={normalizeMode(sharePreview.mode) === "edit" ? "info" : "success"}>
                     {modeLabel(sharePreview.mode)}
@@ -732,7 +739,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
               type="button"
               onClick={() => void handleImportShare()}
               disabled={isImportingShare || !shareInput.trim()}
-              className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800"
+              className="h-10 rounded-xl px-4"
             >
               {isImportingShare ? <LoaderCircle className="size-4 animate-spin" /> : null}
               导入
@@ -742,13 +749,13 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
       </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="flex max-h-[88vh] w-[min(94vw,860px)] max-w-none flex-col overflow-hidden rounded-lg p-0">
-          <DialogHeader className="border-b border-stone-200 px-5 pt-5 pb-4 sm:px-6">
+        <DialogContent className="flex max-h-[88vh] w-[min(94vw,860px)] max-w-none flex-col overflow-hidden rounded-2xl p-0">
+          <DialogHeader className="border-b border-[#e2e8f0] bg-[#f8fbff] px-5 pt-5 pb-4 sm:px-6">
             <DialogTitle className="text-xl font-semibold text-stone-950">
-              {editingItem ? "编辑提示词" : "添加提示词"}
+              {editingItem ? "编辑创作模板" : "添加创作模板"}
             </DialogTitle>
             <DialogDescription className="text-stone-500">
-              标题、卡片描述、提示词和示例图会同步到画图页。
+              标题、卡片描述、创作描述和示例图会同步到画图页。
             </DialogDescription>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
@@ -770,8 +777,8 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="generate">文生图</SelectItem>
-                        <SelectItem value="edit">图生图</SelectItem>
+                        <SelectItem value="generate">文字生成</SelectItem>
+                        <SelectItem value="edit">参考图编辑</SelectItem>
                       </SelectContent>
                     </Select>
                   </label>
@@ -795,7 +802,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
                   </label>
                 </div>
                 <label className="block space-y-1.5">
-                  <span className="text-xs font-medium text-stone-500">提示词</span>
+                  <span className="text-xs font-medium text-stone-500">创作描述</span>
                   <Textarea
                     value={form.prompt}
                     onChange={(event) => updateForm({ prompt: event.target.value })}
@@ -852,11 +859,11 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-2 border-t border-stone-200 px-5 py-4 sm:px-6">
-            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="h-10 rounded-xl border-stone-200 bg-white px-4">
+          <div className="flex justify-end gap-2 border-t border-[#e2e8f0] bg-[#f8fbff] px-5 py-4 sm:px-6">
+            <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="h-10 rounded-xl px-4">
               取消
             </Button>
-            <Button type="button" onClick={() => void handleSubmit()} disabled={isSaving} className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800">
+            <Button type="button" onClick={() => void handleSubmit()} disabled={isSaving} className="h-10 rounded-xl px-4">
               {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : null}
               保存
             </Button>
@@ -870,7 +877,7 @@ function PromptManagerContent({ session }: { session: StoredAuthSession }) {
 export default function PromptManagerPage() {
   const { isCheckingAuth, session } = useAuthGuard();
   if (isCheckingAuth || !session) {
-    return <div className="flex min-h-[40vh] items-center justify-center"><LoaderCircle className="size-5 animate-spin text-stone-400" /></div>;
+    return <div className="flex h-full min-h-[40vh] items-center justify-center"><LoaderCircle className="size-5 animate-spin text-[#2563eb]" /></div>;
   }
   return <PromptManagerContent session={session} />;
 }

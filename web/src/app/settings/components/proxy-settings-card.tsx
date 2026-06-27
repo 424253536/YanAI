@@ -47,7 +47,7 @@ export function ProxySettingsCard() {
   };
 
   return (
-    <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+    <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.35)]">
       <CardContent className="space-y-6 p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-center gap-3">
@@ -91,7 +91,7 @@ export function ProxySettingsCard() {
                 className={`rounded-xl border px-4 py-3 text-sm leading-6 ${
                   testResult.ok
                     ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "border-rose-200 bg-rose-50 text-rose-800"
+                    : "border-red-200 bg-red-50 text-red-800"
                 }`}
               >
                 {testResult.ok
@@ -111,7 +111,7 @@ export function ProxySettingsCard() {
                 测试代理
               </Button>
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className="h-10 rounded-xl px-5"
                 onClick={() => void saveConfig()}
                 disabled={isSavingConfig}
               >

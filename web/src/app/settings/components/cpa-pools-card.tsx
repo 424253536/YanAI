@@ -19,7 +19,7 @@ export function CPAPoolsCard() {
   const browseFiles = useSettingsStore((state) => state.browseFiles);
 
   return (
-    <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+    <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.35)]">
       <CardContent className="space-y-6 p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -27,13 +27,13 @@ export function CPAPoolsCard() {
               <ServerCog className="size-5 text-stone-600" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">CPA 连接管理</h2>
+              <h2 className="text-lg font-semibold tracking-tight">远程凭据源</h2>
               <p className="text-sm text-stone-500">先配置连接，再按需查询远程账号并选择导入到本地号池。</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {pools.length > 0 ? <Badge className="rounded-md px-2.5 py-1">{pools.length} 个连接</Badge> : null}
-            <Button className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={openAddDialog}>
+            <Button className="h-9 rounded-xl px-4" onClick={openAddDialog}>
               <Plus className="size-4" />
               添加连接
             </Button>
@@ -48,8 +48,8 @@ export function CPAPoolsCard() {
           <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-stone-50 px-6 py-10 text-center">
             <ServerCog className="size-8 text-stone-300" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-stone-600">暂无 CPA 连接</p>
-              <p className="text-sm text-stone-400">点击「添加连接」保存你的 CLIProxyAPI 信息。</p>
+              <p className="text-sm font-medium text-stone-600">暂无远程凭据源</p>
+              <p className="text-sm text-stone-400">点击「添加连接」保存远程凭据服务信息。</p>
             </div>
           </div>
         ) : (
@@ -80,7 +80,7 @@ export function CPAPoolsCard() {
                       </button>
                       <button
                         type="button"
-                        className="rounded-lg p-2 text-stone-400 transition hover:bg-rose-50 hover:text-rose-500"
+                        className="rounded-lg p-2 text-stone-400 transition hover:bg-red-50 hover:text-red-600"
                         onClick={() => void deletePool(pool)}
                         disabled={isBusy}
                         title="删除"
@@ -137,7 +137,7 @@ export function CPAPoolsCard() {
                           </Badge>
                         </div>
                         <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
-                          <div className="h-full rounded-full bg-stone-900 transition-all" style={{ width: `${progress}%` }} />
+                          <div className="h-full rounded-full bg-[#2563eb] transition-all" style={{ width: `${progress}%` }} />
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-500">
                           <span>新增 {importJob.added}</span>
@@ -157,10 +157,10 @@ export function CPAPoolsCard() {
         <div className="rounded-xl bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-500">
           <p className="font-medium text-stone-600">使用说明</p>
           <ul className="mt-1 list-inside list-disc space-y-0.5">
-            <li>页面进入后先读取系统里已配置的 CPA 连接。</li>
+            <li>页面进入后先读取系统里已配置的远程凭据源。</li>
             <li>点击某个连接的「同步」后，会先读取远程账号列表并展示给前端选择。</li>
-            <li>确认选择后，后端后台下载对应 access_token 并导入本地号池。</li>
-            <li>前端只轮询导入进度，不直接参与 download。</li>
+            <li>确认选择后，后端会导入对应凭据并写入本地号池。</li>
+            <li>前端只展示导入进度，实际处理由后端完成。</li>
           </ul>
         </div>
       </CardContent>

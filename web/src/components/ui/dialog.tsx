@@ -32,7 +32,7 @@ function DialogOverlay({
       <DialogPrimitive.Overlay
         data-slot="dialog-overlay"
         className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out fixed inset-0 z-50 bg-[#17120f]/48 backdrop-blur-[6px]",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-slate-950/32 backdrop-blur-[6px]",
         className,
       )}
       {...props}
@@ -54,14 +54,14 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "yan-panel-strong data-[state=open]:animate-in data-[state=closed]:animate-out fixed top-[50%] left-[50%] z-50 grid w-[min(92vw,560px)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl p-6 shadow-[0_44px_140px_-48px_rgba(23,18,15,0.66)] duration-200",
+          "yan-panel-strong data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-[min(92vw,560px)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl p-6 shadow-[0_44px_140px_-48px_rgba(15,23,42,0.45)] duration-200",
           className,
         )}
         {...props}
       >
         {children}
         {showCloseButton ? (
-          <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-full border border-[rgba(143,93,47,0.12)] bg-[#fffaf2]/68 p-1.5 opacity-80 transition hover:bg-[#fffaf2] hover:opacity-100 focus:ring-2 focus:outline-none disabled:pointer-events-none">
+          <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-full border border-[#dbeafe] bg-white/82 p-1.5 opacity-80 transition hover:bg-[#eff6ff] hover:opacity-100 focus:ring-2 focus:outline-none disabled:pointer-events-none">
             <X className="size-4" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
@@ -101,7 +101,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("text-xl leading-none font-bold tracking-tight text-stone-950", className)}
+      className={cn("text-xl leading-none font-bold tracking-tight text-slate-950", className)}
       {...props}
     />
   );

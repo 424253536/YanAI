@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Gift, LoaderCircle, Save, Sparkles, TestTube, Waypoints } from "lucide-react";
+import { BadgeDollarSign, Gift, LoaderCircle, Save, TestTube, Waypoints } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -147,8 +147,8 @@ function ProfileContent() {
         test_models: uniqueModels(channelForm.models),
       });
       const text = result.ok
-        ? `${result.tested_models.length || result.model_count} 个模型可用 · ${result.latency_ms}ms`
-        : result.error || "模型测试失败";
+        ? `${result.tested_models.length || result.model_count} 个接口条目可用 · ${result.latency_ms}ms`
+        : result.error || "接口测试失败";
       setChannelTestMessage({ ok: result.ok, text });
       if (result.ok) {
         toast.success(text);
@@ -156,7 +156,7 @@ function ProfileContent() {
         toast.error(text);
       }
     } catch (error) {
-      const text = error instanceof Error ? error.message : "模型测试失败";
+      const text = error instanceof Error ? error.message : "接口测试失败";
       setChannelTestMessage({ ok: false, text });
       toast.error(text);
     } finally {
@@ -177,17 +177,17 @@ function ProfileContent() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-rose-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }
 
   return (
-    <section className="mx-auto w-full max-w-5xl space-y-5">
+    <section className="min-h-full w-full space-y-5 pb-8">
       <div className="yan-panel-strong rounded-2xl px-5 py-5">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Personal console</div>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Personal console</div>
           <h1 className="text-3xl font-bold tracking-tight text-stone-950">个人中心</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
             管理资料、个人图像渠道和兑换码额度，所有操作沿用原有账号逻辑。
@@ -196,7 +196,7 @@ function ProfileContent() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm md:col-span-2">
+        <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm md:col-span-2">
           <CardContent className="space-y-5 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -208,8 +208,8 @@ function ProfileContent() {
               </Badge>
             </div>
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-              <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="昵称" className="h-11 rounded-xl border-rose-100 bg-white" />
-              <Button className="h-11 rounded-xl bg-rose-500 text-white hover:bg-rose-600" onClick={() => void handleSave()} disabled={isSaving}>
+              <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="昵称" className="h-11 rounded-xl border-[#dbeafe] bg-white" />
+              <Button className="h-11 rounded-xl" onClick={() => void handleSave()} disabled={isSaving}>
                 {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
                 保存资料
               </Button>
@@ -217,23 +217,23 @@ function ProfileContent() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
+        <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
           <CardContent className="space-y-2 p-6">
-            <div className="rounded-2xl bg-rose-50 p-3 text-rose-500 w-fit">
-              <Sparkles className="size-5" />
+            <div className="rounded-2xl bg-[#eff6ff] p-3 text-[#2563eb] w-fit">
+              <BadgeDollarSign className="size-5" />
             </div>
             <div className="text-sm text-stone-500">可用额度</div>
-            <div className="text-4xl font-semibold text-rose-600">{user?.quota ?? 0}</div>
+            <div className="text-4xl font-semibold text-[#2563eb]">{user?.quota ?? 0}</div>
             <div className="text-xs text-stone-400">已消耗 {user?.spent_quota ?? user?.quota_used ?? 0} 点</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
         <CardContent className="space-y-5 p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
-              <Waypoints className="size-4 text-rose-500" />
+              <Waypoints className="size-4 text-[#2563eb]" />
               个人生图渠道
             </div>
             <label className="flex items-center gap-2 text-sm font-medium text-stone-700">
@@ -252,27 +252,27 @@ function ProfileContent() {
                 value={channelForm.name}
                 onChange={(event) => setChannelForm((current) => ({ ...current, name: event.target.value }))}
                 placeholder="个人生图渠道"
-                className="h-10 rounded-xl border-rose-100 bg-white text-sm font-normal"
+                className="h-10 rounded-xl border-[#dbeafe] bg-white text-sm font-normal"
               />
             </label>
             <label className="space-y-1.5 text-xs font-semibold text-stone-700">
-              <span>Base URL</span>
+              <span>服务地址</span>
               <Input
                 value={channelForm.base_url}
                 onChange={(event) => setChannelForm((current) => ({ ...current, base_url: event.target.value }))}
                 placeholder="https://api.example.com"
-                className="h-10 rounded-xl border-rose-100 bg-white text-sm font-normal"
+                className="h-10 rounded-xl border-[#dbeafe] bg-white text-sm font-normal"
               />
             </label>
             <label className="space-y-1.5 text-xs font-semibold text-stone-700">
-              <span>API Key</span>
+              <span>访问密钥</span>
               <Input
                 type="password"
                 value={channelForm.api_key}
                 onChange={(event) => setChannelForm((current) => ({ ...current, api_key: event.target.value }))}
                 placeholder={channelForm.hasApiKey ? "留空保留当前密钥" : "sk-..."}
                 autoComplete="new-password"
-                className="h-10 rounded-xl border-rose-100 bg-white text-sm font-normal"
+                className="h-10 rounded-xl border-[#dbeafe] bg-white text-sm font-normal"
               />
             </label>
             <label className="space-y-1.5 text-xs font-semibold text-stone-700">
@@ -282,23 +282,23 @@ function ProfileContent() {
                 value={channelForm.timeout}
                 onChange={(event) => setChannelForm((current) => ({ ...current, timeout: event.target.value }))}
                 placeholder="60"
-                className="h-10 rounded-xl border-rose-100 bg-white text-sm font-normal"
+                className="h-10 rounded-xl border-[#dbeafe] bg-white text-sm font-normal"
               />
             </label>
             <label className="space-y-1.5 text-xs font-semibold text-stone-700 md:col-span-2">
-              <span>模型</span>
+              <span>接口条目</span>
               <Textarea
                 value={channelForm.models}
                 onChange={(event) => setChannelForm((current) => ({ ...current, models: event.target.value }))}
                 placeholder={DEFAULT_CHANNEL_MODELS}
-                className="min-h-20 rounded-xl border-rose-100 bg-white text-sm font-normal"
+                className="min-h-20 rounded-xl border-[#dbeafe] bg-white text-sm font-normal"
               />
             </label>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             {channelTestMessage ? (
-              <div className={channelTestMessage.ok ? "text-xs font-medium text-emerald-700" : "text-xs font-medium text-rose-600"}>
+              <div className={channelTestMessage.ok ? "text-xs font-medium text-emerald-700" : "text-xs font-medium text-red-600"}>
                 {channelTestMessage.text}
               </div>
             ) : (
@@ -309,7 +309,7 @@ function ProfileContent() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="h-10 rounded-xl border-rose-100 bg-white"
+                className="h-10 rounded-xl border-[#dbeafe] bg-white"
                 disabled={isTestingChannel}
                 onClick={() => void handleTestChannel()}
               >
@@ -317,7 +317,7 @@ function ProfileContent() {
                 测试
               </Button>
               <Button
-                className="h-10 rounded-xl bg-rose-500 text-white hover:bg-rose-600"
+                className="h-10 rounded-xl"
                 disabled={isSavingChannel}
                 onClick={() => void handleSaveChannel()}
               >
@@ -329,15 +329,15 @@ function ProfileContent() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
         <CardContent className="space-y-4 p-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
-            <Gift className="size-4 text-rose-500" />
+            <Gift className="size-4 text-[#2563eb]" />
             兑换额度
           </div>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-            <Input value={code} onChange={(event) => setCode(event.target.value)} placeholder="输入兑换码" className="h-11 rounded-xl border-rose-100 bg-white uppercase" />
-            <Button className="h-11 rounded-xl bg-rose-500 text-white hover:bg-rose-600" onClick={() => void handleRedeem()}>
+            <Input value={code} onChange={(event) => setCode(event.target.value)} placeholder="输入兑换码" className="h-11 rounded-xl border-[#dbeafe] bg-white uppercase" />
+            <Button className="h-11 rounded-xl" onClick={() => void handleRedeem()}>
               立即兑换
             </Button>
           </div>
@@ -351,8 +351,8 @@ export default function ProfilePage() {
   const { isCheckingAuth, session } = useAuthGuard(["user"]);
   if (isCheckingAuth || !session) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-rose-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }

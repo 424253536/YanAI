@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Ban, CheckCircle2, Copy, KeyRound, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, Copy, KeyRound, LoaderCircle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -136,7 +136,7 @@ export function UserKeysCard() {
 
   return (
     <>
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.35)]">
         <CardContent className="space-y-6 p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -148,7 +148,7 @@ export function UserKeysCard() {
                 <p className="text-sm text-stone-500">为普通用户创建专用密钥；普通用户只能进入画图页，不能查看设置和号池。</p>
               </div>
             </div>
-            <Button className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={() => setIsDialogOpen(true)}>
+            <Button className="h-9 rounded-xl px-4" onClick={() => setIsDialogOpen(true)}>
               <Plus className="size-4" />
               创建用户密钥
             </Button>
@@ -157,7 +157,7 @@ export function UserKeysCard() {
           {revealedKey ? (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
               <div className="font-medium">新密钥仅展示一次，请立即保存：</div>
-              <div className="mt-3 flex flex-col gap-3 rounded-lg border border-emerald-200 bg-white/80 p-3 md:flex-row md:items-center md:justify-between">
+              <div className="mt-3 flex flex-col gap-3 rounded-lg border border-emerald-200 bg-white p-3 md:flex-row md:items-center md:justify-between">
                 <code className="break-all font-mono text-[13px]">{revealedKey}</code>
                 <Button
                   type="button"
@@ -219,7 +219,7 @@ export function UserKeysCard() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-9 rounded-xl border-rose-200 bg-white px-4 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                        className="h-9 rounded-xl border-red-200 bg-white px-4 text-red-600 hover:bg-red-50 hover:text-red-700"
                         onClick={() => setDeletingItem(item)}
                         disabled={isPending}
                       >
@@ -264,7 +264,7 @@ export function UserKeysCard() {
             </Button>
             <Button
               type="button"
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="h-10 rounded-xl px-5"
               onClick={() => void handleCreate()}
               disabled={isCreating}
             >
@@ -278,9 +278,12 @@ export function UserKeysCard() {
       <Dialog open={Boolean(deletingItem)} onOpenChange={(open) => (!open ? setDeletingItem(null) : null)}>
         <DialogContent className="rounded-2xl p-6">
           <DialogHeader className="gap-2">
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <AlertTriangle className="size-5" />
+            </div>
             <DialogTitle>删除用户密钥</DialogTitle>
             <DialogDescription className="text-sm leading-6">
-              确认删除用户密钥「{deletingItem?.name}」吗？删除后该密钥将无法继续调用接口。
+              确认删除用户密钥「{deletingItem?.name}」吗？删除后该密钥将不再具备访问能力。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -295,7 +298,8 @@ export function UserKeysCard() {
             </Button>
             <Button
               type="button"
-              className="h-10 rounded-xl bg-rose-600 px-5 text-white hover:bg-rose-700"
+              variant="destructive"
+              className="h-10 rounded-xl px-5"
               onClick={() => void handleDelete()}
               disabled={deletingItem ? pendingIds.has(deletingItem.id) : false}
             >

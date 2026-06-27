@@ -36,7 +36,7 @@ export function CPAPoolDialog() {
         <DialogHeader className="gap-2">
           <DialogTitle>{editingPool ? "编辑连接" : "添加连接"}</DialogTitle>
           <DialogDescription className="text-sm leading-6">
-            {editingPool ? "修改 CPA 连接信息" : "添加一个新的 CLIProxyAPI 连接"}
+            {editingPool ? "修改远程凭据源连接信息" : "添加一个新的远程凭据源"}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -52,7 +52,7 @@ export function CPAPoolDialog() {
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-sm font-medium text-stone-700">
               <Link2 className="size-3.5" />
-              CPA 地址
+              服务地址
             </label>
             <Input
               value={formBaseUrl}
@@ -64,14 +64,14 @@ export function CPAPoolDialog() {
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-sm font-medium text-stone-700">
               <Unplug className="size-3.5" />
-              Management Secret Key
+              管理密钥
             </label>
             <div className="relative">
               <Input
                 type={showSecret ? "text" : "password"}
                 value={formSecretKey}
                 onChange={(event) => setFormSecretKey(event.target.value)}
-                placeholder={editingPool ? "留空则不修改密钥" : "CPA 管理密钥"}
+                placeholder={editingPool ? "留空则不修改密钥" : "远程服务管理密钥"}
                 className="h-11 rounded-xl border-stone-200 bg-white pr-10"
               />
               <button
@@ -94,7 +94,7 @@ export function CPAPoolDialog() {
             取消
           </Button>
           <Button
-            className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+            className="h-10 rounded-xl px-5"
             onClick={() => void savePool()}
             disabled={isSavingPool}
           >

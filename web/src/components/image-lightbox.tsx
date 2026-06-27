@@ -70,7 +70,7 @@ export function ImageLightbox({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#17120f]/86 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0f172a]/86 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           className="fixed inset-0 z-50 flex items-center justify-center outline-none"
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -82,24 +82,24 @@ export function ImageLightbox({
           {/* toolbar */}
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
             {current.sizeLabel || current.dimensions ? (
-              <span className="rounded-full border border-white/15 bg-[#fff8ec]/12 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-xl">
+              <span className="rounded-full border border-white/15 bg-[#ffffff]/12 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-xl">
                 {[current.sizeLabel, current.dimensions].filter(Boolean).join(" · ")}
               </span>
             ) : null}
             {images.length > 1 && (
-              <span className="rounded-full border border-white/15 bg-[#fff8ec]/12 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-xl">
+              <span className="rounded-full border border-white/15 bg-[#ffffff]/12 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-xl">
                 {currentIndex + 1} / {images.length}
               </span>
             )}
             <button
               type="button"
               onClick={handleDownload}
-              className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-[#fff8ec]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#fff8ec]/20"
+              className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-[#ffffff]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#ffffff]/20"
               aria-label="下载图片"
             >
               <Download className="size-4" />
             </button>
-            <DialogPrimitive.Close className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-[#fff8ec]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#fff8ec]/20">
+            <DialogPrimitive.Close className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-[#ffffff]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#ffffff]/20">
               <X className="size-4" />
               <span className="sr-only">关闭</span>
             </DialogPrimitive.Close>
@@ -110,7 +110,7 @@ export function ImageLightbox({
             <button
               type="button"
               onClick={goPrev}
-              className="absolute left-4 z-10 inline-flex size-10 items-center justify-center rounded-full border border-white/15 bg-[#fff8ec]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#fff8ec]/20"
+              className="absolute left-4 z-10 inline-flex size-10 items-center justify-center rounded-full border border-white/15 bg-[#ffffff]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#ffffff]/20"
               aria-label="上一张"
             >
               <ChevronLeft className="size-5" />
@@ -136,7 +136,7 @@ export function ImageLightbox({
             <button
               type="button"
               onClick={goNext}
-              className="absolute right-4 z-10 inline-flex size-10 items-center justify-center rounded-full border border-white/15 bg-[#fff8ec]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#fff8ec]/20"
+              className="absolute right-4 z-10 inline-flex size-10 items-center justify-center rounded-full border border-white/15 bg-[#ffffff]/12 text-white/90 backdrop-blur-xl transition hover:bg-[#ffffff]/20"
               aria-label="下一张"
             >
               <ChevronRight className="size-5" />

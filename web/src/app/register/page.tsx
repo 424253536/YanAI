@@ -44,21 +44,21 @@ function RegisterDataController() {
 
 function RegisterPageContent() {
   return (
-    <>
+    <div className="flex h-full min-h-0 w-full flex-col gap-4">
       <RegisterDataController />
-      <section className="yan-panel-strong mb-5 flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
+      <section className="yan-panel-strong shrink-0 rounded-2xl px-5 py-5">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Registration engine</div>
-          <h1 className="text-3xl font-bold tracking-tight text-stone-950">ChatGPT注册机</h1>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Registration engine</div>
+          <h1 className="text-3xl font-bold tracking-tight text-stone-950">账号接入引擎</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
             配置批量注册、邮箱 provider 和运行状态，保留原有保存、启动与实时日志流程。
           </p>
         </div>
       </section>
-      <section>
+      <section className="min-h-0 flex-1">
         <RegisterCard />
       </section>
-    </>
+    </div>
   );
 }
 
@@ -67,8 +67,8 @@ export default function RegisterPage() {
 
   if (isCheckingAuth || !session || session.role !== "admin") {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-stone-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }

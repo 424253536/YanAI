@@ -93,11 +93,11 @@ function MethodCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-lg border border-rose-100 bg-white/80 p-0 text-left transition hover:border-rose-200 hover:bg-white"
+      className="w-full rounded-2xl border border-[#e2e8f0] bg-white/82 p-0 text-left transition hover:border-[#bfdbfe] hover:bg-white"
     >
-      <Card className="rounded-lg border-0 bg-transparent shadow-none">
+      <Card className="rounded-2xl border-0 bg-transparent shadow-none">
         <CardContent className="flex items-start gap-4 p-4">
-          <div className="rounded-xl bg-stone-100 p-3 text-stone-700">
+          <div className="rounded-xl bg-[#eff6ff] p-3 text-[#2563eb]">
             <Icon className="size-5" />
           </div>
           <div className="space-y-1">
@@ -142,7 +142,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
     const normalizedTokens = tokens.map((item) => item.trim()).filter(Boolean);
 
     if (normalizedTokens.length === 0) {
-      toast.error("请先提供至少一个可用 Token");
+      toast.error("请先提供至少一个可用访问凭据");
       return;
     }
 
@@ -172,7 +172,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
   };
 
   const handleImportTokenText = async () => {
-    await submitTokens(splitTokens(tokenInput), "Access Token 导入完成");
+      await submitTokens(splitTokens(tokenInput), "访问凭据导入完成");
   };
 
   const handleTxtSelected = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -188,7 +188,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
       const tokens = splitTokens(content);
 
       if (tokens.length === 0) {
-        toast.error("TXT 文件里没有读取到有效 Token");
+        toast.error("TXT 文件里没有读取到有效访问凭据");
         return;
       }
 
@@ -196,7 +196,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
         const next = [...splitTokens(prev), ...tokens];
         return next.join("\n");
       });
-      toast.success(`已从 ${file.name} 读取 ${tokens.length} 个 Token`);
+      toast.success(`已从 ${file.name} 读取 ${tokens.length} 个访问凭据`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "读取 TXT 文件失败";
       toast.error(message);
@@ -205,7 +205,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
 
   const handleImportSessionJson = async () => {
     if (!sessionInput.trim()) {
-      toast.error("请先粘贴完整 Session JSON");
+      toast.error("请先粘贴完整会话 JSON");
       return;
     }
 
@@ -214,13 +214,13 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
       const token = getSessionAccessToken(payload);
 
       if (!token) {
-        toast.error("未从 Session JSON 中提取到 accessToken");
+        toast.error("未从会话 JSON 中提取到访问凭据");
         return;
       }
 
-      await submitTokens([token], "Session JSON 导入完成");
+      await submitTokens([token], "会话 JSON 导入完成");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Session JSON 解析失败";
+      const message = error instanceof Error ? error.message : "会话 JSON 解析失败";
       toast.error(message);
     }
   };
@@ -250,7 +250,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
       const errorCount = results.length - parsedFileCount;
 
       if (parsedFileCount === 0) {
-        toast.error("这些 CPA JSON 文件里没有读取到可用 access_token");
+        toast.error("这些本地凭据文件里没有读取到可用访问凭据");
         return;
       }
 
@@ -261,7 +261,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
       });
       setConfirmOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "读取 CPA JSON 文件失败";
+      const message = error instanceof Error ? error.message : "读取本地凭据文件失败";
       toast.error(message);
     }
   };
@@ -281,22 +281,22 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
               <ArrowLeft className="size-4" />
               返回导入方式
             </button>
-            <span className="text-xs text-stone-400">当前识别 {tokenCount} 个 Token</span>
+            <span className="text-xs text-stone-400">当前识别 {tokenCount} 个访问凭据</span>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-700">Access Token 列表</label>
+            <label className="text-sm font-medium text-stone-700">访问凭据列表</label>
             <Textarea
-              placeholder="每行一个 Access Token..."
+              placeholder="每行一个访问凭据..."
               value={tokenInput}
               onChange={(event) => setTokenInput(event.target.value)}
               className="min-h-56 resize-none rounded-xl border-stone-200"
             />
           </div>
-          <div className="rounded-lg border border-dashed border-rose-100 bg-rose-50/45 p-4">
+          <div className="rounded-2xl border border-dashed border-[#bfdbfe] bg-[#f8fbff] p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <div className="text-sm font-medium text-stone-800">从 TXT 文件导入</div>
-                <div className="text-sm leading-6 text-stone-500">支持 `.txt`，文件内容也是一行一个 Token。</div>
+                <div className="text-sm leading-6 text-stone-500">支持 `.txt`，文件内容也是一行一个访问凭据。</div>
               </div>
               <Button
                 type="button"
@@ -332,8 +332,8 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             <ArrowLeft className="size-4" />
             返回导入方式
           </button>
-          <div className="rounded-lg border border-rose-100 bg-rose-50/45 p-4 text-sm leading-6 text-stone-600">
-            打开
+          <div className="rounded-2xl border border-[#e2e8f0] bg-[#f8fbff] p-4 text-sm leading-6 text-stone-600">
+            打开上游会话接口
             {" "}
             <a
               href={sessionUrl}
@@ -341,10 +341,10 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
               rel="noreferrer"
               className="inline-flex items-center gap-1 font-medium text-stone-900 underline underline-offset-4"
             >
-              {sessionUrl}
+              会话接口
               <ExternalLink className="size-3.5" />
             </a>
-            ，复制页面返回的完整 JSON，系统会自动提取其中的 `accessToken` 导入。
+            ，复制页面返回的完整 JSON，系统会自动提取其中的访问凭据导入。
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
             <div className="font-medium">风险提示</div>
@@ -353,9 +353,9 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-700">Session JSON</label>
+            <label className="text-sm font-medium text-stone-700">会话 JSON</label>
             <Textarea
-              placeholder='粘贴完整 JSON，例如包含 "accessToken" 的对象...'
+              placeholder="粘贴完整 JSON，例如包含访问凭据的对象..."
               value={sessionInput}
               onChange={(event) => setSessionInput(event.target.value)}
               className="min-h-56 resize-none rounded-xl border-stone-200 font-mono text-xs"
@@ -376,21 +376,21 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             <ArrowLeft className="size-4" />
             返回导入方式
           </button>
-          <div className="rounded-lg border border-dashed border-rose-100 bg-rose-50/45 p-5">
+          <div className="rounded-2xl border border-dashed border-[#bfdbfe] bg-[#f8fbff] p-5">
             <div className="space-y-2">
-              <div className="text-sm font-medium text-stone-800">多选本地 CPA JSON 文件</div>
+              <div className="text-sm font-medium text-stone-800">多选本地凭据文件</div>
               <div className="text-sm leading-6 text-stone-500">
-                每个文件应为一个 JSON 对象。系统会从对象中自动提取 `access_token` 或 `accessToken`，
+                每个文件应为一个 JSON 对象。系统会自动提取其中的访问凭据，
               </div>
             </div>
             <Button
               type="button"
-              className="mt-4 rounded-xl bg-stone-950 text-white hover:bg-stone-800"
+              className="mt-4 rounded-xl"
               onClick={() => cpaInputRef.current?.click()}
               disabled={isSubmitting}
             >
               <Files className="size-4" />
-              选择多个 JSON 文件
+              选择多个凭据文件
             </Button>
           </div>
           <input
@@ -402,8 +402,8 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             onChange={(event) => void handleCpaSelected(event)}
           />
           {pendingCpaImport ? (
-            <div className="rounded-lg border border-rose-100 bg-white/80 p-4 text-sm leading-6 text-stone-600">
-              最近一次读取到 {pendingCpaImport.parsedFileCount} 个 Token
+            <div className="rounded-2xl border border-[#e2e8f0] bg-white/82 p-4 text-sm leading-6 text-stone-600">
+              最近一次读取到 {pendingCpaImport.parsedFileCount} 个访问凭据
               {pendingCpaImport.errorCount > 0 ? `，另有 ${pendingCpaImport.errorCount} 个文件未提取成功` : ""}。
             </div>
           ) : null}
@@ -414,26 +414,26 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
     return (
       <div className="space-y-3">
         <MethodCard
-          title="导入 Access Token"
-          description="支持直接粘贴，一行一个；也支持从 TXT 文件读取，一行一个。"
+          title="导入访问凭据"
+          description="支持直接粘贴，一行一个；也支持从 TXT 文件读取。"
           icon={KeyRound}
           onClick={() => setMethod("token")}
         />
         <MethodCard
-          title="导入 Session JSON"
-          description="从 chatgpt.com 的 session 接口复制完整 JSON，自动提取 accessToken。"
+          title="导入会话 JSON"
+          description="从上游会话接口复制完整 JSON，自动提取访问凭据。"
           icon={FileJson}
           onClick={() => setMethod("session")}
         />
         <MethodCard
-          title="导入 CPA JSON 文件"
-          description="支持一次多选多个本地 JSON 文件，逐个读取对象里的 access_token 后导入。"
+          title="导入本地凭据文件"
+          description="支持一次多选多个本地凭据文件，逐个读取对象里的访问凭据后导入。"
           icon={Files}
           onClick={() => setMethod("cpa")}
         />
         <MethodCard
-          title="从远程 CPA 服务器导入"
-          description="前往设置页面配置远程 CPA 服务器后再执行导入。"
+          title="从远程凭据源导入"
+          description="前往设置页面配置远程凭据源后再执行导入。"
           icon={Files}
           onClick={() => {
             setOpen(false);
@@ -442,8 +442,8 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
           }}
         />
         <MethodCard
-          title="从 Sub2API 服务器导入"
-          description="前往设置页面配置 Sub2API 服务器，再选择其中的 OpenAI 账号导入。"
+          title="从远程同步服务导入"
+          description="前往设置页面配置远程同步服务，再选择其中的上游账号导入。"
           icon={ServerCog}
           onClick={() => {
             setOpen(false);
@@ -461,7 +461,7 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <Button
-          className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800"
+          className="h-10 rounded-xl px-4"
           onClick={() => setOpen(true)}
           disabled={disabled}
         >
@@ -474,19 +474,19 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
               {method === "menu"
                 ? "导入账户"
                 : method === "token"
-                  ? "导入 Access Token"
+                  ? "导入访问凭据"
                   : method === "session"
-                    ? "导入 Session JSON"
-                    : "导入 CPA JSON"}
+                    ? "导入会话 JSON"
+                    : "导入本地凭据"}
             </DialogTitle>
             <DialogDescription className="text-sm leading-6">
               {method === "menu"
                 ? "选择一种导入方式。导入成功后会自动拉取邮箱、类型和额度。"
                 : method === "token"
-                  ? "支持手动粘贴或从 TXT 文件导入，一行一个 Token。"
+                  ? "支持手动粘贴或从 TXT 文件导入，一行一个访问凭据。"
                   : method === "session"
-                    ? "粘贴完整 Session JSON，系统会自动提取 accessToken。"
-                    : "支持一次读取多个本地 JSON 文件，并在提交前做数量确认。"}
+                    ? "粘贴完整会话 JSON，系统会自动提取访问凭据。"
+                    : "支持一次读取多个本地凭据文件，并在提交前做数量确认。"}
             </DialogDescription>
           </DialogHeader>
 
@@ -503,28 +503,28 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
             </Button>
             {method === "token" ? (
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className="h-10 rounded-xl px-5"
                 onClick={() => void handleImportTokenText()}
                 disabled={footerDisabled}
               >
                 {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                导入 Token
+                导入凭据
               </Button>
             ) : null}
             {method === "session" ? (
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className="h-10 rounded-xl px-5"
                 onClick={() => void handleImportSessionJson()}
                 disabled={footerDisabled}
               >
                 {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
-                导入 JSON
+                导入会话数据
               </Button>
             ) : null}
             {method === "cpa" ? (
               <Button
                 className={cn(
-                  "h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800",
+                  "h-10 rounded-xl px-5",
                   !pendingCpaImport ? "hidden" : "",
                 )}
                 onClick={() => setConfirmOpen(true)}
@@ -540,11 +540,11 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="rounded-2xl p-6">
           <DialogHeader className="gap-2">
-            <DialogTitle>确认导入 CPA Token</DialogTitle>
+            <DialogTitle>确认导入本地凭据</DialogTitle>
             <DialogDescription className="text-sm leading-6">
               {pendingCpaImport
-                ? `确认识别到 ${pendingCpaImport.parsedFileCount} 个 Token，是否确认导入？`
-                : "尚未读取到可导入的 Token。"}
+                ? `确认识别到 ${pendingCpaImport.parsedFileCount} 个访问凭据，是否确认导入？`
+                : "尚未读取到可导入的访问凭据。"}
               {pendingCpaImport?.errorCount
                 ? `，另有 ${pendingCpaImport.errorCount} 个文件未提取成功。`
                 : "。"}
@@ -560,8 +560,8 @@ export function AccountImportDialog({ disabled, onImported }: AccountImportDialo
               返回
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
-              onClick={() => void submitTokens(pendingCpaImport?.tokens ?? [], "CPA JSON 导入完成")}
+              className="h-10 rounded-xl px-5"
+              onClick={() => void submitTokens(pendingCpaImport?.tokens ?? [], "本地凭据导入完成")}
               disabled={isSubmitting || !pendingCpaImport}
             >
               {isSubmitting ? <LoaderCircle className="size-4 animate-spin" /> : null}

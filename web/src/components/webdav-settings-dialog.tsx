@@ -63,53 +63,58 @@ export function WebDAVSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="w-[min(92vw,620px)]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-1">
-          <label className="flex items-center gap-3 rounded-xl border border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/70 px-3 py-2 text-sm text-stone-700">
+          <label className="flex items-center justify-between gap-4 rounded-2xl border border-[#dbeafe] bg-[#f8fbff] px-4 py-3 text-sm text-stone-700">
+            <span>
+              <span className="block font-semibold text-slate-950">启用自动保存</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">生成图片后同步到你配置的远程目录。</span>
+            </span>
             <Checkbox checked={enabled} onCheckedChange={(checked) => setEnabled(checked === true)} />
-            <span className="font-medium">启用自动保存</span>
           </label>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-stone-700">WebDAV 地址</label>
-            <Input
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              placeholder="https://example.com/remote.php/dav/files/name"
-              className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-[#e2e8f0] bg-white/72 p-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-stone-700">用户名</label>
+              <label className="text-sm font-medium text-stone-700">WebDAV 地址</label>
               <Input
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                placeholder="https://example.com/remote.php/dav/files/name"
+                className="h-10"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-stone-700">密码</label>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-stone-700">用户名</label>
+                <Input
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  className="h-10"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-stone-700">密码</label>
+                <Input
+                  value={password}
+                  type="password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder={config?.password_set ? "留空则保持原密码" : ""}
+                  className="h-10"
+                />
+              </div>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              <label className="text-sm font-medium text-stone-700">远程目录</label>
               <Input
-                value={password}
-                type="password"
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder={config?.password_set ? "留空则保持原密码" : ""}
-                className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
+                value={rootPath}
+                onChange={(event) => setRootPath(event.target.value)}
+                placeholder="ImageRouter"
+                className="h-10"
               />
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-stone-700">远程目录</label>
-            <Input
-              value={rootPath}
-              onChange={(event) => setRootPath(event.target.value)}
-              placeholder="YanAI"
-              className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78"
-            />
           </div>
         </div>
         <DialogFooter>

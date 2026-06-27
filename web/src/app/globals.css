@@ -44,109 +44,78 @@
 }
 
 :root {
-  --radius: 1.125rem;
-  --background: #191512;
-  --foreground: #241d18;
-  --card: rgba(252, 248, 240, 0.88);
-  --card-foreground: #241d18;
-  --popover: rgba(253, 250, 244, 0.98);
-  --popover-foreground: #241d18;
-  --primary: #8f5d2f;
-  --primary-foreground: #fffaf0;
-  --secondary: #efe6d8;
-  --secondary-foreground: #2a211b;
-  --muted: #eee5d7;
-  --muted-foreground: #776b5d;
-  --accent: #ead6b7;
-  --accent-foreground: #2a211b;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: rgba(98, 78, 54, 0.18);
-  --input: rgba(98, 78, 54, 0.2);
-  --ring: rgba(181, 138, 82, 0.44);
-  --chart-1: #8f5d2f;
-  --chart-2: #355c54;
-  --chart-3: #9e3f4d;
-  --chart-4: #b58a52;
-  --chart-5: #2d2924;
-  --sidebar: rgba(249, 245, 236, 0.82);
-  --sidebar-foreground: #241d18;
-  --sidebar-primary: #8f5d2f;
-  --sidebar-primary-foreground: #fffaf0;
-  --sidebar-accent: #ead6b7;
-  --sidebar-accent-foreground: #2a211b;
-  --sidebar-border: rgba(98, 78, 54, 0.18);
-  --sidebar-ring: rgba(181, 138, 82, 0.44);
-  --yan-petal: #9e3f4d;
-  --yan-rose: #8f5d2f;
-  --yan-lavender: #355c54;
-  --yan-champagne: #b58a52;
-  --yan-ink: #191512;
-  --yan-porcelain: #f8f2e7;
-  --yan-paper: #fbf7ef;
-  --yan-panel: rgba(250, 245, 236, 0.74);
-  --yan-panel-strong: rgba(253, 250, 244, 0.92);
-  --yan-border: rgba(98, 78, 54, 0.18);
-  --yan-shadow: 0 28px 90px rgba(27, 22, 18, 0.18);
-  --yan-brass-shadow: 0 16px 42px rgba(143, 93, 47, 0.18);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --radius: 1rem;
+  --background: #f6f8fc;
+  --foreground: #0f172a;
+  --card: rgba(255, 255, 255, 0.94);
+  --card-foreground: #0f172a;
+  --popover: rgba(255, 255, 255, 0.98);
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #eaf1ff;
+  --secondary-foreground: #102a56;
+  --muted: #eef3fb;
+  --muted-foreground: #64748b;
+  --accent: #dbeafe;
+  --accent-foreground: #0f3c88;
+  --destructive: #ef4444;
+  --border: #e3e8f2;
+  --input: #d8e1ef;
+  --ring: rgba(37, 99, 235, 0.28);
+  --chart-1: #2563eb;
+  --chart-2: #06b6d4;
+  --chart-3: #38bdf8;
+  --chart-4: #60a5fa;
+  --chart-5: #1e40af;
+  --sidebar: rgba(243, 247, 253, 0.96);
+  --sidebar-foreground: #1e293b;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eaf1ff;
+  --sidebar-accent-foreground: #0f3c88;
+  --sidebar-border: #dfe7f3;
+  --sidebar-ring: rgba(37, 99, 235, 0.28);
+  --router-sky: #0ea5e9;
+  --router-blue: #2563eb;
+  --router-cyan: #38bdf8;
+  --router-ice: #93c5fd;
+  --yan-ink: #0f172a;
+  --router-porcelain: #f8fbff;
+  --yan-paper: #ffffff;
+  --yan-panel: rgba(255, 255, 255, 0.88);
+  --yan-panel-strong: rgba(255, 255, 255, 0.96);
+  --yan-border: #e3e8f2;
+  --yan-shadow: 0 24px 72px rgba(15, 23, 42, 0.08);
+  --yan-brass-shadow: 0 16px 42px rgba(37, 99, 235, 0.16);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    background: #f6f8fc;
+  }
+
   body {
     @apply bg-background text-foreground;
     background:
-      radial-gradient(circle at 16% 12%, rgba(181, 138, 82, 0.3), transparent 27rem),
-      radial-gradient(circle at 86% 8%, rgba(53, 92, 84, 0.24), transparent 31rem),
-      linear-gradient(112deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 100%),
-      linear-gradient(180deg, #201a16 0%, #17130f 48%, #241b15 100%);
-    background-size: auto, auto, 92px 92px, auto;
+      radial-gradient(circle at 12% 10%, rgba(37, 99, 235, 0.12), transparent 26rem),
+      radial-gradient(circle at 88% 4%, rgba(14, 165, 233, 0.16), transparent 28rem),
+      linear-gradient(180deg, #fbfdff 0%, #f6f8fc 45%, #eef4ff 100%);
     letter-spacing: 0;
   }
 
   ::selection {
-    background: rgba(181, 138, 82, 0.28);
-    color: #18120f;
+    background: rgba(37, 99, 235, 0.18);
+    color: #0f172a;
   }
 
   h1 {
     letter-spacing: -0.035em;
-    font-weight: 750;
+    font-weight: 760;
   }
 
   h2,
@@ -155,29 +124,71 @@
   }
 
   label {
-    color: #4f4439;
+    color: #334155;
   }
 }
 
 @layer utilities {
   .yan-app-surface {
     position: relative;
-    border: 1px solid rgba(255, 250, 240, 0.22);
-    background:
-      linear-gradient(180deg, rgba(255, 252, 245, 0.9), rgba(245, 236, 222, 0.82)),
-      radial-gradient(circle at 12% 0%, rgba(181, 138, 82, 0.12), transparent 30rem);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    background: rgba(255, 255, 255, 0.72);
     box-shadow: var(--yan-shadow);
-    backdrop-filter: blur(26px) saturate(1.05);
+    backdrop-filter: blur(18px) saturate(1.05);
+  }
+
+  .app-scroll,
+  .app-sidebar,
+  .yan-panel,
+  .yan-panel-strong {
+    scrollbar-color: rgba(37, 99, 235, 0.28) transparent;
+    scrollbar-width: thin;
+  }
+
+  .app-scroll::-webkit-scrollbar,
+  .app-sidebar::-webkit-scrollbar,
+  .yan-panel::-webkit-scrollbar,
+  .yan-panel-strong::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .app-scroll::-webkit-scrollbar-thumb,
+  .app-sidebar::-webkit-scrollbar-thumb,
+  .yan-panel::-webkit-scrollbar-thumb,
+  .yan-panel-strong::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.24);
+  }
+
+  .app-scroll::-webkit-scrollbar-track,
+  .app-sidebar::-webkit-scrollbar-track,
+  .yan-panel::-webkit-scrollbar-track,
+  .yan-panel-strong::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .app-scroll:has(> .auth-page) {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .app-scroll > .auth-page {
+    min-height: 100%;
+    width: 100%;
   }
 
   .yan-app-surface::before {
     pointer-events: none;
     content: "";
     position: absolute;
-    inset: 12px;
+    inset: 0;
     z-index: 0;
-    border: 1px solid rgba(143, 93, 47, 0.1);
-    border-radius: inherit;
+    background:
+      linear-gradient(90deg, rgba(37, 99, 235, 0.055) 1px, transparent 1px),
+      linear-gradient(rgba(37, 99, 235, 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.34), transparent 42%);
   }
 
   .yan-app-surface > * {
@@ -186,81 +197,114 @@
   }
 
   .yan-panel {
-    border: 1px solid rgba(255, 252, 245, 0.72);
+    border: 1px solid var(--yan-border);
     background:
-      linear-gradient(180deg, rgba(255, 252, 246, 0.82), rgba(244, 236, 224, 0.7)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 251, 255, 0.86)),
       var(--yan-panel);
-    box-shadow: 0 18px 54px rgba(33, 27, 21, 0.1);
-    backdrop-filter: blur(18px) saturate(1.05);
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.055);
+    backdrop-filter: blur(16px) saturate(1.06);
   }
 
   .yan-panel-strong {
-    border: 1px solid rgba(255, 252, 245, 0.86);
+    border: 1px solid var(--yan-border);
     background:
-      linear-gradient(180deg, rgba(255, 252, 246, 0.96), rgba(247, 239, 226, 0.9)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.92)),
       var(--yan-panel-strong);
-    box-shadow: 0 24px 70px rgba(33, 27, 21, 0.12);
-    backdrop-filter: blur(22px) saturate(1.08);
+    box-shadow: 0 18px 52px rgba(15, 23, 42, 0.075);
+    backdrop-filter: blur(20px) saturate(1.08);
   }
 
   .yan-gradient {
     background:
-      linear-gradient(135deg, rgba(255, 244, 220, 0.2), transparent 42%),
-      linear-gradient(135deg, #17120f, #72512f 58%, #b58a52);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent 100%),
+      #2563eb;
   }
 
   .yan-mark-gradient {
     background:
-      linear-gradient(145deg, rgba(255, 244, 220, 0.34), transparent 44%),
-      linear-gradient(135deg, #17120f, #8f5d2f 58%, #b58a52);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 100%),
+      #2563eb;
   }
 
   .yan-soft-grid {
     background-image:
-      linear-gradient(rgba(143, 93, 47, 0.09) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(143, 93, 47, 0.075) 1px, transparent 1px),
-      radial-gradient(circle at 0 0, rgba(255, 250, 240, 0.28), transparent 34rem);
-    background-size: 44px 44px, 44px 44px, auto;
+      linear-gradient(rgba(37, 99, 235, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .auth-visual-card {
+    animation: authFadeUp 0.72s cubic-bezier(.2, .8, .2, 1) both;
+  }
+
+  .auth-form-card {
+    animation: authFadeUp 0.72s cubic-bezier(.2, .8, .2, 1) 0.12s both;
+  }
+
+  .auth-float {
+    animation: authFloat 7s ease-in-out infinite;
+  }
+
+  .auth-pulse {
+    animation: authPulse 5.4s ease-in-out infinite;
+  }
+
+  @keyframes authFadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes authFloat {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes authPulse {
+    0%,
+    100% {
+      opacity: 0.28;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.54;
+      transform: scale(1.035);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auth-visual-card,
+    .auth-form-card,
+    .auth-float,
+    .auth-pulse {
+      animation: none;
+    }
   }
 
   .rounded-md {
-    border-radius: 14px;
+    border-radius: 12px;
   }
 
   .rounded-lg {
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .rounded-xl {
-    border-radius: 22px;
+    border-radius: 20px;
   }
 
   .rounded-2xl {
-    border-radius: 26px;
-  }
-
-  .bg-rose-50,
-  .bg-pink-50,
-  .bg-fuchsia-50,
-  [class~="bg-rose-50/35"],
-  [class~="bg-rose-50/40"],
-  [class~="bg-rose-50/45"],
-  [class~="bg-rose-50/60"],
-  [class~="bg-rose-50/80"],
-  [class~="bg-pink-50/80"] {
-    background-color: rgba(239, 230, 216, 0.82) !important;
-  }
-
-  .bg-rose-100,
-  [class~="bg-rose-200/70"],
-  [class~="bg-rose-300/55"],
-  [class~="bg-rose-100/80"] {
-    background-color: rgba(234, 214, 183, 0.86) !important;
-  }
-
-  .bg-rose-500,
-  .bg-rose-600 {
-    background-color: #8f5d2f !important;
+    border-radius: 24px;
   }
 
   .bg-white,
@@ -279,49 +323,17 @@
   [class~="bg-white/85"],
   [class~="bg-white/90"],
   [class~="bg-white/95"] {
-    background-color: rgba(255, 250, 242, 0.82) !important;
+    background-color: rgba(255, 255, 255, 0.9) !important;
   }
 
   .bg-stone-50,
   [class~="bg-stone-50"] {
-    background-color: rgba(239, 230, 216, 0.62) !important;
+    background-color: rgba(248, 250, 252, 0.92) !important;
   }
 
   .bg-stone-100,
   [class~="bg-stone-100"] {
-    background-color: rgba(234, 214, 183, 0.72) !important;
-  }
-
-  .hover\:bg-rose-50:hover {
-    background-color: rgba(239, 230, 216, 0.94) !important;
-  }
-
-  .hover\:bg-rose-600:hover,
-  .hover\:bg-rose-700:hover {
-    background-color: #76502e !important;
-  }
-
-  .border-rose-50,
-  [class~="border-rose-50"] {
-    border-color: rgba(143, 93, 47, 0.08) !important;
-  }
-
-  .border-rose-100,
-  [class~="border-rose-100/60"],
-  [class~="border-rose-100/70"],
-  [class~="border-rose-100/80"] {
-    border-color: rgba(143, 93, 47, 0.16) !important;
-  }
-
-  .border-rose-200 {
-    border-color: rgba(143, 93, 47, 0.28) !important;
-  }
-
-  .border-fuchsia-100,
-  .border-fuchsia-200,
-  [class~="border-fuchsia-100"],
-  [class~="border-fuchsia-200"] {
-    border-color: rgba(143, 93, 47, 0.2) !important;
+    background-color: rgba(241, 245, 249, 0.92) !important;
   }
 
   .border-white,
@@ -330,7 +342,7 @@
   [class~="border-white/78"],
   [class~="border-white/80"],
   [class~="border-white/82"] {
-    border-color: rgba(255, 252, 245, 0.76) !important;
+    border-color: rgba(255, 255, 255, 0.86) !important;
   }
 
   .border-stone-100,
@@ -339,35 +351,36 @@
   [class~="border-stone-100"],
   [class~="border-stone-200"],
   [class~="border-stone-300"] {
-    border-color: rgba(143, 93, 47, 0.16) !important;
+    border-color: #e2e8f0 !important;
   }
 
-  .text-rose-400,
-  .text-rose-500,
-  .text-rose-600,
-  .text-rose-700,
-  .text-pink-600,
-  .text-fuchsia-500,
-  .text-fuchsia-700,
-  .text-fuchsia-900 {
-    color: #8f5d2f !important;
+  .text-red-500,
+  .text-red-600,
+  .text-red-700 {
+    color: #dc2626 !important;
   }
 
-  .ring-rose-100,
-  [class~="ring-rose-100/60"],
-  [class~="focus:ring-rose-100/60"]:focus,
-  [class~="focus-visible:ring-rose-100/80"]:focus-visible {
-    --tw-ring-color: rgba(181, 138, 82, 0.24) !important;
+  .bg-red-50 {
+    background-color: #fef2f2 !important;
+  }
+
+  .border-red-100,
+  .border-red-200 {
+    border-color: #fecaca !important;
+  }
+
+  .hover\:bg-red-50:hover {
+    background-color: #fef2f2 !important;
   }
 
   .hover\:bg-stone-50:hover,
   .hover\:bg-stone-100:hover,
   .hover\:bg-stone-200:hover {
-    background-color: rgba(234, 214, 183, 0.78) !important;
+    background-color: rgba(226, 232, 240, 0.8) !important;
   }
 
   .hover\:border-stone-300:hover {
-    border-color: rgba(143, 93, 47, 0.28) !important;
+    border-color: rgba(37, 99, 235, 0.28) !important;
   }
 
   .hide-scrollbar {

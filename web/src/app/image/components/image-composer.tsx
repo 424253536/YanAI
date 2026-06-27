@@ -18,9 +18,7 @@ import {
   Search,
   Share2,
   Scissors,
-  Sparkles,
   SunMedium,
-  WandSparkles,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -57,11 +55,11 @@ const GLASSES_PROMPT = `
 const HAIRSTYLE_PROMPT = `
 不知道自己适合什么发型？
 
-请根据用户上传的正面形象照片，生成一张横向4:3的高完成度「AI发型美学升级报告/发型升级前后报告」。用户上传的本人形象照片，是本次生成的核心参考。请严格保留用户本人身份相似度、五官结构、脸型比例、年龄感、皮肤真实轮廓、表情气质和原创穿搭，让人瞬间能认出是同一个人。本次升级重点放在发型设计、头发长度、刘海处理、层次结构、蓬松度、阶梯体积、发尾高度和发色建议上。不要改变五官、不要瘦脸、不要磨皮美颜、不要换衣服、不要靠妆容提升效果。请把画面设计做成一个融合「时尚发型顾问模板 + 杂志型时尚顾问模板 + 多方案对比 + 充满幽默避坑感」的个人发型升级报告。它既要专业、清晰、有设计感，还要有一点“原来这些发型不适合我”的轻微趣味感，让观众会心一笑，但不能恶搞、不能造成丑化人物、不能做负面整蛊图。
+请根据用户上传的正面形象照片，生成一张横向4:3的高完成度「发型美学升级报告/发型升级前后报告」。用户上传的本人形象照片，是本次生成的核心参考。请严格保留用户本人身份相似度、五官结构、脸型比例、年龄感、皮肤真实轮廓、表情气质和原创穿搭，让人瞬间能认出是同一个人。本次升级重点放在发型设计、头发长度、刘海处理、层次结构、蓬松度、阶梯体积、发尾高度和发色建议上。不要改变五官、不要瘦脸、不要磨皮美颜、不要换衣服、不要靠妆容提升效果。请把画面设计做成一个融合「时尚发型顾问模板 + 杂志型时尚顾问模板 + 多方案对比 + 充满幽默避坑感」的个人发型升级报告。它既要专业、清晰、有设计感，还要有一点“原来这些发型不适合我”的轻微趣味感，让观众会心一笑，但不能恶搞、不能造成丑化人物、不能做负面整蛊图。
 
 【整体版式】横向4:3构图，背景以白色、米白、浅灰为主，少量浅橄榄绿、灰蓝、柔和红色作为功能性强调色。整体版式不要完全照搬参考图，形式为整页协调矩阵，同时更主次分明、对应个人专属造型。画面采用「左侧原始造型大图 + 右侧主推造型大图 + 中下部最佳选择推荐区 + 底部避雷区 + 底部发型执行指南」的结构。整体视觉要达到高级、保持合理留白、信息丰富但不拥挤。
 
-【标题区】顶部主标题：AI发型美学升级报告。中文副标题：发型升级前后报告。可加入辅助小标签：HAIR RESET STYLE PROPOSAL / BEST CUT FOR YOU / 个人发型升级。
+【标题区】顶部主标题：发型美学升级报告。中文副标题：发型升级前后报告。可加入辅助小标签：HAIR RESET STYLE PROPOSAL / BEST CUT FOR YOU / 个人发型升级。
 
 【中央主视觉】左边为原始发型大图 Before：尽量保持用户当前发型的真实状态，包括原始长度、自然发量、凌乱度、贴头皮感、刘海状态、发尾状态和整体精神感。不要偷偷优化原图，不要让之前外观已经变好。右边为之后主推发型大图 After：仍然是同一个人，同样的脸、同样的亮度、同样的服装和相似光线构图，只升级发型。发型后应该更适合这个人，看起来更精神、更帅气、更修饰脸型、更协调、更日常高级感，且真实可实现。方向偏韩系自然、Clean Cut、松弛有型、低维护、生活化，不要夸张杀马特，不要网红模板发型，不要过度油头，不要明显染漂，不要舞台感造型。
 
@@ -117,7 +115,7 @@ const HAIRSTYLE_PROMPT = `
 
 【视觉语气】请让整张图专业顾问感，也有一点报告“避坑提醒”的视觉感。推荐区让人觉得“这些发型确实挺适合”，避雷区让人觉得“哈哈，这种真的不太行”，但整体仍然必须干净、高级、好看、有设计感，不能变成低级恶搞。
 
-【底部小字】本图为AI造型视觉提案，仅供参考。实际造型建议请以专业发型师面诊为准。
+【底部小字】本图为造型视觉提案，仅供参考。实际造型建议请以专业发型师面诊为准。
 
 【彻底避免】不要改变用户身份，不要换脸，不要改变五官，不要磨皮美颜，不要改变穿搭，不要通过化妆或服装提升效果。不要生成夸张发型、杀马特、二次元造型、舞台造型、过度油头、过度漂染。不要让多个发型方案看起来不像同一个人。不要完全照搬参考图的排版。不要参考普通发型合集图，而要做一张高完成度、专业又有一点感性的个人发型造型升级报告。
 `.trim();
@@ -149,7 +147,7 @@ const PHOTO_ENHANCE_PROMPT = `
 4. 恢复高光和阴影层次，避免过曝死白、暗部死黑和不自然 HDR。
 5. 进行自然的摄影级调色：干净、通透、真实、有质感，不要浓重滤镜。
 
-输出效果：真实照片增强、高清、自然色彩、细节清楚、层次丰富。彻底避免：AI感、插画感、换背景、改变身份、脸部变形、过度锐化、过饱和、油画感、塑料皮肤。
+输出效果：真实照片增强、高清、自然色彩、细节清楚、层次丰富。彻底避免：合成感、插画感、换背景、改变身份、脸部变形、过度锐化、过饱和、油画感、塑料皮肤。
 `.trim();
 
 const BACKLIGHT_REPAIR_PROMPT = `
@@ -179,15 +177,15 @@ const DETAIL_RESTORE_PROMPT = `
 4. 保持自然颗粒和镜头质感，不要让细节变成假纹理。
 5. 适度优化亮度、对比和色彩，让照片清晰但不刺眼。
 
-输出效果：真实高清修复、自然锐化、细节增强、同一张照片更清楚。彻底避免：换脸、五官重绘、假毛孔、过度锐化光晕、AI插画感、塑料皮肤、过度降噪涂抹。
+输出效果：真实高清修复、自然锐化、细节增强、同一张照片更清楚。彻底避免：换脸、五官重绘、假毛孔、过度锐化光晕、合成插画感、塑料皮肤、过度降噪涂抹。
 `.trim();
 
 const PHOTO_PORTRAIT_V1_PROMPT = `
 # 角色设定（Role Definition）
-你是一位资深的视觉艺术家与摄影风格提示词专家，对现代主流审美趋势有敏锐的洞察力。你精通摄影构图、光影运用、氛围营造和人像美学，能够将复杂的视觉概念转化为精准、生动且富有吸引力的文本描述，专门用于指导AI图像生成模型。
+你是一位资深的视觉艺术家与摄影风格策划专家，对现代主流审美趋势有敏锐的洞察力。你精通摄影构图、光影运用、氛围营造和人像美学，能够将复杂的视觉概念转化为精准、生动且富有吸引力的创作描述，专门用于指导图像生成引擎。
 
 # 任务描述（Task Specification）
-你的任务是根据一系列预设的、符合大众审美的摄影风格元素，随机组合并生成一条高质量、风格鲜明、让人眼前一亮的真人写真风格AI绘画提示词。
+你的任务是根据一系列预设的、符合大众审美的摄影风格元素，随机组合并生成一条高质量、风格鲜明、让人眼前一亮的真人写真风格创作描述。
 
 # 任务步骤（Task Steps）
 1.  **随机选择一个核心摄影风格**：从以下列表中随机选择一种作为基础风格：
@@ -218,19 +216,19 @@ const PHOTO_PORTRAIT_V1_PROMPT = `
     * 9:16
     * 16:9
 
-6.  **组合并润色**：将以上步骤选择的元素有机地组合成一段通顺、生动、描述性强的提示词文本。确保语言表达流畅，能够激发创作灵感。
+6.  **组合并润色**：将以上步骤选择的元素有机地组合成一段通顺、生动、描述性强的创作描述。确保语言表达流畅，能够激发创作灵感。
 
-7.  **添加强制性结尾**：在生成提示词的末尾，必须一字不差地加上固定后缀。
+7.  **添加强制性结尾**：在生成描述的末尾，必须一字不差地加上固定后缀。
 
 # 约束条件（Constraints）
 1.  生成的风格必须是大众容易接受的真人写真风格，严禁生成二次元、油画、赛博朋克、哥特等小众或非写实艺术风格。
 2.  生成的内容必须健康、积极，不包含任何敏感或不适宜的信息。
-3.  最终输出的必须是完整的一段提示词，不能分点或分段。
-4.  必须在提示词的末尾添加：“【不改变人脸比例和形象，保留人物原貌，原比例！原比例！原比例！】”。这是强制要求，必须包含。
-5.  每次生成的提示词都应具有独特性和随机性，避免重复。
+3.  最终输出的必须是完整的一段创作描述，不能分点或分段。
+4.  必须在创作描述的末尾添加：“【不改变人脸比例和形象，保留人物原貌，原比例！原比例！原比例！】”。这是强制要求，必须包含。
+5.  每次生成的创作描述都应具有独特性和随机性，避免重复。
 
 # 响应格式（Response Format）
-直接输出最终生成的摄影风格提示词文本，不要包含任何额外的前言、标题、解释或说明。
+直接输出最终生成的摄影风格创作描述，不要包含任何额外的前言、标题、解释或说明。
 
 # 示例和指导（Examples and Guidance）
 * **高质量范例1 (细腻质感风):** 采用细腻皮肤真实质感的风格，画面中展现了一个少女的脸部特写，通过略微俯视的镜头角度进行呈现。背景营造出清醒系且阳光的场景氛围，少女有着散乱的头发随风飘动，眼神闪闪发光，其中带着阳光和魅惑的情绪，尽显高冷气质。画面着重勾勒了少女的面部细节，高光处理十分讲究，同时画面呈现出带有摄影机噪点的画质，并且有着蓝白色通透效果。比例3:4。【不改变人脸比例和形象，原比例！原比例！原比例！】
@@ -242,7 +240,7 @@ const PHOTO_PORTRAIT_V2_PROMPT = `
 # 角色设定（Role Definition）
 你是一位顶尖的商业摄影师与视觉艺术家，拥有敏锐的时尚洞察力和丰富的人像摄影经验。你擅长捕捉人物的真实情感与状态，并能创造出既符合大众审美又具有独特风格的视觉作品。你精通光影、构图、色彩和质感的运用，能够将抽象的氛围和情绪转化为具体的、可执行的摄影风格描述。
 # 任务描述（Task Specification）
-你的任务是根据用户的需求，随机创造出多种独特、鲜明、且易于被大众接受的真人写真摄影风格。这些风格描述将作为AI绘画的提示词，需要足够详细、具体、富有画面感，能够引导AI生成高质量、令人眼前一亮的摄影作品。
+你的任务是根据用户的需求，随机创造出多种独特、鲜明、且易于被大众接受的真人写真摄影风格。这些风格描述将作为图像创作描述，需要足够详细、具体、富有画面感，能够引导图像引擎生成高质量、令人眼前一亮的摄影作品。
 # 任务步骤（Task Steps）
 构思核心场景/情绪 (Core Scene/Emotion)：首先，随机选择一个生活化的场景或一种特定的情绪作为风格的基石。例如：“清晨窗边的慵懒”、“都市夜游的疏离感”、“夏日午后的宁静”、“与宠物互动的温馨一刻”。
 确定摄影基调 (Photographic Tone)：从以下主流摄影类型中随机选择一种或两种进行融合，作为整体风格的基调：
@@ -261,7 +259,7 @@ const PHOTO_PORTRAIT_V2_PROMPT = `
 皮肤质感：细腻通透的、带有微汗水光的、有雀斑的自然皮肤。
 环境/道具细节：空气中的微尘、镜头上的光晕、湿润发丝的细节、衣服的褶皱。
 后期质感：添加轻微的胶片颗粒、锐化或柔焦效果。
-整合并输出：将以上步骤中随机选择的元素有机地组合成一段通顺、生动、富有感染力的文字描述。确保语言精炼，关键词明确，便于AI理解和执行。
+整合并输出：将以上步骤中随机选择的元素有机地组合成一段通顺、生动、富有感染力的文字描述。确保语言精炼，关键词明确，便于图像引擎理解和执行。
 # 约束条件（Constraints）
 生成的风格必须是“真人写真”风格，避免生成任何形式的动漫、插画或3D渲染风格。
 风格必须新颖且符合大众审美，避免使用过于小众、怪异或已经被滥用的固定风格模板（例如，赛博朋克、哥特幻想、蒸汽朋克等）。
@@ -326,7 +324,7 @@ const CUTIE_3D_STYLE_PROMPT = `
 `.trim();
 
 const XIAOHONGSHU_POSTER_PROMPT = `
-你是一个专业的视觉提示词设计助手，帮助用户生成“小红书风格”的图片提示词。请严格按照以下流程工作：
+你是一个专业的视觉方案设计助手，帮助用户生成“小红书风格”的图片创作描述。请严格按照以下流程工作：
 
 第1步：先询问用户以下问题，并记录答案（中英文都可以）：
 1. 你希望海报的布局是竖直还是横向？（vertical or horizontal）
@@ -335,10 +333,10 @@ const XIAOHONGSHU_POSTER_PROMPT = `
 4. 边框或标签颜色你更喜欢哪种？例如：粉色、亮黄、草绿色、天蓝色。
 5. 这张图的使用时间范围是什么？例如：3.25 ~ 5.15。
 
-第2步：根据用户输入填写以下模板，并输出完整 JSON。
+第2步：根据用户输入填写以下模板，并输出完整结构化方案。
 - 如果布局选择 vertical 或竖直，则 "aspect_ratio" 为 "3:4"。
 - 如果布局选择 horizontal 或横向，则 "aspect_ratio" 为 "4:3"。
-- 只输出 JSON，不要输出额外解释。
+- 只输出结构化方案，不要输出额外解释。
 
 模板如下，请替换大括号内内容：
 
@@ -413,7 +411,7 @@ const promptPresetOptions: ImagePromptPreset[] = [
   {
     id: "hairstyle",
     title: "不知道适合什么发型？",
-    description: "AI发型美学升级报告",
+    description: "发型美学升级报告",
     prompt: HAIRSTYLE_PROMPT,
     mode: "edit",
     imageSize: "4:3",
@@ -427,12 +425,12 @@ const promptPresetOptions: ImagePromptPreset[] = [
     prompt: NATURAL_BEAUTY_PROMPT,
     mode: "edit",
     imageCount: "1",
-    icon: Sparkles,
+    icon: Camera,
   },
   {
     id: "photo-portrait-v1",
     title: "写真随机风格 V1",
-    description: "随机组合真人写真提示词",
+    description: "随机组合真人写真描述",
     prompt: PHOTO_PORTRAIT_V1_PROMPT,
     mode: "edit",
     imageCount: "1",
@@ -460,7 +458,7 @@ const promptPresetOptions: ImagePromptPreset[] = [
   {
     id: "xiaohongshu-poster",
     title: "小红书风格海报",
-    description: "先问参数 + 输出海报 JSON",
+    description: "先确认参数 + 生成海报方案",
     prompt: XIAOHONGSHU_POSTER_PROMPT,
     mode: "generate",
     imageSize: "3:4",
@@ -501,7 +499,7 @@ const promptPresetOptions: ImagePromptPreset[] = [
     prompt: DETAIL_RESTORE_PROMPT,
     mode: "edit",
     imageCount: "1",
-    icon: WandSparkles,
+    icon: Images,
   },
 ];
 
@@ -516,15 +514,15 @@ const promptIconMap: Record<string, LucideIcon> = {
   newspaper: Newspaper,
   "notebook-pen": NotebookPen,
   scissors: Scissors,
-  sparkles: Sparkles,
+  sparkles: Camera,
   "sun-medium": SunMedium,
-  "wand-sparkles": WandSparkles,
+  "wand-sparkles": Images,
 };
 
 const defaultPromptIconById: Record<string, string> = {
   glasses: "glasses",
   hairstyle: "scissors",
-  "natural-beauty": "sparkles",
+  "natural-beauty": "camera",
   "photo-portrait-v1": "aperture",
   "photo-portrait-v2": "clapperboard",
   "cutie-3d-style": "box",
@@ -532,7 +530,7 @@ const defaultPromptIconById: Record<string, string> = {
   "handwritten-notes": "notebook-pen",
   "photo-enhance": "camera",
   "backlight-repair": "sun-medium",
-  "detail-restore": "wand-sparkles",
+  "detail-restore": "images",
 };
 
 const defaultPromptItems: PromptPickerItem[] = promptPresetOptions.map((preset, index) => ({
@@ -560,7 +558,7 @@ function normalizePromptMode(value?: string): ImageConversationMode {
 }
 
 function getPromptModeLabel(value?: string) {
-  return normalizePromptMode(value) === "edit" ? "图生图" : "文生图";
+  return normalizePromptMode(value) === "edit" ? "参考图编辑" : "文字生成";
 }
 
 function summarizeBananaPrompt(item: PromptPickerItem) {
@@ -578,7 +576,7 @@ function summarizeBananaPrompt(item: PromptPickerItem) {
       ?.trim() || cleaned;
 
   if (!firstSentence) {
-    return item.sub_category ? `${item.sub_category}类提示词，可一键填入当前输入框。` : "可一键填入当前输入框的创作提示词。";
+    return item.sub_category ? `${item.sub_category}类模板，可一键填入当前输入框。` : "可一键填入当前输入框的创作模板。";
   }
 
   return firstSentence.length > 86 ? `${firstSentence.slice(0, 86)}...` : firstSentence;
@@ -676,7 +674,7 @@ function getPromptDescription(item: PromptPickerItem) {
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<T>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error("提示词管理接口响应超时")), timeoutMs);
+    timeoutId = setTimeout(() => reject(new Error("创作模板接口响应超时")), timeoutMs);
   });
   return Promise.race([promise, timeout]).finally(() => {
     if (timeoutId) {
@@ -688,7 +686,7 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
 function buildPromptShareTitle(prompt: string) {
   const cleaned = prompt.replace(/\s+/g, " ").trim();
   if (!cleaned) {
-    return "未命名提示词";
+    return "未命名创作模板";
   }
   return cleaned.length > 24 ? `${cleaned.slice(0, 24)}...` : cleaned;
 }
@@ -844,23 +842,23 @@ export function ImageComposer({
   const handleCopyPrompt = async () => {
     const cleaned = prompt.trim();
     if (!cleaned) {
-      toast.error("没有可复制的提示词");
+      toast.error("没有可复制的创作描述");
       return;
     }
     await navigator.clipboard.writeText(cleaned);
-    toast.success("提示词已复制");
+    toast.success("创作描述已复制");
   };
 
   const handleSharePrompt = async () => {
     const cleaned = prompt.trim();
     if (!cleaned) {
-      toast.error("没有可分享的提示词");
+      toast.error("没有可分享的创作描述");
       return;
     }
     try {
       const result = await sharePromptPayload({
         title: buildPromptShareTitle(cleaned),
-        description: mode === "edit" ? "图生图提示词" : "文生图提示词",
+        description: mode === "edit" ? "参考图编辑描述" : "文字生成描述",
         prompt: cleaned,
         mode,
         image_size: imageSize,
@@ -898,7 +896,7 @@ export function ImageComposer({
           items = normalizeBananaPromptsPayload(await response.json());
         }
         if (items.length === 0) {
-          throw new Error("未读取到可用提示词");
+          throw new Error("未读取到可用创作模板");
         }
         setBananaPrompts(sortPromptItems(mergePromptItems(defaultPromptItems, items)));
         setBananaPromptError(apiErrorMessage);
@@ -907,7 +905,7 @@ export function ImageComposer({
         if (controller.signal.aborted) {
           return;
         }
-        const message = error instanceof Error ? error.message : "提示词加载失败";
+        const message = error instanceof Error ? error.message : "创作模板加载失败";
         setBananaPromptError(message);
         setBananaPrompts(defaultPromptItems);
         setBananaPromptStatus("error");
@@ -947,8 +945,8 @@ export function ImageComposer({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-rose-100/70 px-4 py-4">
-        <div className="text-base font-bold text-stone-950">Prompt 创作台</div>
+      <div className="border-b border-[#e2e8f0] px-4 py-4">
+        <div className="text-base font-bold text-stone-950">创作面板</div>
         <div className="mt-1 text-sm text-stone-500">图像生成 · 参考图编辑</div>
       </div>
 
@@ -968,17 +966,17 @@ export function ImageComposer({
 
         <div className="mb-4 grid grid-cols-2 gap-2">
           <ModeButton active={mode === "generate"} onClick={() => onModeChange("generate")}>
-            文生图
+            文字生成
           </ModeButton>
           <ModeButton active={mode === "edit"} onClick={() => onModeChange("edit")}>
-            图生图
+            参考图编辑
           </ModeButton>
         </div>
 
         <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg bg-white/45 p-3">
           <div>
-            <div className="text-xs text-stone-500">模型</div>
-            <div className="mt-1 text-sm font-bold text-stone-950">gpt-image-2</div>
+            <div className="text-xs text-stone-500">通道</div>
+            <div className="mt-1 text-sm font-bold text-stone-950">默认图像通道</div>
           </div>
           <div>
             <div className="text-xs text-stone-500">生成张数</div>
@@ -1004,7 +1002,7 @@ export function ImageComposer({
                     setLightboxIndex(index);
                     setLightboxOpen(true);
                   }}
-                  className="group size-16 overflow-hidden rounded-lg border border-rose-100 bg-rose-50/70 transition hover:border-rose-200"
+                  className="group size-16 overflow-hidden rounded-lg border border-[#dbeafe] bg-[#eff6ff] transition hover:border-[#bfdbfe]"
                   aria-label={`预览参考图 ${image.name || index + 1}`}
                 >
                   <img
@@ -1019,7 +1017,7 @@ export function ImageComposer({
                     event.stopPropagation();
                     onRemoveReferenceImage(index);
                   }}
-                  className="absolute -top-1 -right-1 inline-flex size-5 items-center justify-center rounded-full border border-rose-100 bg-white text-stone-500 transition hover:border-rose-200 hover:text-rose-600"
+                  className="absolute -top-1 -right-1 inline-flex size-5 items-center justify-center rounded-full border border-[#dbeafe] bg-white text-stone-500 transition hover:border-red-200 hover:text-red-600"
                   aria-label={`移除参考图 ${image.name || index + 1}`}
                 >
                   <X className="size-3" />
@@ -1042,14 +1040,14 @@ export function ImageComposer({
                   className={cn(
                     "flex min-h-14 items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition",
                     active
-                      ? "border-rose-100 bg-[#2d1d26] text-white shadow-sm"
-                      : "border-rose-100 bg-white/72 text-stone-800 hover:border-rose-200 hover:bg-white",
+                      ? "border-[#bfdbfe] bg-[#1e3a8a] text-white shadow-sm"
+                      : "border-[#dbeafe] bg-white/72 text-stone-800 hover:border-[#bfdbfe] hover:bg-white",
                   )}
                 >
                   <span
                     className={cn(
                       "inline-flex size-8 shrink-0 items-center justify-center rounded-full",
-                      active ? "bg-white/15 text-white" : "bg-rose-50 text-rose-500",
+                      active ? "bg-white/15 text-white" : "bg-[#eff6ff] text-[#2563eb]",
                     )}
                   >
                     <PresetIcon className="size-4" />
@@ -1069,8 +1067,8 @@ export function ImageComposer({
               type="button"
               onClick={() => void handleCopyPrompt()}
               disabled={!prompt}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
-              aria-label="复制当前提示词"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-[#bfdbfe] hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
+              aria-label="复制当前创作描述"
             >
               <Copy className="size-4" />
               复制
@@ -1079,8 +1077,8 @@ export function ImageComposer({
               type="button"
               onClick={() => void handleSharePrompt()}
               disabled={!prompt}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
-              aria-label="分享当前提示词"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-[#bfdbfe] hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
+              aria-label="分享当前创作描述"
             >
               <Share2 className="size-4" />
               分享
@@ -1089,42 +1087,42 @@ export function ImageComposer({
               type="button"
               onClick={handleClearPrompt}
               disabled={!prompt}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-[#bfdbfe] hover:bg-white disabled:cursor-not-allowed disabled:border-stone-100 disabled:bg-stone-50 disabled:text-stone-300"
             >
               <X className="size-4" />
-              清空提示词
+              清空描述
             </button>
             <button
               type="button"
               onClick={() => setIsPromptLibraryOpen(true)}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-rose-200 hover:bg-white"
+              className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/75 px-3 text-sm font-medium text-stone-700 transition hover:border-[#bfdbfe] hover:bg-white"
             >
               <Images className="size-4" />
-              更多提示词
+              更多模板
             </button>
           </div>
         </div>
 
         <Dialog open={isPromptLibraryOpen} onOpenChange={setIsPromptLibraryOpen}>
-          <DialogContent className="flex h-[84vh] w-[min(94vw,1040px)] max-w-none flex-col overflow-hidden rounded-lg p-0">
-            <DialogHeader className="border-b border-rose-100 px-5 pt-5 pb-4 sm:px-6">
+          <DialogContent className="flex h-[84vh] w-[min(94vw,1040px)] max-w-none flex-col overflow-hidden rounded-2xl p-0">
+            <DialogHeader className="border-b border-[#e2e8f0] px-5 pt-5 pb-4 sm:px-6">
               <div className="flex flex-col gap-3 pr-10 sm:flex-row sm:items-start sm:justify-between sm:pr-12">
                 <div className="min-w-0">
-                  <DialogTitle className="text-xl font-semibold text-stone-950">更多提示词</DialogTitle>
+                  <DialogTitle className="text-xl font-semibold text-stone-950">更多创作模板</DialogTitle>
                   <DialogDescription className="mt-2 leading-6 text-stone-500">
-                    包含当前三个快捷提示词{morePromptItems.length > 0 ? `，已加载 ${morePromptItems.length} 条` : ""}
-                    ，点击使用会填入提示词并自动切换文生图或图生图模式。
+                    包含当前三个快捷模板{morePromptItems.length > 0 ? `，已加载 ${morePromptItems.length} 条` : ""}
+                    ，点击使用会填入创作描述并自动切换到对应工作模式。
                   </DialogDescription>
                 </div>
                 <Button
                   type="button"
                   asChild
                   variant="outline"
-                  className="h-9 shrink-0 rounded-lg border-rose-100 bg-white/75 text-stone-700"
+                  className="h-9 shrink-0 rounded-lg border-[#dbeafe] bg-white/75 text-stone-700"
                 >
                   <a href="/prompt-manager">
                     <ExternalLink className="size-4" />
-                    管理提示词
+                    管理模板
                   </a>
                 </Button>
               </div>
@@ -1134,8 +1132,8 @@ export function ImageComposer({
                   <Input
                     value={bananaPromptQuery}
                     onChange={(event) => setBananaPromptQuery(event.target.value)}
-                    placeholder="搜索标题、作者、分类或提示词内容"
-                    className="h-10 rounded-lg border-rose-100 bg-white/70 pl-9 text-sm shadow-none focus-visible:bg-white"
+                    placeholder="搜索标题、作者、分类或描述内容"
+                    className="h-10 rounded-lg border-[#dbeafe] bg-white/70 pl-9 text-sm shadow-none focus-visible:bg-white"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1147,8 +1145,8 @@ export function ImageComposer({
                       className={cn(
                         "h-9 shrink-0 rounded-lg border px-3 text-xs font-medium transition",
                         category === bananaPromptCategory
-                          ? "border-rose-100 bg-[#2d1d26] text-white"
-                          : "border-rose-100 bg-white/75 text-stone-600 hover:border-rose-200 hover:text-stone-900",
+                          ? "border-[#bfdbfe] bg-[#1e3a8a] text-white"
+                          : "border-[#dbeafe] bg-white/75 text-stone-600 hover:border-[#bfdbfe] hover:text-stone-900",
                       )}
                     >
                       {category}
@@ -1158,23 +1156,23 @@ export function ImageComposer({
               </div>
             </DialogHeader>
 
-            <div className="min-h-0 flex-1 overflow-y-auto bg-rose-50/35 px-4 py-4 sm:px-6">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-[#eff6ff]/45 px-4 py-4 sm:px-6">
               {bananaPromptStatus === "loading" || bananaPromptStatus === "idle" ? (
                 <div className="flex h-full min-h-[260px] items-center justify-center">
                   <div className="flex items-center gap-2 text-sm text-stone-500">
                     <LoaderCircle className="size-4 animate-spin" />
-                    正在读取提示词库
+                    正在读取创作模板库
                   </div>
                 </div>
               ) : bananaPromptStatus === "error" ? (
                 <div className="flex h-full min-h-[260px] items-center justify-center text-center">
                   <div className="max-w-sm">
-                    <div className="text-base font-semibold text-stone-900">提示词库加载失败</div>
+                    <div className="text-base font-semibold text-stone-900">创作模板库加载失败</div>
                     <p className="mt-2 text-sm leading-6 text-stone-500">{bananaPromptError || "请稍后重试。"}</p>
                     <Button
                       type="button"
                       variant="outline"
-                      className="mt-4 rounded-lg border-rose-100 bg-white"
+                      className="mt-4 rounded-lg border-[#dbeafe] bg-white"
                       onClick={() => {
                         setBananaPromptStatus("idle");
                         setBananaPromptRetryKey((key) => key + 1);
@@ -1186,7 +1184,7 @@ export function ImageComposer({
                 </div>
               ) : filteredBananaPrompts.length === 0 ? (
                 <div className="flex h-full min-h-[260px] items-center justify-center text-sm text-stone-500">
-                  没有匹配的提示词
+                  没有匹配的创作模板
                 </div>
               ) : (
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1195,7 +1193,7 @@ export function ImageComposer({
                     return (
                       <article
                         key={`${item.title}-${item.created || index}`}
-                        className="overflow-hidden rounded-lg border border-rose-100 bg-white/85 shadow-sm"
+                        className="overflow-hidden rounded-lg border border-[#e2e8f0] bg-white/85 shadow-sm"
                       >
                         <div className="aspect-[4/3] bg-stone-100">
                           {previewUrl ? (
@@ -1228,7 +1226,7 @@ export function ImageComposer({
                           </div>
                           <div className="mt-auto flex items-center justify-between gap-3">
                             <div className="min-w-0 truncate text-xs text-stone-400">
-                              {item.author ? `作者 ${item.author}` : "提示词管理"}
+                              {item.author ? `作者 ${item.author}` : "模板管理"}
                             </div>
                             <Button
                               type="button"
@@ -1280,21 +1278,21 @@ export function ImageComposer({
               className="min-h-[220px] resize-y rounded-lg border-0 bg-transparent px-4 pt-4 pb-4 text-[15px] leading-7 text-stone-900 shadow-none placeholder:text-stone-400 focus-visible:ring-0"
             />
 
-            <div className="border-t border-rose-100 bg-white/80 px-3 py-3">
+            <div className="border-t border-[#e2e8f0] bg-white/80 px-3 py-3">
               <div className="flex flex-col gap-3">
                 <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
                   {mode === "edit" && (
                     <Button
                       type="button"
                       variant="outline"
-                      className="col-span-2 h-10 rounded-lg border-rose-100 bg-white/85 px-3 text-sm font-medium text-stone-700 shadow-none"
+                      className="col-span-2 h-10 rounded-lg border-[#dbeafe] bg-white/85 px-3 text-sm font-medium text-stone-700 shadow-none"
                       onClick={onPickReferenceImage}
                     >
                       <ImagePlus className="size-4" />
                       <span>{referenceImages.length > 0 ? "继续添加参考图" : "上传参考图"}</span>
                     </Button>
                   )}
-                  <div className="inline-flex h-9 items-center justify-center rounded-lg bg-rose-50 px-3 text-xs font-medium text-stone-600">
+                  <div className="inline-flex h-9 items-center justify-center rounded-lg bg-[#eff6ff] px-3 text-xs font-medium text-stone-600">
                     <span className="mr-1">本地额度</span>{availableQuota}
                   </div>
                   {activeTaskCount > 0 && (
@@ -1303,7 +1301,7 @@ export function ImageComposer({
                       {activeTaskCount}<span> 个任务处理中</span>
                     </div>
                   )}
-                  <div className="flex h-9 items-center justify-center gap-2 rounded-lg border border-rose-100 bg-white/85 px-3">
+                  <div className="flex h-9 items-center justify-center gap-2 rounded-lg border border-[#dbeafe] bg-white/85 px-3">
                     <span className="text-sm font-medium text-stone-700">张数</span>
                     <Input
                       type="number"
@@ -1317,7 +1315,7 @@ export function ImageComposer({
                   </div>
                   <div
                     ref={sizeMenuRef}
-                    className="relative col-span-2 flex h-9 items-center gap-2 rounded-lg border border-rose-100 bg-white/85 px-3 text-sm"
+                    className="relative col-span-2 flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/85 px-3 text-sm"
                   >
                     <span className="font-medium text-stone-700">比例</span>
                     <button
@@ -1329,7 +1327,7 @@ export function ImageComposer({
                       <ChevronDown className={cn("size-4 shrink-0 opacity-60 transition", isSizeMenuOpen && "rotate-180")} />
                     </button>
                     {isSizeMenuOpen ? (
-                      <div className="absolute bottom-[calc(100%+10px)] left-0 z-50 w-full overflow-hidden rounded-lg border border-white/80 bg-white p-2 shadow-[0_24px_80px_-32px_rgba(84,38,62,0.35)]">
+                      <div className="absolute bottom-[calc(100%+10px)] left-0 z-50 w-full overflow-hidden rounded-lg border border-[#e2e8f0] bg-white p-2 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.18)]">
                         {imageSizeOptions.map((option) => {
                           const active = option.value === imageSize;
                           return (
@@ -1337,8 +1335,8 @@ export function ImageComposer({
                               key={option.label}
                               type="button"
                               className={cn(
-                                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-rose-50",
-                                active && "bg-rose-50 font-medium text-stone-950",
+                                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-[#eff6ff]",
+                                active && "bg-[#eff6ff] font-medium text-stone-950",
                               )}
                               onClick={() => {
                                 onImageSizeChange(option.value);
@@ -1360,7 +1358,7 @@ export function ImageComposer({
                   type="button"
                   onClick={() => void onSubmit()}
                   disabled={!prompt.trim() || (mode === "edit" && referenceImages.length === 0)}
-                  className="yan-gradient inline-flex h-11 w-full shrink-0 items-center justify-center rounded-lg text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-stone-300 disabled:brightness-100"
+                  className="inline-flex h-11 w-full shrink-0 items-center justify-center rounded-lg bg-[#2563eb] text-white shadow-[0_10px_24px_rgba(37,99,235,0.18)] transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:bg-stone-300 disabled:shadow-none"
                   aria-label={mode === "edit" ? "编辑图片" : "生成图片"}
                 >
                   <ArrowUp className="size-4" />
@@ -1390,7 +1388,7 @@ function ModeButton({
       onClick={onClick}
       className={cn(
         "rounded-lg px-2.5 py-1.5 text-xs font-medium transition sm:px-4 sm:py-2 sm:text-sm",
-        active ? "bg-[#2d1d26] text-white" : "bg-rose-50 text-stone-600 hover:bg-rose-100",
+        active ? "bg-[#1e3a8a] text-white" : "bg-[#eff6ff] text-stone-600 hover:bg-[#dbeafe]",
       )}
     >
       {children}

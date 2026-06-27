@@ -29,7 +29,7 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "border-input bg-[#fffaf2]/78 data-[placeholder]:text-muted-foreground flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-4 py-2 text-sm whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.62)] outline-none focus-visible:border-[rgba(143,93,47,0.36)] focus-visible:bg-[#fffdf8] focus-visible:ring-[3px] focus-visible:ring-[rgba(181,138,82,0.22)] disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+        "border-input bg-white/88 data-[placeholder]:text-muted-foreground flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-4 py-2 text-sm whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] outline-none focus-visible:border-[#2563eb]/45 focus-visible:bg-white focus-visible:ring-[3px] focus-visible:ring-[#2563eb]/18 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
         className,
       )}
       {...props}
@@ -89,7 +89,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out relative z-50 max-h-96 min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-[rgba(143,93,47,0.14)] shadow-[0_24px_70px_-30px_rgba(23,18,15,0.42)]",
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out relative z-50 max-h-96 min-w-[8rem] overflow-x-hidden overflow-y-auto rounded-xl border border-[#dbeafe] shadow-[0_24px_70px_-30px_rgba(15,23,42,0.28)]",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className,

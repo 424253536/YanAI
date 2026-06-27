@@ -102,7 +102,7 @@ export function ProxySettingsCard() {
   };
 
   return (
-    <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+    <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.35)]">
       <CardContent className="space-y-6 p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -112,7 +112,7 @@ export function ProxySettingsCard() {
             <div>
               <h2 className="text-lg font-semibold tracking-tight">上游代理配置</h2>
               <p className="text-sm text-stone-500">
-                为 chatgpt.com 的请求配置出网代理，适合国内服务器部署；Sub2API / CPA 请求不受影响。
+                为上游平台请求配置出网代理，适合国内服务器部署；远程同步与远程凭据源请求不受影响。
               </p>
             </div>
           </div>
@@ -134,7 +134,7 @@ export function ProxySettingsCard() {
               <div className="space-y-0.5">
                 <div className="text-sm font-medium text-stone-800">启用代理</div>
                 <div className="text-sm text-stone-500">
-                  关闭后 chatgpt.com 请求会直连。保存后立即生效，无需重启。
+                  关闭后上游平台请求会直连。保存后立即生效，无需重启。
                 </div>
               </div>
             </label>
@@ -160,7 +160,7 @@ export function ProxySettingsCard() {
                 className={`rounded-xl border px-4 py-3 text-sm leading-6 ${
                   testResult.ok
                     ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "border-rose-200 bg-rose-50 text-rose-800"
+                    : "border-red-200 bg-red-50 text-red-800"
                 }`}
               >
                 {testResult.ok ? (
@@ -175,7 +175,7 @@ export function ProxySettingsCard() {
 
             <div className="flex items-center gap-2">
               <Button
-                className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+                className="h-10 rounded-xl px-5"
                 onClick={() => void handleSave()}
                 disabled={isSaving || !dirty}
               >

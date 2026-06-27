@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -266,10 +267,10 @@ function ImageManagerContent() {
   }, []);
 
   return (
-    <section className="space-y-5">
+    <section className="min-h-full space-y-5 pb-8">
       <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Asset vault</div>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Asset vault</div>
           <h1 className="text-3xl font-bold tracking-tight text-stone-950">图片管理</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
             按日期、用户与渠道审阅生成资产，支持批量选择、删除与 WebDAV 同步。
@@ -314,14 +315,14 @@ function ImageManagerContent() {
           <Button variant="outline" onClick={clearFilters} className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700">
             清除筛选
           </Button>
-          <Button onClick={() => void loadImages()} disabled={isLoading} className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800">
+          <Button onClick={() => void loadImages()} disabled={isLoading} className="h-10 rounded-xl px-4">
             {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}
             查询
           </Button>
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-[#e2e8f0] bg-white/88 shadow-sm">
         <CardContent className="p-0">
           <div className="flex flex-col gap-3 border-b border-stone-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-3 text-sm text-stone-600">
@@ -367,7 +368,15 @@ function ImageManagerContent() {
               <LoaderCircle className="size-5 animate-spin text-stone-400" />
             </div>
           ) : items.length === 0 ? (
-            <div className="px-6 py-14 text-center text-sm text-stone-500">没有找到图片</div>
+            <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+              <div className="grid size-12 place-items-center rounded-2xl bg-[#eff6ff] text-[#2563eb]">
+                <ImageIcon className="size-5" />
+              </div>
+              <div className="mt-4 text-base font-semibold text-slate-950">没有找到图片</div>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                调整日期、用户或渠道筛选条件后再试，或等待新的生成任务完成归档。
+              </p>
+            </div>
           ) : (
             <div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {dateGroups.map((group) => {
@@ -376,7 +385,7 @@ function ImageManagerContent() {
                 const someGroupSelected = groupSelected > 0 && !allGroupSelected;
                 return (
                   <div key={group.date} className="contents">
-                    <div className="col-span-full flex items-center justify-between border-b border-[rgba(143,93,47,0.1)] bg-[#efe6d8]/54 px-4 py-3 text-sm text-stone-600">
+                    <div className="col-span-full flex items-center justify-between border-b border-[rgba(37,99,235,0.1)] bg-[#eff6ff]/54 px-4 py-3 text-sm text-stone-600">
                       <div className="flex items-center gap-2">
                         <Checkbox
                           checked={allGroupSelected ? true : someGroupSelected ? "indeterminate" : false}
@@ -394,7 +403,7 @@ function ImageManagerContent() {
                       return (
                         <div
                           key={key}
-                          className={`group relative border-r border-b border-[rgba(143,93,47,0.08)] p-4 transition hover:bg-[#efe6d8]/42 ${selected ? "bg-[#ead6b7]/38 ring-1 ring-inset ring-[#b58a52]/45" : ""}`}
+                          className={`group relative border-r border-b border-[rgba(37,99,235,0.08)] p-4 transition hover:bg-[#eff6ff]/42 ${selected ? "bg-[#dbeafe]/38 ring-1 ring-inset ring-[#60a5fa]/45" : ""}`}
                         >
                           <div className="absolute top-6 left-6 z-10 rounded-md bg-white/90 p-1 shadow-sm">
                             <Checkbox
@@ -406,7 +415,7 @@ function ImageManagerContent() {
                           </div>
                           <button
                             type="button"
-                            className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-[#efe6d8] text-left shadow-sm"
+                            className="relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-2xl bg-[#eff6ff] text-left shadow-sm"
                             onClick={() => {
                               setLightboxIndex(items.findIndex((row) => imageKey(row) === key));
                               setLightboxOpen(true);
@@ -500,6 +509,9 @@ function ImageManagerContent() {
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => (!open ? setDeleteTarget(null) : null)}>
         <DialogContent>
           <DialogHeader>
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <AlertTriangle className="size-5" />
+            </div>
             <DialogTitle>{deleteCount === 1 ? "删除图片" : "批量删除图片"}</DialogTitle>
             <DialogDescription>确认删除选中的 {deleteCount} 张图片吗？删除后图片文件和管理记录将无法恢复。</DialogDescription>
           </DialogHeader>
@@ -521,7 +533,7 @@ function ImageManagerContent() {
 export default function ImageManagerPage() {
   const { isCheckingAuth, session } = useAuthGuard(["admin"]);
   if (isCheckingAuth || !session || session.role !== "admin") {
-    return <div className="flex min-h-[40vh] items-center justify-center"><LoaderCircle className="size-5 animate-spin text-stone-400" /></div>;
+    return <div className="flex h-full min-h-[40vh] items-center justify-center"><LoaderCircle className="size-5 animate-spin text-[#2563eb]" /></div>;
   }
   return <ImageManagerContent />;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Copy, ImageIcon, LoaderCircle, Share2, Sparkles } from "lucide-react";
+import { Clock3, Copy, ImageIcon, LoaderCircle, PencilLine, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,7 @@ const emptyStateExampleSources: EmptyStatePromptSource[] = [
 function buildPromptShareTitle(prompt: string) {
   const cleaned = prompt.replace(/\s+/g, " ").trim();
   if (!cleaned) {
-    return "未命名提示词";
+    return "未命名创作模板";
   }
   return cleaned.length > 24 ? `${cleaned.slice(0, 24)}...` : cleaned;
 }
@@ -148,23 +148,23 @@ export function ImageResults({
   const copyTurnPrompt = async (prompt: string) => {
     const cleaned = prompt.trim();
     if (!cleaned) {
-      toast.error("没有可复制的提示词");
+      toast.error("没有可复制的创作描述");
       return;
     }
     await navigator.clipboard.writeText(cleaned);
-    toast.success("提示词已复制");
+    toast.success("创作描述已复制");
   };
 
   const shareTurnPrompt = async (turn: { prompt: string; mode: string; size: string; count: number }) => {
     const cleaned = turn.prompt.trim();
     if (!cleaned) {
-      toast.error("没有可分享的提示词");
+      toast.error("没有可分享的创作描述");
       return;
     }
     try {
       const result = await sharePromptPayload({
         title: buildPromptShareTitle(cleaned),
-        description: turn.mode === "edit" ? "图生图提示词" : "文生图提示词",
+        description: turn.mode === "edit" ? "参考图编辑描述" : "文字生成描述",
         prompt: cleaned,
         mode: turn.mode,
         image_size: turn.size,
@@ -179,34 +179,34 @@ export function ImageResults({
   if (!selectedConversation) {
     return (
       <div className="grid min-h-[520px] items-center gap-4 lg:grid-cols-[minmax(0,1.08fr)_minmax(280px,.92fr)]">
-        <div className="relative min-h-[420px] overflow-hidden rounded-2xl border border-white/70 bg-white/52 shadow-[0_24px_80px_rgba(33,27,21,0.14)]">
+        <div className="relative min-h-[420px] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_18px_52px_rgba(15,23,42,0.08)]">
           <img
             src={emptyStateHero.preview}
             alt={emptyStateHero.title}
-            className="absolute inset-0 h-full w-full object-cover opacity-75"
+            className="absolute inset-0 h-full w-full object-cover opacity-88"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#17120f]/76 via-[#17120f]/20 to-white/10" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.06),rgba(15,23,42,0.72))]" />
           <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-            <div className="inline-flex rounded-full border border-white/18 bg-white/18 px-3 py-1 text-xs font-semibold backdrop-blur">示例预览</div>
+            <div className="inline-flex rounded-full border border-white/20 bg-white/14 px-3 py-1 text-xs font-semibold backdrop-blur">示例预览</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight">{emptyStateHero.title}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-white/78">{emptyStateHero.description}</p>
           </div>
         </div>
 
         <div className="grid gap-3">
-          <div className="rounded-2xl border border-white/70 bg-[#fffaf2]/64 p-4 shadow-sm">
-            <div className="yan-mark-gradient grid size-12 place-items-center rounded-xl text-white shadow-[0_14px_32px_rgba(33,27,21,0.16)]">
+          <div className="rounded-2xl border border-[#e2e8f0] bg-white/82 p-4 shadow-sm">
+            <div className="grid size-12 place-items-center rounded-xl bg-[#eff6ff] text-[#2563eb]">
               <ImageIcon className="size-5" />
             </div>
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-stone-950">从右侧创作台开始</h1>
             <p className="mt-2 text-sm leading-6 text-stone-500">
-              支持文生图、图生图、参考图上传和粘贴、提示词库、队列恢复、灯箱预览与继续编辑。
+              支持文字生成、参考图编辑、图片上传和粘贴、创作模板库、队列恢复、灯箱预览与继续编辑。
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {emptyStateExamples.map((item) => (
-              <div key={item.label} className="rounded-2xl border border-white/70 bg-gradient-to-br from-[#fffaf2]/76 to-[#efe6d8]/70 p-3 shadow-sm">
-                <div className="h-20 overflow-hidden rounded-xl border border-white/70 bg-[#efe6d8]">
+              <div key={item.label} className="rounded-2xl border border-[#e2e8f0] bg-white/78 p-3 shadow-sm">
+                <div className="h-20 overflow-hidden rounded-xl border border-[#e2e8f0] bg-[#eff6ff]">
                   <img src={item.preview} alt={`${item.label}示例`} className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className="mt-3 text-sm font-semibold text-stone-800">{item.label}</div>
@@ -241,12 +241,12 @@ export function ImageResults({
 
         return (
           <section key={turn.id} className="overflow-hidden rounded-lg border border-white/70 bg-white/46 shadow-sm">
-            <div className="border-b border-rose-100/70 bg-white/56 px-4 py-3">
+            <div className="border-b border-[#e2e8f0] bg-white/56 px-4 py-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="mb-2 flex flex-wrap gap-2 text-[11px] font-medium text-stone-400">
                     <span>第 {turnIndex + 1} 轮</span>
-                    <span>{turn.mode === "edit" ? "图生图" : "文生图"}</span>
+                    <span>{turn.mode === "edit" ? "参考图编辑" : "文字生成"}</span>
                     <span>{getTurnStatusLabel(turn.status)}</span>
                     <span>{formatConversationTime(turn.createdAt)}</span>
                   </div>
@@ -257,7 +257,7 @@ export function ImageResults({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-lg border-rose-100 bg-white/85 px-2.5 text-stone-700 hover:bg-white"
+                    className="h-8 rounded-lg border-[#dbeafe] bg-white/85 px-2.5 text-stone-700 hover:bg-white"
                     onClick={() => void copyTurnPrompt(turn.prompt)}
                   >
                     <Copy className="size-4" />
@@ -267,13 +267,13 @@ export function ImageResults({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-lg border-rose-100 bg-white/85 px-2.5 text-stone-700 hover:bg-white"
+                    className="h-8 rounded-lg border-[#dbeafe] bg-white/85 px-2.5 text-stone-700 hover:bg-white"
                     onClick={() => void shareTurnPrompt(turn)}
                   >
                     <Share2 className="size-4" />
                     分享
                   </Button>
-                  <div className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-stone-600">
+                  <div className="rounded-full bg-[#eff6ff] px-3 py-1 text-xs font-semibold text-stone-600">
                     {turn.count} 张
                   </div>
                 </div>
@@ -281,7 +281,7 @@ export function ImageResults({
             </div>
 
             {turn.referenceImages.length > 0 ? (
-              <div className="border-b border-rose-100/60 px-4 py-3">
+              <div className="border-b border-[#e2e8f0] px-4 py-3">
                 <div className="mb-3 text-xs font-semibold text-stone-500">本轮参考图</div>
                 <div className="flex flex-wrap gap-3">
                   {turn.referenceImages.map((image, index) => (
@@ -289,7 +289,7 @@ export function ImageResults({
                       <button
                         type="button"
                         onClick={() => onOpenLightbox(referenceLightboxImages, index)}
-                        className="group relative size-20 overflow-hidden rounded-lg border border-rose-100 bg-rose-50/60 text-left transition hover:border-rose-200"
+                        className="group relative size-20 overflow-hidden rounded-lg border border-[#dbeafe] bg-[#eff6ff] text-left transition hover:border-[#bfdbfe]"
                         aria-label={`预览参考图 ${image.name || index + 1}`}
                       >
                         <img
@@ -301,10 +301,10 @@ export function ImageResults({
                       <Button
                         variant="outline"
                         size="sm"
-                        className="rounded-lg border-rose-100 bg-white/85 text-stone-700 hover:bg-white"
+                        className="rounded-lg border-[#dbeafe] bg-white/85 text-stone-700 hover:bg-white"
                         onClick={() => onContinueEdit(selectedConversation.id, image)}
                       >
-                        <Sparkles className="size-4" />
+                        <PencilLine className="size-4" />
                         加入编辑
                       </Button>
                     </div>
@@ -360,10 +360,10 @@ export function ImageResults({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="rounded-lg border-rose-100 bg-white/85 text-stone-700 hover:bg-white"
+                          className="rounded-lg border-[#dbeafe] bg-white/85 text-stone-700 hover:bg-white"
                           onClick={() => onContinueEdit(selectedConversation.id, image)}
                         >
-                          <Sparkles className="size-4" />
+                          <PencilLine className="size-4" />
                           编辑
                         </Button>
                       </div>
@@ -376,12 +376,12 @@ export function ImageResults({
                     <div
                       key={image.id}
                       className={cn(
-                        "overflow-hidden rounded-lg border border-rose-200 bg-rose-50",
+                        "overflow-hidden rounded-lg border border-red-200 bg-red-50",
                         getImageAspectClass(turn.size),
                         featured && "md:row-span-2",
                       )}
                     >
-                      <div className="flex h-full items-center justify-center px-6 py-8 text-center text-sm leading-6 text-rose-600">
+                      <div className="flex h-full items-center justify-center px-6 py-8 text-center text-sm leading-6 text-red-600">
                         {image.error || "生成失败"}
                       </div>
                     </div>
@@ -392,7 +392,7 @@ export function ImageResults({
                   <div
                     key={image.id}
                     className={cn(
-                      "overflow-hidden rounded-lg border border-rose-100/80 bg-rose-50/70",
+                      "overflow-hidden rounded-lg border border-[#dbeafe] bg-[#eff6ff]",
                       getImageAspectClass(turn.size),
                       featured && "md:row-span-2",
                     )}

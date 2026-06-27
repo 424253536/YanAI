@@ -133,43 +133,43 @@ function RedeemCodesContent() {
   };
 
   return (
-    <section className="space-y-5">
+    <section className="min-h-full space-y-5 pb-8">
       <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Credit instruments</div>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Credits</div>
           <h1 className="text-3xl font-bold tracking-tight text-stone-950">兑换码管理</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
             批量生成、导出和停用兑换码，统一管理额度发放入口。
           </p>
         </div>
-        <Button variant="outline" className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78" onClick={() => void load()}>
+        <Button variant="outline" className="h-10 rounded-xl" onClick={() => void load()}>
           <RefreshCw className="size-4" />
           刷新
         </Button>
       </div>
 
-      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
-            <Plus className="size-4 text-rose-500" />
+            <Plus className="size-4 text-[#2563eb]" />
             批量生成兑换码
           </div>
           <div className="grid gap-3 md:grid-cols-[120px_120px_120px_180px_1fr_auto]">
-            <Input type="number" value={form.quota} onChange={(event) => setForm((current) => ({ ...current, quota: event.target.value }))} placeholder="额度" className="h-10 rounded-xl border-rose-100 bg-white" />
-            <Input type="number" value={form.count} onChange={(event) => setForm((current) => ({ ...current, count: event.target.value }))} placeholder="数量" className="h-10 rounded-xl border-rose-100 bg-white" />
-            <Input type="number" value={form.max_uses} onChange={(event) => setForm((current) => ({ ...current, max_uses: event.target.value }))} placeholder="次数" className="h-10 rounded-xl border-rose-100 bg-white" />
-            <Input value={form.expires_at} onChange={(event) => setForm((current) => ({ ...current, expires_at: event.target.value }))} placeholder="过期时间，可空" className="h-10 rounded-xl border-rose-100 bg-white" />
-            <Input value={form.note} onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))} placeholder="备注" className="h-10 rounded-xl border-rose-100 bg-white" />
-            <Button className="h-10 rounded-xl bg-rose-500 text-white hover:bg-rose-600" onClick={() => void handleCreate()}>
+            <Input type="number" value={form.quota} onChange={(event) => setForm((current) => ({ ...current, quota: event.target.value }))} placeholder="额度" className="h-10" />
+            <Input type="number" value={form.count} onChange={(event) => setForm((current) => ({ ...current, count: event.target.value }))} placeholder="数量" className="h-10" />
+            <Input type="number" value={form.max_uses} onChange={(event) => setForm((current) => ({ ...current, max_uses: event.target.value }))} placeholder="次数" className="h-10" />
+            <Input value={form.expires_at} onChange={(event) => setForm((current) => ({ ...current, expires_at: event.target.value }))} placeholder="过期时间，可空" className="h-10" />
+            <Input value={form.note} onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))} placeholder="备注" className="h-10" />
+            <Button className="h-10 rounded-xl" onClick={() => void handleCreate()}>
               生成
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-[#e2e8f0] bg-white/88 shadow-sm">
         <CardContent className="p-0">
-          <div className="flex flex-wrap items-center gap-3 border-b border-rose-50 px-5 py-3">
+          <div className="flex flex-wrap items-center gap-3 border-b border-[#e2e8f0] bg-[#f8fbff] px-5 py-3">
             <label className="flex items-center gap-2 text-sm text-stone-500">
               <Checkbox
                 checked={allSelected}
@@ -180,7 +180,7 @@ function RedeemCodesContent() {
             </label>
             <Button
               variant="ghost"
-              className="h-8 rounded-lg px-3 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+              className="h-8 rounded-lg px-3 text-[#2563eb] hover:bg-[#eff6ff]"
               onClick={handleExportCodes}
               disabled={selectedCodes.length === 0}
             >
@@ -189,7 +189,7 @@ function RedeemCodesContent() {
             </Button>
             <Button
               variant="ghost"
-              className="h-8 rounded-lg px-3 text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+              className="h-8 rounded-lg px-3 text-red-600 hover:bg-red-50 hover:text-red-700"
               onClick={() => openDeleteCodes(selectedCodes)}
               disabled={selectedCodes.length === 0 || isDeleting}
             >
@@ -204,13 +204,19 @@ function RedeemCodesContent() {
           </div>
           {isLoading ? (
             <div className="flex h-40 items-center justify-center">
-              <LoaderCircle className="size-5 animate-spin text-rose-400" />
+              <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
             </div>
           ) : items.length === 0 ? (
-            <div className="px-6 py-14 text-center text-sm text-stone-500">暂无兑换码</div>
+            <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+              <div className="grid size-12 place-items-center rounded-2xl bg-[#eff6ff] text-[#2563eb]">
+                <Gift className="size-5" />
+              </div>
+              <div className="mt-4 text-base font-semibold text-slate-950">暂无兑换码</div>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">生成兑换码后，可在这里批量导出、停用和删除。</p>
+            </div>
           ) : (
             items.map((item) => (
-              <div key={item.id} className="grid gap-3 border-b border-[rgba(143,93,47,0.08)] px-5 py-4 text-sm transition hover:bg-[#efe6d8]/36 last:border-0 lg:grid-cols-[44px_1.4fr_100px_100px_120px_160px_180px] lg:items-center">
+              <div key={item.id} className="grid gap-3 border-b border-[#e2e8f0] px-5 py-4 text-sm transition hover:bg-[#f8fbff] last:border-0 lg:grid-cols-[44px_1.4fr_100px_100px_120px_160px_180px] lg:items-center">
                 <Checkbox
                   checked={selectedIds.includes(item.id)}
                   onCheckedChange={(checked) => {
@@ -223,7 +229,7 @@ function RedeemCodesContent() {
                   aria-label={`选择兑换码 ${item.code}`}
                 />
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="rounded-2xl bg-rose-50 p-3 text-rose-500">
+                  <div className="rounded-2xl bg-[#eff6ff] p-3 text-[#2563eb]">
                     <Gift className="size-4" />
                   </div>
                   <div className="min-w-0">
@@ -231,12 +237,12 @@ function RedeemCodesContent() {
                     <div className="truncate text-xs text-stone-400">{item.note || "无备注"}</div>
                   </div>
                 </div>
-                <div className="font-semibold text-rose-600">{item.quota} 点</div>
+                <div className="font-semibold text-[#2563eb]">{item.quota} 点</div>
                 <div className="text-stone-600">{item.used_count}/{item.max_uses}</div>
                 <Badge variant={item.status === "enabled" ? "success" : "secondary"}>{item.status === "enabled" ? "启用" : "停用"}</Badge>
                 <div className="text-xs text-stone-500">{item.expires_at || "永不过期"}</div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="h-8 rounded-lg border-rose-100 bg-white" onClick={() => void handleToggle(item)}>
+                  <Button variant="outline" size="sm" className="h-8 rounded-lg" onClick={() => void handleToggle(item)}>
                     {item.status === "enabled" ? "停用" : "启用"}
                   </Button>
                   <Button
@@ -260,7 +266,7 @@ function RedeemCodesContent() {
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
               <AlertTriangle className="size-5" />
             </div>
             <DialogTitle>{deleteCount === 1 ? "删除兑换码" : "批量删除兑换码"}</DialogTitle>
@@ -285,8 +291,8 @@ export default function RedeemCodesPage() {
   const { isCheckingAuth, session } = useAuthGuard(["admin"]);
   if (isCheckingAuth || !session) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-rose-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }

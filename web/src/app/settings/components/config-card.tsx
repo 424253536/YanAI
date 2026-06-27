@@ -89,7 +89,7 @@ export function ConfigCard() {
 
   if (isLoadingConfig) {
     return (
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
         <CardContent className="flex items-center justify-center p-10">
           <LoaderCircle className="size-5 animate-spin text-stone-400" />
         </CardContent>
@@ -98,7 +98,7 @@ export function ConfigCard() {
   }
 
   return (
-    <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+    <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
       <CardContent className="space-y-4 p-6">
         <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-600">
           管理员登录密钥继续从部署配置读取，不再在此页面展示；如需分发给其他人，请在下方创建普通用户密钥。
@@ -131,7 +131,7 @@ export function ConfigCard() {
                 className={`rounded-xl border px-3 py-2 text-xs leading-6 ${
                   proxyTestResult.ok
                     ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : "border-rose-200 bg-rose-50 text-rose-800"
+                    : "border-red-200 bg-red-50 text-red-800"
                 }`}
               >
                 {proxyTestResult.ok
@@ -173,14 +173,14 @@ export function ConfigCard() {
             <p className="text-xs text-stone-500">自动删除多少天前的本地图片。</p>
           </div>
           <div className="space-y-2">
-            <label className="text-sm text-stone-700">gpt-image-2 底层模型</label>
+            <label className="text-sm text-stone-700">默认图像通道映射</label>
             <Input
               value={String(config?.image_model_mappings?.["gpt-image-2"] || "")}
               onChange={(event) => setGptImage2ModelSlug(event.target.value)}
               placeholder="gpt-5-5"
               className="h-10 rounded-xl border-stone-200 bg-white"
             />
-            <p className="text-xs text-stone-500">内置账号池调用 ChatGPT 图片链路时使用的上游模型 slug。</p>
+            <p className="text-xs text-stone-500">内置账号池调用图片链路时使用的上游接口 slug。</p>
           </div>
           <label className="flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700">
             <Checkbox
@@ -318,12 +318,12 @@ export function ConfigCard() {
           </div>
           <div className="space-y-4 rounded-xl border border-stone-200 bg-white px-4 py-4 md:col-span-2">
             <div>
-              <h2 className="text-sm font-semibold text-stone-900">Linux DO OAuth</h2>
+              <h2 className="text-sm font-semibold text-stone-900">Linux DO 登录</h2>
               <p className="mt-1 text-xs leading-5 text-stone-500">回调地址需填写到 Linux DO Connect 应用中。</p>
             </div>
-            <div className="flex flex-col gap-2 rounded-lg border border-[rgba(143,93,47,0.2)] bg-[#efe6d8] px-3 py-2 text-sm text-[#5b3a1e] md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-2 rounded-lg border border-[rgba(37,99,235,0.2)] bg-[#eff6ff] px-3 py-2 text-sm text-[#1e3a8a] md:flex-row md:items-center md:justify-between">
               <span className="break-all">回调 URL：{linuxDoCallbackUrl}</span>
-              <Button type="button" variant="outline" className="h-8 shrink-0 rounded-lg border-[rgba(143,93,47,0.28)] bg-white px-3 text-[#8f5d2f]" onClick={() => void copyLinuxDoCallbackUrl()}>
+              <Button type="button" variant="outline" className="h-8 shrink-0 rounded-lg border-[rgba(37,99,235,0.28)] bg-white px-3 text-[#2563eb]" onClick={() => void copyLinuxDoCallbackUrl()}>
                 <Copy className="size-3.5" />
                 复制
               </Button>
@@ -357,7 +357,7 @@ export function ConfigCard() {
 
         <div className="flex justify-end">
           <Button
-            className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+            className="h-10 rounded-xl px-5"
             onClick={() => void handleSaveConfig()}
             disabled={isSavingConfig}
           >

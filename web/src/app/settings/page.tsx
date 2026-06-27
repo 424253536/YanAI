@@ -48,7 +48,7 @@ function SettingsDataController() {
 
 function SettingsPageContent() {
   return (
-    <>
+    <div className="min-h-full space-y-6 pb-8">
       <SettingsDataController />
       <SettingsHeader />
       <section className="space-y-6">
@@ -59,7 +59,7 @@ function SettingsPageContent() {
       </section>
       <CPAPoolDialog />
       <ImportBrowserDialog />
-    </>
+    </div>
   );
 }
 
@@ -68,8 +68,8 @@ export default function SettingsPage() {
 
   if (isCheckingAuth || !session || session.role !== "admin") {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-stone-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }

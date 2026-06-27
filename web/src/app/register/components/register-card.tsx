@@ -56,18 +56,18 @@ export function RegisterCard() {
   };
 
   return (
-    <div className="yan-panel grid h-[calc(100vh-132px)] min-h-[640px] items-stretch gap-0 overflow-hidden rounded-2xl xl:grid-cols-2">
-      <section className="space-y-5 overflow-y-auto border-b border-[rgba(143,93,47,0.14)] p-4 xl:border-r xl:border-b-0">
+    <div className="yan-panel grid h-full min-h-0 items-stretch gap-0 overflow-hidden rounded-2xl xl:grid-cols-2">
+      <section className="space-y-5 overflow-y-auto border-b border-[rgba(37,99,235,0.14)] p-4 xl:border-r xl:border-b-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="yan-mark-gradient flex size-10 items-center justify-center rounded-xl text-white shadow-[0_14px_32px_rgba(33,27,21,0.16)]">
+              <div className="yan-mark-gradient flex size-10 items-center justify-center rounded-xl text-white shadow-[0_14px_32px_rgba(15,23,42,0.16)]">
                 <UserPlus className="size-5" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold tracking-tight">注册配置</h2>
               </div>
             </div>
-            <Button className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800" onClick={() => void save()} disabled={isSaving || config.enabled}>
+            <Button className="h-9 rounded-xl px-4" onClick={() => void save()} disabled={isSaving || config.enabled}>
               {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
               保存配置
             </Button>
@@ -113,11 +113,11 @@ export function RegisterCard() {
             </div>
           </div>
 
-          <div className="space-y-3 border-t border-[rgba(143,93,47,0.14)] pt-4">
+          <div className="space-y-3 border-t border-[rgba(37,99,235,0.14)] pt-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-stone-800">邮箱配置</h3>
-                <p className="mt-1 text-xs text-stone-500">可配置多个 provider，按启用顺序轮换。</p>
+                <p className="mt-1 text-xs text-stone-500">可配置多个邮箱服务，按启用顺序轮换。</p>
               </div>
               <Button type="button" variant="outline" className="h-9 rounded-xl border-stone-200 bg-white px-3 text-stone-700" onClick={addProvider} disabled={config.enabled}>
                 <Plus className="size-4" />
@@ -145,13 +145,13 @@ export function RegisterCard() {
                 const type = String(provider.type || "tempmail_lol");
                 const domains = Array.isArray(provider.domain) ? provider.domain.map(String).join("\n") : "";
                 return (
-                  <div key={index} className="space-y-3 rounded-2xl border border-[rgba(143,93,47,0.12)] bg-[#fffaf2]/54 p-4 first:border-t first:pt-4">
+                  <div key={index} className="space-y-3 rounded-2xl border border-[rgba(37,99,235,0.12)] bg-[#ffffff]/54 p-4 first:border-t first:pt-4">
                     <div className="flex items-center justify-between gap-3">
                       <label className="flex items-center gap-3 text-sm text-stone-700">
                         <Checkbox checked={Boolean(provider.enable)} onCheckedChange={(checked) => updateProvider(index, { enable: Boolean(checked) })} disabled={config.enabled} />
                         启用
                       </label>
-                      <button type="button" className="rounded-lg p-2 text-stone-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50" onClick={() => deleteProvider(index)} disabled={config.enabled || providers.length <= 1} title="删除 provider">
+                      <button type="button" className="rounded-lg p-2 text-stone-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50" onClick={() => deleteProvider(index)} disabled={config.enabled || providers.length <= 1} title="删除邮箱服务">
                         <Trash2 className="size-4" />
                       </button>
                     </div>
@@ -175,36 +175,36 @@ export function RegisterCard() {
                       {type === "cloudflare_temp_email" ? (
                         <>
                           <div className="space-y-2">
-                            <label className="text-sm text-stone-700">API Base</label>
+                            <label className="text-sm text-stone-700">服务地址</label>
                             <Input value={String(provider.api_base || "")} onChange={(event) => updateProvider(index, { api_base: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm text-stone-700">Admin Password</label>
+                            <label className="text-sm text-stone-700">管理密码</label>
                             <Input value={String(provider.admin_password || "")} onChange={(event) => updateProvider(index, { admin_password: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
                           </div>
                         </>
                       ) : null}
                       {type === "moemail" ? (
                         <div className="space-y-2">
-                          <label className="text-sm text-stone-700">API Base</label>
+                          <label className="text-sm text-stone-700">服务地址</label>
                           <Input value={String(provider.api_base || "https://moemail.app")} onChange={(event) => updateProvider(index, { api_base: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
                         </div>
                       ) : null}
                       {type === "tempmail_lol" || type === "duckmail" || type === "gptmail" || type === "moemail" ? (
                         <div className="space-y-2">
-                          <label className="text-sm text-stone-700">API Key</label>
+                          <label className="text-sm text-stone-700">访问密钥</label>
                           <Input value={String(provider.api_key || "")} onChange={(event) => updateProvider(index, { api_key: event.target.value })} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
                         </div>
                       ) : null}
                       {type === "duckmail" || type === "gptmail" || type === "moemail" ? (
                         <div className="space-y-2">
-                          <label className="text-sm text-stone-700">Default Domain</label>
+                          <label className="text-sm text-stone-700">默认域名</label>
                           <Input value={String(provider.default_domain || "")} onChange={(event) => updateProvider(index, { default_domain: event.target.value })} placeholder={type === "duckmail" ? "duckmail.sbs" : type === "moemail" ? "moemail.app" : ""} className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
                         </div>
                       ) : null}
                       {type === "moemail" ? (
                         <div className="space-y-2">
-                          <label className="text-sm text-stone-700">Expiry Time(ms)</label>
+                          <label className="text-sm text-stone-700">有效期（毫秒）</label>
                           <Input value={String(provider.expiry_time || "")} onChange={(event) => updateProvider(index, { expiry_time: Number(event.target.value) || "" })} placeholder="3600000" className="h-10 rounded-xl border-stone-200 bg-white" disabled={config.enabled} />
                         </div>
                       ) : null}
@@ -212,7 +212,7 @@ export function RegisterCard() {
 
                     {type === "tempmail_lol" || type === "cloudflare_temp_email" || type === "moemail" ? (
                       <div className="space-y-2">
-                        <label className="text-sm text-stone-700">Domain</label>
+                        <label className="text-sm text-stone-700">域名</label>
                         <Textarea value={domains} onChange={(event) => updateProvider(index, { domain: event.target.value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean) })} placeholder="每行一个域名，留空则使用服务默认域名" className="min-h-20 rounded-xl border-stone-200 bg-white font-mono text-xs" disabled={config.enabled} />
                       </div>
                     ) : null}
@@ -224,7 +224,7 @@ export function RegisterCard() {
 
       </section>
 
-      <section className="flex min-h-0 flex-col bg-[#fffaf2]/24 p-4">
+      <section className="flex min-h-0 flex-col bg-[#ffffff]/24 p-4">
         <div className="space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -246,14 +246,14 @@ export function RegisterCard() {
                 ["当前额度", stats.current_quota || 0],
                 ["正常账号", stats.current_available || 0],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-[rgba(143,93,47,0.14)] bg-[#fffaf2]/68 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.58)]">
+                <div key={label} className="rounded-xl border border-[rgba(37,99,235,0.14)] bg-[#ffffff]/68 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.58)]">
                   <div className="text-xs text-stone-400">{label}</div>
                   <div className="mt-1 text-base font-semibold text-stone-800">{value}</div>
                 </div>
               ))}
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <Button className="h-10 rounded-xl bg-stone-950 px-3 text-white hover:bg-stone-800" onClick={() => void toggle()} disabled={isSaving}>
+              <Button className="h-10 rounded-xl px-3" onClick={() => void toggle()} disabled={isSaving}>
                 {isSaving ? <LoaderCircle className="size-4 animate-spin" /> : config.enabled ? <Square className="size-4" /> : <Play className="size-4" />}
                 {config.enabled ? "停止" : "启动"}
               </Button>
@@ -272,7 +272,7 @@ export function RegisterCard() {
             </div>
         </div>
 
-        <div className="mt-4 flex min-h-0 flex-1 flex-col space-y-3 overflow-hidden border-t border-[rgba(143,93,47,0.14)] pt-4">
+        <div className="mt-4 flex min-h-0 flex-1 flex-col space-y-3 overflow-hidden border-t border-[rgba(37,99,235,0.14)] pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-stone-900">实时日志</h3>
@@ -282,7 +282,7 @@ export function RegisterCard() {
                 {logs.length}
               </Badge>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[rgba(143,93,47,0.14)] bg-[#201814] p-4 font-mono text-xs leading-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[#1e3a8a] p-4 font-mono text-xs leading-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
               {logs.length === 0 ? (
                 <div className="text-stone-400">暂无日志</div>
               ) : (

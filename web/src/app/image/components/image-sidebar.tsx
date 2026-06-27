@@ -40,7 +40,7 @@ export function ImageSidebar({
             </Button>
             <Button
               variant="outline"
-              className="h-10 rounded-lg border-rose-100 bg-white/75 px-3 text-stone-600 hover:bg-white"
+              className="h-10 rounded-lg border-[#dbeafe] bg-white/75 px-3 text-stone-600 hover:bg-white"
               onClick={() => void onClearHistory()}
               disabled={conversations.length === 0}
               aria-label="清空历史记录"
@@ -50,15 +50,15 @@ export function ImageSidebar({
           </div>
         )}
 
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 [scrollbar-color:rgba(181,138,82,.45)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(181,138,82,0.55)] [&::-webkit-scrollbar-track]:bg-transparent">
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 [scrollbar-color:rgba(96,165,250,.45)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(96,165,250,0.55)] [&::-webkit-scrollbar-track]:bg-transparent">
           {isLoadingHistory ? (
             <div className="flex items-center gap-2 px-2 py-3 text-sm text-stone-500">
               <LoaderCircle className="size-4 animate-spin" />
               正在读取会话记录
             </div>
           ) : conversations.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-rose-100 bg-white/45 px-3 py-4 text-sm leading-6 text-stone-500">
-              还没有图片记录，输入提示词后会在这里显示。
+            <div className="rounded-lg border border-dashed border-[#dbeafe] bg-white/45 px-3 py-4 text-sm leading-6 text-stone-500">
+              还没有图片记录，输入创作描述后会在这里显示。
             </div>
           ) : (
             conversations.map((conversation) => {
@@ -70,8 +70,8 @@ export function ImageSidebar({
                   className={cn(
                     "group relative w-full rounded-lg border px-3 py-2 text-left transition sm:py-3",
                     active
-                      ? "border-rose-100 bg-[#2d1d26] text-white shadow-sm"
-                      : "border-transparent text-stone-700 hover:border-rose-100 hover:bg-white/52",
+                      ? "border-[#bfdbfe] bg-[#1e3a8a] text-white shadow-sm"
+                      : "border-transparent text-stone-700 hover:border-[#dbeafe] hover:bg-white/52",
                   )}
                 >
                   <button
@@ -88,7 +88,7 @@ export function ImageSidebar({
                     {stats.running > 0 || stats.queued > 0 ? (
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
                         {stats.running > 0 ? (
-                          <span className="rounded-full bg-[#efe6d8] px-2 py-1 text-[#8f5d2f]">处理中 {stats.running}</span>
+                          <span className="rounded-full bg-[#eff6ff] px-2 py-1 text-[#2563eb]">处理中 {stats.running}</span>
                         ) : null}
                         {stats.queued > 0 ? (
                           <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">排队 {stats.queued}</span>
@@ -103,7 +103,7 @@ export function ImageSidebar({
                       "absolute top-3 right-2 inline-flex size-7 items-center justify-center rounded-md opacity-0 transition group-hover:opacity-100",
                       active
                         ? "text-white/55 hover:bg-white/10 hover:text-white"
-                        : "text-stone-400 hover:bg-rose-50 hover:text-rose-500",
+                        : "text-stone-400 hover:bg-red-50 hover:text-red-600",
                     )}
                     aria-label="删除会话"
                   >

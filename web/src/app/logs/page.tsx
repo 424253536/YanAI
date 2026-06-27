@@ -127,10 +127,10 @@ function LogsContent() {
   }, [type, status, startDate, endDate, userQuery]);
 
   return (
-    <section className="space-y-5">
+    <section className="min-h-full space-y-5 pb-8">
       <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Activity ledger</div>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Activity ledger</div>
           <h1 className="text-3xl font-bold tracking-tight text-stone-950">日志管理</h1>
           <p className="text-sm leading-6 text-stone-500">按时间、类型、状态与用户维度审阅系统行为。</p>
         </div>
@@ -163,14 +163,14 @@ function LogsContent() {
           <Button variant="outline" onClick={clearFilters} className="h-10 rounded-xl border-stone-200 bg-white px-4 text-stone-700">
             清除筛选条件
           </Button>
-          <Button onClick={() => void loadLogs()} disabled={isLoading} className="h-10 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800">
+          <Button onClick={() => void loadLogs()} disabled={isLoading} className="h-10 rounded-xl px-4">
             {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}
             查询
           </Button>
         </div>
       </div>
 
-      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-[#e2e8f0] bg-white/88 shadow-sm">
         <CardContent className="p-0">
           <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4 text-sm text-stone-600">
             <span>共 {total} 条</span>
@@ -232,17 +232,17 @@ function LogsContent() {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="w-[min(92vw,920px)] rounded-2xl p-0">
           <DialogHeader>
-            <div className="border-b border-[rgba(143,93,47,0.14)] px-6 pt-6 pb-4">
-              <div className="text-[11px] font-semibold tracking-[0.22em] text-[#8f5d2f] uppercase">Log detail</div>
+            <div className="border-b border-[rgba(37,99,235,0.14)] px-6 pt-6 pb-4">
+              <div className="text-[11px] font-semibold tracking-[0.22em] text-[#2563eb] uppercase">Log detail</div>
               <DialogTitle className="mt-2">日志详情</DialogTitle>
             </div>
           </DialogHeader>
           <div className="max-h-[78vh] space-y-4 overflow-y-auto px-6 py-5">
-            <div className="grid gap-3 rounded-2xl border border-[rgba(143,93,47,0.14)] bg-[#fffaf2]/62 p-4 text-sm text-stone-600 md:grid-cols-2">
+            <div className="grid gap-3 rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[#ffffff]/62 p-4 text-sm text-stone-600 md:grid-cols-2">
               {Object.entries(detailLog?.detail || {})
                 .filter(([key, value]) => key !== "urls" && typeof value !== "object")
                 .map(([key, value]) => (
-                  <div key={key} className="flex items-start justify-between gap-4 rounded-xl bg-[#fffaf2]/58 px-3 py-2">
+                  <div key={key} className="flex items-start justify-between gap-4 rounded-xl bg-[#ffffff]/58 px-3 py-2">
                     <span className="text-stone-400">{key}</span>
                     <span className="text-right font-medium text-stone-700">{String(value)}</span>
                   </div>
@@ -254,7 +254,7 @@ function LogsContent() {
                   <button
                     key={url}
                     type="button"
-                    className="aspect-square overflow-hidden rounded-2xl border border-[rgba(143,93,47,0.14)] bg-[#efe6d8]/64 shadow-sm"
+                    className="aspect-square overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[#eff6ff]/64 shadow-sm"
                     onClick={() => {
                       setLightboxIndex(index);
                       setLightboxOpen(true);
@@ -265,7 +265,7 @@ function LogsContent() {
                 ))}
               </div>
             ) : null}
-            <pre className="max-h-[42vh] overflow-auto rounded-2xl border border-black/10 bg-[#201814] p-4 text-xs leading-6 text-[#f8f2e7] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <pre className="max-h-[42vh] overflow-auto rounded-2xl border border-black/10 bg-[#1e3a8a] p-4 text-xs leading-6 text-[#eff6ff] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
               {JSON.stringify(detailLog?.detail || {}, null, 2)}
             </pre>
           </div>
@@ -285,7 +285,7 @@ function LogsContent() {
 export default function LogsPage() {
   const { isCheckingAuth, session } = useAuthGuard(["admin"]);
   if (isCheckingAuth || !session || session.role !== "admin") {
-    return <div className="flex min-h-[40vh] items-center justify-center"><LoaderCircle className="size-5 animate-spin text-stone-400" /></div>;
+    return <div className="flex h-full min-h-[40vh] items-center justify-center"><LoaderCircle className="size-5 animate-spin text-[#2563eb]" /></div>;
   }
   return <LogsContent />;
 }

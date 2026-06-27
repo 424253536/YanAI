@@ -71,22 +71,22 @@ const CHANNEL_FIELDS: Array<{
   },
   {
     key: "base_url",
-    label: "Base URL",
-    description: "兼容 OpenAI 的服务根地址。",
+    label: "服务地址",
+    description: "兼容图像接口的服务根地址。",
     placeholder: "https://api.example.com",
   },
   {
     key: "api_key",
-    label: "API Key",
+    label: "访问密钥",
     description: "新增必填，编辑时留空保持原密钥。",
     placeholder: "sk-...",
     type: "password",
   },
   {
     key: "models",
-    label: "模型",
-    description: "逗号分隔，匹配模型时才会走该渠道。",
-    placeholder: "gpt-image-2,codex-gpt-image-2",
+    label: "接口条目",
+    description: "逗号分隔，匹配条目时才会走该渠道。",
+    placeholder: "image-main,image-fast,auto",
   },
   {
     key: "weight",
@@ -134,7 +134,7 @@ const toNumber = (value: string, fallback: number) => {
 };
 
 const channelTypeLabel = (channel: Channel) =>
-  channel.type === "internal_pool" ? "内置账号池" : "OpenAI 图片兼容";
+  channel.type === "internal_pool" ? "内置账号池" : "图片接口兼容";
 
 const uniqueModels = (models: string[] | undefined) => {
   const seen = new Set<string>();
@@ -159,11 +159,11 @@ function FieldCaption({ field }: { field: (typeof CHANNEL_FIELDS)[number] }) {
 
 function FieldHelpStrip() {
   return (
-    <div className="grid gap-x-4 gap-y-2 rounded-lg bg-rose-50/55 px-4 py-3 text-xs leading-5 text-stone-500 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-x-4 gap-y-2 rounded-lg bg-[#eff6ff] px-4 py-3 text-xs leading-5 text-stone-500 sm:grid-cols-2 xl:grid-cols-4">
       {CHANNEL_FIELDS.map((field) => (
         <div key={field.key} className="min-w-0">
           <span className="font-semibold text-stone-700">{field.label}</span>
-          <span className="mx-1 text-rose-300">/</span>
+          <span className="mx-1 text-[#93c5fd]">/</span>
           <span>{field.description}</span>
         </div>
       ))}
@@ -297,7 +297,7 @@ function ChannelsContent() {
     const channel = modelTestChannel;
     if (!channel) return;
     if (selectedTestModels.length <= 0) {
-      toast.error("请选择至少一个测试模型");
+      toast.error("请选择至少一个测试条目");
       return;
     }
     setTestingChannelId(channel.id);
@@ -305,13 +305,13 @@ function ChannelsContent() {
       const result = await testChannelModels(channel.id, selectedTestModels);
       setTestResults((current) => ({ ...current, [channel.id]: result }));
       if (result.ok) {
-        toast.success(`${channel.name} 模型测试通过：${result.tested_models.length} 个模型，${result.latency_ms}ms`);
+        toast.success(`${channel.name} 接口测试通过：${result.tested_models.length} 个条目，${result.latency_ms}ms`);
         setModelTestChannel(null);
       } else {
-        toast.error(result.error || `${channel.name} 模型测试失败`);
+        toast.error(result.error || `${channel.name} 接口测试失败`);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "模型测试失败");
+      toast.error(error instanceof Error ? error.message : "接口测试失败");
     } finally {
       setTestingChannelId(null);
     }
@@ -355,29 +355,29 @@ function ChannelsContent() {
   const selectedTestModelSet = new Set(selectedTestModels);
 
   return (
-    <section className="space-y-5">
+    <section className="min-h-full space-y-5 pb-8">
       <div className="yan-panel-strong flex flex-col gap-4 rounded-2xl px-5 py-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
-          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Routing desk</div>
+          <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Routing</div>
           <h1 className="text-3xl font-bold tracking-tight text-stone-950">渠道管理</h1>
           <p className="max-w-2xl text-sm leading-6 text-stone-500">
-            管理内置账号池与 OpenAI 兼容渠道，调整模型路由、权重、优先级和可用性。
+            管理内置账号池与兼容渠道，调整接口路由、权重、优先级和可用性。
           </p>
         </div>
-        <Button variant="outline" className="h-10 rounded-xl border-[rgba(143,93,47,0.16)] bg-[#fffaf2]/78" onClick={() => void load()}>
+        <Button variant="outline" className="h-10 rounded-xl" onClick={() => void load()}>
           <RefreshCw className="size-4" />
           刷新
         </Button>
       </div>
 
-      <Card className="rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-stone-800">
-              <Plus className="size-4 text-rose-500" />
-              新增 OpenAI 图片兼容渠道
+              <Plus className="size-4 text-[#2563eb]" />
+              新增图片接口兼容渠道
             </div>
-            <div className="text-xs text-stone-400">填写 OpenAI 兼容地址后，可在列表中测试模型接口。</div>
+            <div className="text-xs text-stone-400">填写兼容地址后，可在列表中测试接口连通性。</div>
           </div>
           <div className="grid gap-3 lg:grid-cols-[1fr_1.4fr_1.15fr]">
             {PRIMARY_FIELDS.map((field) => (
@@ -389,7 +389,7 @@ function ChannelsContent() {
                   onChange={(event) => updateCreateField(field.key, event.target.value)}
                   placeholder={field.placeholder}
                   autoComplete={field.key === "api_key" ? "new-password" : undefined}
-                  className="h-10 rounded-xl border-rose-100 bg-white"
+                  className="h-10"
                 />
               </div>
             ))}
@@ -401,7 +401,7 @@ function ChannelsContent() {
                 value={form.models}
                 onChange={(event) => updateCreateField("models", event.target.value)}
                 placeholder={MODEL_FIELD.placeholder}
-                className="h-10 rounded-xl border-rose-100 bg-white"
+                className="h-10"
               />
             </div>
             {ROUTING_FIELDS.map((field) => (
@@ -412,12 +412,12 @@ function ChannelsContent() {
                   value={form[field.key]}
                   onChange={(event) => updateCreateField(field.key, event.target.value)}
                   placeholder={field.placeholder}
-                  className="h-10 rounded-xl border-rose-100 bg-white"
+                  className="h-10"
                 />
               </div>
             ))}
             <Button
-              className="h-10 self-end rounded-xl bg-rose-500 text-white hover:bg-rose-600"
+              className="h-10 self-end rounded-xl"
               disabled={isCreating}
               onClick={() => void handleCreate()}
             >
@@ -429,19 +429,19 @@ function ChannelsContent() {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-2xl border-white/80 bg-white/80 shadow-sm">
+      <Card className="overflow-hidden rounded-2xl border-[#e2e8f0] bg-white/88 shadow-sm">
         <CardContent className="p-0">
-          <div className="hidden border-b border-rose-50 px-5 py-3 text-xs font-semibold text-stone-500 lg:grid lg:grid-cols-[1.05fr_1.4fr_1.6fr_1fr_90px_230px] lg:items-center">
+          <div className="hidden border-b border-[#e2e8f0] bg-[#f8fbff] px-5 py-3 text-xs font-semibold text-stone-500 lg:grid lg:grid-cols-[1.05fr_1.4fr_1.6fr_1fr_90px_230px] lg:items-center">
             <div>名称 / 类型</div>
-            <div>Base URL</div>
-            <div>模型</div>
+            <div>服务地址</div>
+            <div>接口条目</div>
             <div>路由参数</div>
             <div>状态</div>
             <div>操作</div>
           </div>
           {isLoading ? (
             <div className="flex h-40 items-center justify-center">
-              <LoaderCircle className="size-5 animate-spin text-rose-400" />
+              <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
             </div>
           ) : (
             items.map((channel) => {
@@ -449,7 +449,7 @@ function ChannelsContent() {
               return (
                 <div
                   key={channel.id}
-                  className="grid gap-3 border-b border-rose-50 px-5 py-4 text-sm last:border-0 lg:grid-cols-[1.05fr_1.4fr_1.6fr_1fr_90px_230px] lg:items-center"
+                  className="grid gap-3 border-b border-[#e2e8f0] px-5 py-4 text-sm transition hover:bg-[#f8fbff] last:border-0 lg:grid-cols-[1.05fr_1.4fr_1.6fr_1fr_90px_230px] lg:items-center"
                 >
                   <div>
                     <div className="font-medium text-stone-900">{channel.name}</div>
@@ -474,7 +474,7 @@ function ChannelsContent() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="size-8 rounded-lg border-rose-100 bg-white"
+                        className="size-8 rounded-lg"
                         title="编辑"
                         aria-label="编辑渠道"
                         onClick={() => openEditDialog(channel)}
@@ -484,7 +484,7 @@ function ChannelsContent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 rounded-lg border-rose-100 bg-white"
+                        className="h-8 rounded-lg"
                         disabled={testingChannelId === channel.id}
                         onClick={() => openModelTestDialog(channel)}
                       >
@@ -494,7 +494,7 @@ function ChannelsContent() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 rounded-lg border-rose-100 bg-white"
+                        className="h-8 rounded-lg"
                         disabled={savingChannelId === channel.id}
                         onClick={() => void handleToggle(channel)}
                       >
@@ -505,7 +505,7 @@ function ChannelsContent() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-8 text-rose-500"
+                          className="size-8 text-red-600 hover:bg-red-50"
                           title="删除"
                           aria-label="删除渠道"
                           disabled={savingChannelId === channel.id}
@@ -520,17 +520,17 @@ function ChannelsContent() {
                         className={
                           testResult.ok
                             ? "flex min-w-0 items-center gap-1.5 text-xs text-emerald-700"
-                            : "flex min-w-0 items-center gap-1.5 text-xs text-rose-600"
+                            : "flex min-w-0 items-center gap-1.5 text-xs text-red-600"
                         }
                         title={testResult.ok ? testResult.tested_models.join(", ") : testResult.missing_models.join(", ") || testResult.error}
                       >
                         {testResult.ok ? <CheckCircle2 className="size-3.5 shrink-0" /> : <XCircle className="size-3.5 shrink-0" />}
                         <span className="truncate">
                           {testResult.ok
-                            ? `${testResult.tested_models.length} 个选中模型可用 · ${testResult.latency_ms}ms`
+                            ? `${testResult.tested_models.length} 个选中条目可用 · ${testResult.latency_ms}ms`
                             : testResult.missing_models.length > 0
                               ? `缺失 ${testResult.missing_models.join(", ")}`
-                              : testResult.error || "模型测试失败"}
+                              : testResult.error || "接口测试失败"}
                         </span>
                       </div>
                     ) : null}
@@ -543,11 +543,11 @@ function ChannelsContent() {
       </Card>
 
       <Dialog open={Boolean(modelTestChannel)} onOpenChange={(open) => (!open ? setModelTestChannel(null) : null)}>
-        <DialogContent showCloseButton={false} className="flex max-h-[86vh] w-[min(94vw,680px)] max-w-none flex-col overflow-hidden rounded-lg p-0">
-          <DialogHeader className="border-b border-rose-100 px-5 pt-5 pb-4 sm:px-6">
-            <DialogTitle>选择测试模型</DialogTitle>
+        <DialogContent showCloseButton={false} className="flex max-h-[86vh] w-[min(94vw,680px)] max-w-none flex-col overflow-hidden rounded-2xl p-0">
+          <DialogHeader className="border-b border-[#e2e8f0] bg-[#f8fbff] px-5 pt-5 pb-4 sm:px-6">
+            <DialogTitle>选择测试条目</DialogTitle>
             <DialogDescription className="leading-6 text-stone-500">
-              {modelTestChannel ? `${modelTestChannel.name} · ${channelTypeLabel(modelTestChannel)}` : "选择要测试的模型"}
+              {modelTestChannel ? `${modelTestChannel.name} · ${channelTypeLabel(modelTestChannel)}` : "选择要测试的条目"}
             </DialogDescription>
           </DialogHeader>
 
@@ -559,7 +559,7 @@ function ChannelsContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 rounded-lg border-rose-100 bg-white"
+                  className="h-8 rounded-lg"
                   onClick={() => setSelectedTestModels(candidateTestModels)}
                 >
                   全选
@@ -568,7 +568,7 @@ function ChannelsContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 rounded-lg border-rose-100 bg-white"
+                  className="h-8 rounded-lg"
                   onClick={() => setSelectedTestModels([])}
                 >
                   清空
@@ -577,9 +577,9 @@ function ChannelsContent() {
             </div>
 
             {candidateTestModels.length > 0 ? (
-              <div className="grid max-h-[46vh] gap-2 overflow-y-auto rounded-lg border border-rose-100 bg-white/70 p-3 sm:grid-cols-2">
+              <div className="grid max-h-[46vh] gap-2 overflow-y-auto rounded-2xl border border-[#e2e8f0] bg-white/70 p-3 sm:grid-cols-2">
                 {candidateTestModels.map((model) => (
-                  <label key={model} className="flex min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-rose-50/80">
+                  <label key={model} className="flex min-w-0 items-center gap-3 rounded-xl px-3 py-2 text-sm hover:bg-[#eff6ff]">
                     <Checkbox
                       checked={selectedTestModelSet.has(model)}
                       onCheckedChange={(checked) => toggleTestModel(model, checked === true)}
@@ -589,18 +589,18 @@ function ChannelsContent() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-lg border border-rose-100 bg-white/70 p-4 text-sm text-stone-500">
-                该渠道还没有配置可勾选的模型。
+              <div className="rounded-2xl border border-[#e2e8f0] bg-white/70 p-4 text-sm text-stone-500">
+                该渠道还没有配置可勾选的接口条目。
               </div>
             )}
           </div>
 
-          <DialogFooter className="border-t border-rose-100 px-5 py-4 sm:px-6">
-            <Button variant="outline" className="h-10 rounded-xl border-rose-100 bg-white" onClick={() => setModelTestChannel(null)}>
+          <DialogFooter className="border-t border-[#e2e8f0] bg-[#f8fbff] px-5 py-4 sm:px-6">
+            <Button variant="outline" className="h-10 rounded-xl" onClick={() => setModelTestChannel(null)}>
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-rose-500 text-white hover:bg-rose-600"
+              className="h-10 rounded-xl"
               disabled={!modelTestChannel || selectedTestModels.length <= 0 || testingChannelId === modelTestChannel.id}
               onClick={() => void handleTestModels()}
             >
@@ -612,16 +612,16 @@ function ChannelsContent() {
       </Dialog>
 
       <Dialog open={Boolean(editingChannel)} onOpenChange={(open) => (!open ? setEditingChannel(null) : null)}>
-        <DialogContent showCloseButton={false} className="flex max-h-[88vh] w-[min(94vw,760px)] max-w-none flex-col overflow-hidden rounded-lg p-0">
-          <DialogHeader className="border-b border-rose-100 px-5 pt-5 pb-4 sm:px-6">
+        <DialogContent showCloseButton={false} className="flex max-h-[88vh] w-[min(94vw,760px)] max-w-none flex-col overflow-hidden rounded-2xl p-0">
+          <DialogHeader className="border-b border-[#e2e8f0] bg-[#f8fbff] px-5 pt-5 pb-4 sm:px-6">
             <DialogTitle>{isEditingInternal ? "配置内置账号池" : "编辑渠道配置"}</DialogTitle>
             <DialogDescription className="leading-6 text-stone-500">
-              {isEditingInternal ? "内置账号池仅控制是否允许回落调用本地账号。" : "修改渠道名称、地址、模型范围和路由参数。"}
+              {isEditingInternal ? "内置账号池仅控制是否允许回落调用本地账号。" : "修改渠道名称、地址、接口范围和路由参数。"}
             </DialogDescription>
           </DialogHeader>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
-            <label className="flex items-center gap-3 rounded-lg border border-rose-100 bg-white/70 px-4 py-3 text-sm">
+            <label className="flex items-center gap-3 rounded-2xl border border-[#e2e8f0] bg-white/70 px-4 py-3 text-sm">
               <Checkbox
                 checked={editForm.enabled}
                 onCheckedChange={(checked) => setEditForm((current) => ({ ...current, enabled: checked === true }))}
@@ -630,8 +630,8 @@ function ChannelsContent() {
             </label>
 
             {isEditingInternal ? (
-              <div className="space-y-2 rounded-lg border border-rose-100 bg-white/70 p-4 text-sm">
-                <div className="font-semibold text-stone-800">内置模型</div>
+              <div className="space-y-2 rounded-2xl border border-[#e2e8f0] bg-white/70 p-4 text-sm">
+                <div className="font-semibold text-stone-800">内置接口条目</div>
                 <div className="leading-6 text-stone-500">{editForm.models}</div>
               </div>
             ) : (
@@ -644,7 +644,7 @@ function ChannelsContent() {
                         value={editForm.models}
                         onChange={(event) => updateEditField("models", event.target.value)}
                         placeholder={field.placeholder}
-                        className="min-h-24 rounded-xl border-rose-100 bg-white"
+                        className="min-h-24"
                       />
                     ) : (
                       <Input
@@ -653,7 +653,7 @@ function ChannelsContent() {
                         onChange={(event) => updateEditField(field.key, event.target.value)}
                         placeholder={field.placeholder}
                         autoComplete={field.key === "api_key" ? "new-password" : undefined}
-                        className="h-10 rounded-xl border-rose-100 bg-white"
+                        className="h-10"
                       />
                     )}
                   </div>
@@ -662,12 +662,12 @@ function ChannelsContent() {
             )}
           </div>
 
-          <DialogFooter className="border-t border-rose-100 px-5 py-4 sm:px-6">
-            <Button variant="outline" className="h-10 rounded-xl border-rose-100 bg-white" onClick={() => setEditingChannel(null)}>
+          <DialogFooter className="border-t border-[#e2e8f0] bg-[#f8fbff] px-5 py-4 sm:px-6">
+            <Button variant="outline" className="h-10 rounded-xl" onClick={() => setEditingChannel(null)}>
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-rose-500 text-white hover:bg-rose-600"
+              className="h-10 rounded-xl"
               disabled={Boolean(editingChannel && savingChannelId === editingChannel.id)}
               onClick={() => void handleSaveEdit()}
             >
@@ -685,8 +685,8 @@ export default function ChannelsPage() {
   const { isCheckingAuth, session } = useAuthGuard(["admin"]);
   if (isCheckingAuth || !session) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-rose-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }

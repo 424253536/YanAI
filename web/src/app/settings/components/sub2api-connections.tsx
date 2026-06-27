@@ -133,7 +133,7 @@ export function Sub2APIConnections() {
       const data = await fetchSub2APIServers();
       setServers(data.servers);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "加载 Sub2API 连接失败");
+      toast.error(error instanceof Error ? error.message : "加载远程同步连接失败");
     } finally {
       setIsLoading(false);
     }
@@ -232,7 +232,7 @@ export function Sub2APIConnections() {
 
   const handleSave = async () => {
     if (!formBaseUrl.trim()) {
-      toast.error("请输入 Sub2API 地址");
+      toast.error("请输入远程服务地址");
       return;
     }
     if (authMode === "password") {
@@ -245,7 +245,7 @@ export function Sub2APIConnections() {
         return;
       }
     } else if (!editingServer && !formApiKey.trim()) {
-      toast.error("请输入 Admin API Key");
+      toast.error("请输入管理密钥");
       return;
     }
 
@@ -317,9 +317,9 @@ export function Sub2APIConnections() {
       setAccountQuery("");
       setAccountPage(1);
       setBrowserOpen(true);
-      toast.success(`读取成功，共 ${accounts.length} 个 OpenAI 账号`);
+      toast.success(`读取成功，共 ${accounts.length} 个上游账号`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "读取 Sub2API 账号失败");
+      toast.error(error instanceof Error ? error.message : "读取远程账号失败");
     } finally {
       setLoadingAccountsId(null);
     }
@@ -461,7 +461,7 @@ export function Sub2APIConnections() {
       return;
     }
     if (selectedLocalIds.length === 0) {
-      toast.error("请先选择要导入到 Sub2API 的本地账号");
+      toast.error("请先选择要导入到远程服务的本地账号");
       return;
     }
 
@@ -474,9 +474,9 @@ export function Sub2APIConnections() {
         ),
       );
       setExportOpen(false);
-      toast.success("导入到 Sub2API 的任务已启动");
+      toast.success("导入到远程服务的任务已启动");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "启动导入到 Sub2API 失败");
+      toast.error(error instanceof Error ? error.message : "启动导入到远程服务失败");
     } finally {
       setIsStartingExport(false);
     }
@@ -484,7 +484,7 @@ export function Sub2APIConnections() {
 
   return (
     <>
-      <Card className="rounded-lg border-white/80 bg-white/80 shadow-sm">
+      <Card className="rounded-2xl border-[#e2e8f0] bg-white/86 shadow-[0_20px_50px_-36px_rgba(15,23,42,0.35)]">
         <CardContent className="space-y-6 p-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -492,16 +492,16 @@ export function Sub2APIConnections() {
                 <ServerCog className="size-5 text-stone-600" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold tracking-tight">Sub2API 连接管理</h2>
+                <h2 className="text-lg font-semibold tracking-tight">远程同步连接</h2>
                 <p className="text-sm text-stone-500">
-                  配置 Sub2API 服务器后，可查询其中的 OpenAI OAuth 账号并批量导入本地号池。
+                  配置远程同步服务后，可查询其中的上游账号并批量导入本地号池。
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               {servers.length > 0 ? <Badge className="rounded-md px-2.5 py-1">{servers.length} 个连接</Badge> : null}
               <Button
-                className="h-9 rounded-xl bg-stone-950 px-4 text-white hover:bg-stone-800"
+                className="h-9 rounded-xl px-4"
                 onClick={openAddDialog}
               >
                 <Plus className="size-4" />
@@ -518,8 +518,8 @@ export function Sub2APIConnections() {
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl bg-stone-50 px-6 py-10 text-center">
               <ServerCog className="size-8 text-stone-300" />
               <div className="space-y-1">
-                <p className="text-sm font-medium text-stone-600">暂无 Sub2API 连接</p>
-                <p className="text-sm text-stone-400">点击「添加连接」保存你的 Sub2API 信息。</p>
+                <p className="text-sm font-medium text-stone-600">暂无远程同步连接</p>
+                <p className="text-sm text-stone-400">点击「添加连接」保存远程同步服务信息。</p>
               </div>
             </div>
           ) : (
@@ -540,7 +540,7 @@ export function Sub2APIConnections() {
                         <div className="text-sm font-medium text-stone-800">{server.name || server.base_url}</div>
                         <div className="truncate text-xs text-stone-400">
                           {server.base_url}
-                          {server.email ? ` · ${server.email}` : server.has_api_key ? " · API Key" : ""}
+                          {server.email ? ` · ${server.email}` : server.has_api_key ? " · 管理密钥" : ""}
                           {server.group_id ? ` · 分组 ${server.group_id}` : " · 全部分组"}
                         </div>
                       </div>
@@ -556,7 +556,7 @@ export function Sub2APIConnections() {
                         </button>
                         <button
                           type="button"
-                          className="rounded-lg p-2 text-stone-400 transition hover:bg-rose-50 hover:text-rose-500"
+                          className="rounded-lg p-2 text-stone-400 transition hover:bg-red-50 hover:text-red-600"
                           onClick={() => void handleDelete(server)}
                           disabled={isBusy}
                           title="删除"
@@ -595,14 +595,14 @@ export function Sub2APIConnections() {
                         ) : (
                           <ArrowUpFromLine className="size-3.5" />
                         )}
-                        导入到 Sub2API
+                        导入到远程
                       </Button>
                     </div>
 
                     {importJob ? (
                       <div className="space-y-2 rounded-xl bg-stone-50 px-3 py-3">
                         <div className="text-xs font-medium tracking-[0.16em] text-stone-400 uppercase">
-                          {importJob.direction === "local_to_remote" ? "本地导入到 Sub2API" : "Sub2API 同步到本地"}
+                          {importJob.direction === "local_to_remote" ? "本地导入到远程" : "远程同步到本地"}
                         </div>
                         {(() => {
                           const progress =
@@ -635,7 +635,7 @@ export function Sub2APIConnections() {
                               </div>
                               <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-200">
                                 <div
-                                  className="h-full rounded-full bg-stone-900 transition-all"
+                                  className="h-full rounded-full bg-[#2563eb] transition-all"
                                   style={{ width: `${progress}%` }}
                                 />
                               </div>
@@ -659,10 +659,10 @@ export function Sub2APIConnections() {
           <div className="rounded-xl bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-500">
             <p className="font-medium text-stone-600">使用说明</p>
             <ul className="mt-1 list-inside list-disc space-y-0.5">
-              <li>输入 Sub2API 地址和管理员账户（或 Admin API Key），保存为一个连接。</li>
-              <li>点击某个连接的「同步」会拉取其中 platform=openai 且 type=oauth 的账号列表。</li>
-              <li>勾选需要的账号后后端会并发拉取完整 OAuth 凭据，自动导入本地号池并刷新状态。</li>
-              <li>如果 Sub2API 返回 refresh_token、id_token 等字段，会一并写入本地用于后续导出。</li>
+              <li>输入远程服务地址和管理员凭据，保存为一个连接。</li>
+              <li>点击某个连接的「同步」会拉取其中符合条件的上游账号列表。</li>
+              <li>勾选需要的账号后，后端会并发拉取完整凭据并导入本地号池。</li>
+              <li>如果远程服务返回扩展凭据，会一并写入本地用于后续导出。</li>
             </ul>
           </div>
         </CardContent>
@@ -673,7 +673,7 @@ export function Sub2APIConnections() {
           <DialogHeader className="gap-2">
             <DialogTitle>{editingServer ? "编辑连接" : "添加连接"}</DialogTitle>
             <DialogDescription className="text-sm leading-6">
-              {editingServer ? "修改 Sub2API 连接信息" : "添加一个新的 Sub2API 连接"}
+              {editingServer ? "修改远程同步连接信息" : "添加一个新的远程同步连接"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -689,7 +689,7 @@ export function Sub2APIConnections() {
             <div className="space-y-2">
               <label className="flex items-center gap-1.5 text-sm font-medium text-stone-700">
                 <Link2 className="size-3.5" />
-                Sub2API 地址
+                远程服务地址
               </label>
               <Input
                 value={formBaseUrl}
@@ -706,7 +706,7 @@ export function Sub2APIConnections() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="password">管理员邮箱 + 密码</SelectItem>
-                  <SelectItem value="api_key">Admin API Key</SelectItem>
+                  <SelectItem value="api_key">管理密钥</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -751,14 +751,14 @@ export function Sub2APIConnections() {
               <div className="space-y-2">
                 <label className="flex items-center gap-1.5 text-sm font-medium text-stone-700">
                   <Unplug className="size-3.5" />
-                  Admin API Key
+                  管理密钥
                 </label>
                 <div className="relative">
                   <Input
                     type={showSecret ? "text" : "password"}
                     value={formApiKey}
                     onChange={(event) => setFormApiKey(event.target.value)}
-                    placeholder={editingServer ? "留空则不修改密钥" : "Sub2API Admin API Key"}
+                    placeholder={editingServer ? "留空则不修改密钥" : "远程服务管理密钥"}
                     className="h-11 rounded-xl border-stone-200 bg-white pr-10"
                   />
                   <button
@@ -805,7 +805,7 @@ export function Sub2APIConnections() {
               )}
               {editingServer ? (
                 <div className="flex items-center justify-between gap-2 text-xs text-stone-500">
-                  <span>同步时会用分组 ID 过滤，留空 = 同步所有 OpenAI OAuth 账号。</span>
+                  <span>同步时会用分组 ID 过滤，留空 = 同步所有上游账号。</span>
                   <Button
                     variant="outline"
                     className="h-8 rounded-lg border-stone-200 bg-white px-2 text-xs text-stone-600"
@@ -837,7 +837,7 @@ export function Sub2APIConnections() {
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="h-10 rounded-xl px-5"
               onClick={() => void handleSave()}
               disabled={isSaving}
             >
@@ -853,7 +853,7 @@ export function Sub2APIConnections() {
           <DialogHeader className="gap-2">
             <DialogTitle>选择要导入的账号</DialogTitle>
             <DialogDescription className="text-sm leading-6">
-              {browserServer ? `来自 ${browserServer.name || browserServer.base_url}` : "Sub2API 上的 OpenAI OAuth 账号"}
+              {browserServer ? `来自 ${browserServer.name || browserServer.base_url}` : "远程服务上的上游账号"}
             </DialogDescription>
           </DialogHeader>
 
@@ -991,7 +991,7 @@ export function Sub2APIConnections() {
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="h-10 rounded-xl px-5"
               onClick={() => void handleStartImport()}
               disabled={isStartingImport || selectedIds.length === 0}
             >
@@ -1005,9 +1005,9 @@ export function Sub2APIConnections() {
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent showCloseButton={false} className="max-h-[90vh] max-w-5xl rounded-2xl p-6">
           <DialogHeader className="gap-2">
-            <DialogTitle>选择要导入到 Sub2API 的本地账号</DialogTitle>
+            <DialogTitle>选择要导入到远程的本地账号</DialogTitle>
             <DialogDescription className="text-sm leading-6">
-              {exportServer ? `目标 ${exportServer.name || exportServer.base_url}` : "从本地号池导入到 Sub2API"}
+              {exportServer ? `目标 ${exportServer.name || exportServer.base_url}` : "从本地号池导入到远程服务"}
             </DialogDescription>
           </DialogHeader>
 
@@ -1142,12 +1142,12 @@ export function Sub2APIConnections() {
               取消
             </Button>
             <Button
-              className="h-10 rounded-xl bg-stone-950 px-5 text-white hover:bg-stone-800"
+              className="h-10 rounded-xl px-5"
               onClick={() => void handleStartExport()}
               disabled={isStartingExport || selectedLocalIds.length === 0}
             >
               {isStartingExport ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowUpFromLine className="size-4" />}
-              导入到 Sub2API
+              导入到远程
             </Button>
           </DialogFooter>
         </DialogContent>

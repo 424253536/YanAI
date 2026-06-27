@@ -1068,7 +1068,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
   const handleSubmit = async () => {
     const prompt = imagePrompt.trim();
     if (!prompt) {
-      toast.error("请输入提示词");
+      toast.error("请输入创作描述");
       return;
     }
 
@@ -1153,7 +1153,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
         </div>
 
         <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-          <DialogContent className="flex h-[88vh] w-[92vw] max-w-[430px] flex-col overflow-hidden rounded-lg p-0">
+          <DialogContent className="flex h-[88vh] w-[92vw] max-w-[430px] flex-col overflow-hidden rounded-2xl p-0">
             <DialogTitle className="sr-only">历史记录</DialogTitle>
             <ImageStudioSidebar
               conversations={filteredConversations}
@@ -1179,7 +1179,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
           <div className="flex items-center justify-between gap-2 lg:hidden">
             <Button
               variant="outline"
-              className="h-10 flex-1 rounded-lg border-rose-100 bg-white/75 text-stone-700 shadow-sm"
+              className="h-10 flex-1 rounded-lg border-[#dbeafe] bg-white/75 text-stone-700 shadow-sm"
               onClick={() => setIsHistoryOpen(true)}
             >
               <Menu className="mr-2 size-4" />
@@ -1191,7 +1191,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
             </Button>
             <Button
               variant="outline"
-              className="h-10 rounded-lg border-rose-100 bg-white/75 px-3 text-stone-600 shadow-sm"
+              className="h-10 rounded-lg border-[#dbeafe] bg-white/75 px-3 text-stone-600 shadow-sm"
               onClick={openClearHistoryConfirm}
               disabled={conversations.length === 0}
             >
@@ -1201,10 +1201,10 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
 
           <header className="yan-panel-strong flex min-h-20 flex-col gap-3 rounded-2xl px-5 py-4 md:flex-row md:items-center">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold tracking-[0.24em] text-[#8f5d2f] uppercase">Image atelier</div>
-              <h1 className="mt-1 truncate text-3xl font-bold tracking-tight text-stone-950">月光影像创作台</h1>
+              <div className="text-[11px] font-semibold tracking-[0.24em] text-[#2563eb] uppercase">Creative desk</div>
+              <h1 className="mt-1 truncate text-3xl font-bold tracking-tight text-stone-950">ImageRouter 创作控制台</h1>
               <p className="mt-1 truncate text-sm leading-6 text-stone-500">
-                gpt-image-2 · 创作队列 {workspaceStats.active} · 当前空间 颜AI Studio
+                默认图像通道 · 创作队列 {workspaceStats.active} · 当前空间 ImageRouter
               </p>
             </div>
             <label className="relative w-full md:max-w-[360px]">
@@ -1212,8 +1212,8 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
               <input
                 value={workspaceSearch}
                 onChange={(event) => setWorkspaceSearch(event.target.value)}
-                placeholder="搜索作品、提示词、会话"
-                className="h-10 w-full rounded-xl border border-[var(--yan-border)] bg-[#fffaf2]/78 pl-9 pr-3 text-sm text-stone-700 outline-none transition placeholder:text-stone-400 focus:border-[rgba(143,93,47,0.36)] focus:bg-[#fffaf2] focus:ring-4 focus:ring-[rgba(181,138,82,0.22)]"
+                placeholder="搜索作品、创作描述、会话"
+                className="h-10 w-full rounded-xl border border-[var(--yan-border)] bg-[#ffffff]/78 pl-9 pr-3 text-sm text-stone-700 outline-none transition placeholder:text-stone-400 focus:border-[rgba(37,99,235,0.36)] focus:bg-[#ffffff] focus:ring-4 focus:ring-[rgba(96,165,250,0.22)]"
               />
             </label>
           </header>
@@ -1227,7 +1227,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
 
           <div className="min-h-0 flex-1 overflow-hidden">
             <div ref={resultsViewportRef} className="yan-panel h-full min-h-0 overflow-y-auto rounded-2xl">
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[rgba(143,93,47,0.12)] bg-[#fffaf2]/72 px-4 py-3 backdrop-blur-xl">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[#ffffff]/72 px-4 py-3 backdrop-blur-xl">
                 <div className="min-w-0">
                   <h2 className="text-base font-bold text-stone-950">生成画面</h2>
                   <p className="truncate text-sm text-stone-500">
@@ -1253,16 +1253,16 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
 
         <aside
           className={`yan-panel relative min-h-0 overflow-hidden rounded-2xl lg:col-span-2 xl:col-span-1 ${
-            isComposerPanelResizing ? "ring-2 ring-rose-100" : ""
+            isComposerPanelResizing ? "ring-2 ring-blue-100" : ""
           }`}
         >
           <button
             type="button"
-            aria-label="调整 Prompt 面板宽度"
+            aria-label="调整创作面板宽度"
             onPointerDown={handleComposerPanelResizeStart}
             className="group absolute top-0 bottom-0 left-0 z-20 hidden w-3 cursor-col-resize items-center justify-center outline-none xl:flex"
           >
-            <span className="h-14 w-1 rounded-full bg-[rgba(181,138,82,0.42)] opacity-70 transition group-hover:bg-[#b58a52] group-hover:opacity-100 group-focus-visible:bg-[#8f5d2f] group-focus-visible:opacity-100" />
+            <span className="h-14 w-1 rounded-full bg-[rgba(96,165,250,0.42)] opacity-70 transition group-hover:bg-[#60a5fa] group-hover:opacity-100 group-focus-visible:bg-[#2563eb] group-focus-visible:opacity-100" />
           </button>
           <ImageComposer
             mode={imageMode}
@@ -1296,7 +1296,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
 
       {deleteConfirm ? (
         <Dialog open onOpenChange={(open) => (!open ? setDeleteConfirm(null) : null)}>
-          <DialogContent showCloseButton={false} className="rounded-lg p-6">
+          <DialogContent showCloseButton={false} className="rounded-2xl p-6">
             <DialogHeader className="gap-2">
               <DialogTitle>{deleteConfirmTitle}</DialogTitle>
               <DialogDescription className="text-sm leading-6">
@@ -1307,7 +1307,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
               <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
                 取消
               </Button>
-              <Button className="bg-rose-600 text-white hover:bg-rose-700" onClick={() => void handleConfirmDelete()}>
+              <Button variant="destructive" onClick={() => void handleConfirmDelete()}>
                 确认删除
               </Button>
             </DialogFooter>
@@ -1341,7 +1341,7 @@ function ImageStudioSidebar({
 }) {
   return (
     <aside className="flex h-full min-h-0 w-full flex-col bg-white/32">
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-color:rgba(181,138,82,.45)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(181,138,82,0.55)] [&::-webkit-scrollbar-track]:bg-transparent">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-color:rgba(96,165,250,.45)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(96,165,250,0.55)] [&::-webkit-scrollbar-track]:bg-transparent">
         <div className="min-h-[320px]">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div>
@@ -1362,8 +1362,8 @@ function ImageStudioSidebar({
         </div>
       </div>
 
-      <div className="border-t border-rose-100/70 p-3">
-        <div className="rounded-lg bg-gradient-to-br from-white/80 to-rose-50/80 p-3">
+      <div className="border-t border-[#e2e8f0] p-3">
+        <div className="rounded-lg border border-[#e2e8f0] bg-white/82 p-3">
           <div className="text-sm text-stone-500">本地额度</div>
           <div className="mt-1 text-3xl font-bold tracking-tight text-stone-950">{availableQuota}</div>
         </div>
@@ -1386,8 +1386,8 @@ export default function ImagePage() {
 
   if (isCheckingAuth || !session) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <LoaderCircle className="size-5 animate-spin text-stone-400" />
+      <div className="flex h-full min-h-[40vh] items-center justify-center">
+        <LoaderCircle className="size-5 animate-spin text-[#2563eb]" />
       </div>
     );
   }
