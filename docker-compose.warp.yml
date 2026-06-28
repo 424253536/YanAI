@@ -1,0 +1,37 @@
+services:
+  warp-proxy:
+    image: caomingjun/warp:latest
+    container_name: yanai-warp-proxy
+    restart: unless-stopped
+    environment:
+      WARP_SLEEP: "2"
+      # WARP_LICENSE_KEY: ${WARP_LICENSE_KEY:-}
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: 0
+      net.ipv4.conf.all.src_valid_mark: 1
+    ports:
+      - "127.0.0.1:${WARP_SOCKS_PORT:-40000}:1080"
+
+  privoxy:
+    image: vimagick/privoxy:latest
+    container_name: yanai-privoxy
+    restart: unless-stopped
+    depends_on:
+      - warp-proxy
+    volumes:
+      - ./scripts/privoxy-warp.conf:/etc/privoxy/config:ro
+    ports:
+      - "127.0.0.1:${PRIVOXY_PORT:-40080}:8118"
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: yanai-flaresolverr
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: ${FLARESOLVERR_LOG_LEVEL:-info}
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "127.0.0.1:${FLARESOLVERR_PORT:-8191}:8191"
