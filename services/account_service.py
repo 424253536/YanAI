@@ -867,7 +867,13 @@ class AccountService:
         headers, impersonate = self._build_remote_headers(access_token)
         token_ref = anonymize_token(access_token)
         print(f"[account-refresh] start {token_ref}")
-        session = Session(**proxy_settings.build_session_kwargs(impersonate=impersonate, verify=True))
+        account = self.get_account(access_token) or {"access_token": access_token}
+        session = Session(**proxy_settings.build_session_kwargs(
+            account=account,
+            upstream=True,
+            impersonate=impersonate,
+            verify=True,
+        ))
         session.headers.update(headers)
         try:
             with ThreadPoolExecutor(max_workers=2) as executor:

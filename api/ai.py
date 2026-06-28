@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from api.support import require_identity, resolve_image_base_url
 from services.auth_service import auth_service
 from services.channel_service import channel_service
+from services.content_filter import check_request, request_shape, request_text
 from services.image_service import record_image_result
 from services.log_service import LoggedCall
 from services.observability import request_id_from_request
@@ -25,6 +26,7 @@ class ImageGenerationRequest(BaseModel):
     model: str = "gpt-image-2"
     n: int = Field(default=1, ge=1, le=4)
     size: str | None = None
+    quality: str = "auto"
     response_format: str = "b64_json"
     history_disabled: bool = True
     stream: bool | None = None
@@ -154,6 +156,13 @@ def create_router() -> APIRouter:
             return 0
         return 1
 
+    def filter_or_log(call: LoggedCall, text: str, shape: dict[str, int] | None = None) -> None:
+        try:
+            check_request(text)
+        except HTTPException as exc:
+            call.log("content filter rejected", {"detail": exc.detail, "shape": shape or {}})
+            raise
+
     @router.get("/v1/models")
     async def list_models(authorization: str | None = Header(default=None)):
         require_identity(authorization)
@@ -175,6 +184,8 @@ def create_router() -> APIRouter:
         payload = body.model_dump(mode="python")
         payload["base_url"] = resolve_image_base_url(request)
         payload["request_id"] = request_id
+        call = LoggedCall(identity, "/v1/images/generations", body.model, "image.generate", request_id=request_id)
+        filter_or_log(call, body.prompt, request_shape(body.prompt))
         use_personal_quota_free = attach_personal_image_channel(identity, payload, body.model)
         quota_request_id = None if use_personal_quota_free else reserve_image_quota(identity, int(body.n or 1), request_id)
         call = LoggedCall(identity, "/v1/images/generations", body.model, "文生图", request_id=request_id)
@@ -228,6 +239,7 @@ def create_router() -> APIRouter:
             model: str = Form(default="gpt-image-2"),
             n: int = Form(default=1),
             size: str | None = Form(default=None),
+            quality: str = Form(default="auto"),
             response_format: str = Form(default="b64_json"),
             stream: bool | None = Form(default=None),
     ):
@@ -252,11 +264,14 @@ def create_router() -> APIRouter:
             "model": model,
             "n": n,
             "size": size,
+            "quality": quality,
             "response_format": response_format,
             "stream": stream,
             "base_url": resolve_image_base_url(request),
             "request_id": request_id,
         }
+        call = LoggedCall(identity, "/v1/images/edits", model, "image.edit", request_id=request_id)
+        filter_or_log(call, prompt, request_shape(prompt))
         use_personal_quota_free = attach_personal_image_channel(identity, payload, model)
         quota_request_id = None if use_personal_quota_free else reserve_image_quota(identity, int(n or 1), request_id)
         call = LoggedCall(identity, "/v1/images/edits", model, "图生图", request_id=request_id)
@@ -314,6 +329,7 @@ def create_router() -> APIRouter:
         request_id = request_id_from_request(request)
         payload["request_id"] = request_id
         call = LoggedCall(identity, "/v1/chat/completions", model, "文本生成", request_id=request_id)
+        filter_or_log(call, request_text(payload.get("prompt"), payload.get("messages")), request_shape(payload.get("messages")))
         return await call.run(openai_v1_chat_complete.handle, payload)
 
     @router.post("/v1/responses")
@@ -330,6 +346,11 @@ def create_router() -> APIRouter:
         request_id = request_id_from_request(request)
         payload["request_id"] = request_id
         call = LoggedCall(identity, "/v1/responses", model, "Responses", request_id=request_id)
+        filter_or_log(
+            call,
+            request_text(payload.get("input"), payload.get("instructions"), payload.get("tools")),
+            request_shape(payload.get("input"), payload.get("tools")),
+        )
         return await call.run(openai_v1_response.handle, payload)
 
     @router.post("/v1/messages")
@@ -348,6 +369,11 @@ def create_router() -> APIRouter:
         request_id = request_id_from_request(request)
         payload["request_id"] = request_id
         call = LoggedCall(identity, "/v1/messages", model, "Messages", request_id=request_id)
+        filter_or_log(
+            call,
+            request_text(payload.get("system"), payload.get("messages"), payload.get("tools")),
+            request_shape(payload.get("messages"), payload.get("tools")),
+        )
         return await call.run(anthropic_v1_messages.handle, payload, sse="anthropic")
 
     return router

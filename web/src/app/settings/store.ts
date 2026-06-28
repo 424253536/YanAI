@@ -19,6 +19,9 @@ import {
   updateSettingsConfig,
   type CPAPool,
   type CPARemoteFile,
+  type ProxyRuntimeClearanceMode,
+  type ProxyRuntimeEgressMode,
+  type ProxyRuntimeSettings,
   type RegisterConfig,
   type SettingsConfig,
 } from "@/lib/api";
@@ -26,6 +29,69 @@ import {
 export const PAGE_SIZE_OPTIONS = ["50", "100", "200"] as const;
 
 export type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number];
+
+const DEFAULT_PROXY_RUNTIME: ProxyRuntimeSettings = {
+  enabled: false,
+  egress_mode: "direct",
+  proxy_url: "",
+  resource_proxy_url: "",
+  skip_ssl_verify: false,
+  reset_session_status_codes: [403],
+  clearance: {
+    enabled: false,
+    mode: "none",
+    cf_cookies: "",
+    cf_clearance: "",
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+    browser: "chrome",
+    flaresolverr_url: "",
+    timeout_sec: 60,
+    refresh_interval: 3600,
+    warm_up_on_start: false,
+    has_cf_cookies: false,
+    has_cf_clearance: false,
+  },
+};
+
+function normalizeProxyRuntime(value: unknown): ProxyRuntimeSettings {
+  const source = typeof value === "object" && value !== null ? value as Partial<ProxyRuntimeSettings> : {};
+  const clearanceSource = typeof source.clearance === "object" && source.clearance !== null
+    ? source.clearance as Partial<ProxyRuntimeSettings["clearance"]>
+    : {};
+  const egressMode = source.egress_mode === "single_proxy" ? "single_proxy" : "direct";
+  const clearanceMode: ProxyRuntimeClearanceMode = clearanceSource.mode === "manual" || clearanceSource.mode === "flaresolverr"
+    ? clearanceSource.mode
+    : "none";
+  const statusCodes = Array.isArray(source.reset_session_status_codes)
+    ? source.reset_session_status_codes.map((item) => Number(item)).filter((item) => Number.isInteger(item) && item >= 100 && item <= 599)
+    : [];
+  return {
+    ...DEFAULT_PROXY_RUNTIME,
+    ...source,
+    enabled: Boolean(source.enabled),
+    egress_mode: egressMode,
+    proxy_url: String(source.proxy_url || ""),
+    resource_proxy_url: String(source.resource_proxy_url || ""),
+    skip_ssl_verify: Boolean(source.skip_ssl_verify),
+    reset_session_status_codes: statusCodes.length > 0 ? statusCodes : [403],
+    clearance: {
+      ...DEFAULT_PROXY_RUNTIME.clearance,
+      ...clearanceSource,
+      enabled: Boolean(clearanceSource.enabled),
+      mode: clearanceMode,
+      cf_cookies: String(clearanceSource.cf_cookies || ""),
+      cf_clearance: String(clearanceSource.cf_clearance || ""),
+      user_agent: String(clearanceSource.user_agent || DEFAULT_PROXY_RUNTIME.clearance.user_agent),
+      browser: String(clearanceSource.browser || "chrome"),
+      flaresolverr_url: String(clearanceSource.flaresolverr_url || ""),
+      timeout_sec: Number(clearanceSource.timeout_sec || 60),
+      refresh_interval: Number(clearanceSource.refresh_interval || 3600),
+      warm_up_on_start: Boolean(clearanceSource.warm_up_on_start),
+      has_cf_cookies: Boolean(clearanceSource.has_cf_cookies),
+      has_cf_clearance: Boolean(clearanceSource.has_cf_clearance),
+    },
+  };
+}
 
 const DEFAULT_IMAGE_MODEL_MAPPINGS: Record<string, string> = {
   "gpt-image-2": "gpt-5-5",
@@ -71,8 +137,11 @@ function normalizeConfig(config: SettingsConfig): SettingsConfig {
     auto_remove_invalid_accounts: Boolean(config.auto_remove_invalid_accounts),
     auto_remove_rate_limited_accounts: Boolean(config.auto_remove_rate_limited_accounts),
     log_levels: Array.isArray(config.log_levels) ? config.log_levels : [],
+    sensitive_words: Array.isArray(config.sensitive_words) ? config.sensitive_words : [],
+    ai_review: typeof config.ai_review === "object" && config.ai_review ? config.ai_review : {},
     proxy: typeof config.proxy === "string" ? config.proxy : "",
     base_url: typeof config.base_url === "string" ? config.base_url : "",
+    proxy_runtime: normalizeProxyRuntime(config.proxy_runtime),
     image_model_mappings: {
       ...DEFAULT_IMAGE_MODEL_MAPPINGS,
       ...imageModelMappings,
@@ -139,6 +208,9 @@ type SettingsStore = {
   patchConfig: (updates: Partial<SettingsConfig>) => void;
   setProxy: (value: string) => void;
   setBaseUrl: (value: string) => void;
+  setProxyRuntimeField: <K extends keyof ProxyRuntimeSettings>(key: K, value: ProxyRuntimeSettings[K]) => void;
+  setProxyRuntimeClearanceField: <K extends keyof ProxyRuntimeSettings["clearance"]>(key: K, value: ProxyRuntimeSettings["clearance"][K]) => void;
+  setProxyRuntimeStatusCodesText: (value: string) => void;
   setGptImage2ModelSlug: (value: string) => void;
 
   loadRegister: (silent?: boolean) => Promise<void>;
@@ -264,6 +336,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         auto_remove_rate_limited_accounts: Boolean(config.auto_remove_rate_limited_accounts),
         proxy: config.proxy.trim(),
         base_url: String(config.base_url || "").trim(),
+        proxy_runtime: normalizeProxyRuntime(config.proxy_runtime),
         image_model_mappings: {
           ...DEFAULT_IMAGE_MODEL_MAPPINGS,
           ...(config.image_model_mappings || {}),
@@ -344,6 +417,61 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         config: {
           ...state.config,
           base_url: value,
+        },
+      };
+    });
+  },
+
+  setProxyRuntimeField: (key, value) => {
+    set((state) => {
+      if (!state.config) {
+        return {};
+      }
+      const runtime = normalizeProxyRuntime(state.config.proxy_runtime);
+      return {
+        config: {
+          ...state.config,
+          proxy_runtime: normalizeProxyRuntime({ ...runtime, [key]: value }),
+        },
+      };
+    });
+  },
+
+  setProxyRuntimeClearanceField: (key, value) => {
+    set((state) => {
+      if (!state.config) {
+        return {};
+      }
+      const runtime = normalizeProxyRuntime(state.config.proxy_runtime);
+      return {
+        config: {
+          ...state.config,
+          proxy_runtime: normalizeProxyRuntime({
+            ...runtime,
+            clearance: { ...runtime.clearance, [key]: value },
+          }),
+        },
+      };
+    });
+  },
+
+  setProxyRuntimeStatusCodesText: (value) => {
+    const codes = value
+      .split(/[,\s]+/)
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isInteger(item) && item >= 100 && item <= 599);
+    set((state) => {
+      if (!state.config) {
+        return {};
+      }
+      const runtime = normalizeProxyRuntime(state.config.proxy_runtime);
+      return {
+        config: {
+          ...state.config,
+          proxy_runtime: normalizeProxyRuntime({
+            ...runtime,
+            reset_session_status_codes: codes.length > 0 ? codes : [403],
+          }),
         },
       };
     });

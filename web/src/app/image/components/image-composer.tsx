@@ -726,6 +726,7 @@ type ImageComposerProps = {
   prompt: string;
   imageCount: string;
   imageSize: string;
+  imageQuality: string;
   availableQuota: string;
   activeTaskCount: number;
   referenceImages: Array<{ name: string; dataUrl: string }>;
@@ -735,6 +736,7 @@ type ImageComposerProps = {
   onPromptChange: (value: string) => void;
   onImageCountChange: (value: string) => void;
   onImageSizeChange: (value: string) => void;
+  onImageQualityChange: (value: string) => void;
   onSubmit: () => void | Promise<void>;
   onPickReferenceImage: () => void;
   onReferenceImageChange: (files: File[]) => void | Promise<void>;
@@ -746,6 +748,7 @@ export function ImageComposer({
   prompt,
   imageCount,
   imageSize,
+  imageQuality,
   availableQuota,
   activeTaskCount,
   referenceImages,
@@ -755,6 +758,7 @@ export function ImageComposer({
   onPromptChange,
   onImageCountChange,
   onImageSizeChange,
+  onImageQualityChange,
   onSubmit,
   onPickReferenceImage,
   onReferenceImageChange,
@@ -762,6 +766,7 @@ export function ImageComposer({
 }: ImageComposerProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [isQualityMenuOpen, setIsQualityMenuOpen] = useState(false);
   const [isSizeMenuOpen, setIsSizeMenuOpen] = useState(false);
   const [isPromptLibraryOpen, setIsPromptLibraryOpen] = useState(false);
   const [bananaPromptStatus, setBananaPromptStatus] = useState<BananaPromptStatus>("idle");
@@ -771,18 +776,29 @@ export function ImageComposer({
   const [bananaPromptCategory, setBananaPromptCategory] = useState("全部");
   const [bananaPromptRetryKey, setBananaPromptRetryKey] = useState(0);
   const sizeMenuRef = useRef<HTMLDivElement>(null);
+  const qualityMenuRef = useRef<HTMLDivElement>(null);
   const lightboxImages = useMemo(
     () => referenceImages.map((image, index) => ({ id: `${image.name}-${index}`, src: image.dataUrl })),
     [referenceImages],
   );
   const imageSizeOptions = [
     { value: "", label: "未指定" },
+    { value: "1024x1024", label: "1024x1024" },
+    { value: "1536x1024", label: "1536x1024 横版" },
+    { value: "1024x1536", label: "1024x1536 竖版" },
     { value: "1:1", label: "1:1 (正方形)" },
     { value: "16:9", label: "16:9 (横版)" },
     { value: "4:3", label: "4:3 (横版)" },
     { value: "3:4", label: "3:4 (竖版)" },
     { value: "9:16", label: "9:16 (竖版)" },
   ];
+  const imageQualityOptions = [
+    { value: "auto", label: "自动" },
+    { value: "low", label: "低" },
+    { value: "medium", label: "中" },
+    { value: "high", label: "高" },
+  ];
+  const imageQualityLabel = imageQualityOptions.find((option) => option.value === (imageQuality || "auto"))?.label || "自动";
   const imageSizeLabel = imageSizeOptions.find((option) => option.value === imageSize)?.label || "未指定";
   const quickPromptItems = useMemo(() => {
     const selected = sortPromptItems(bananaPrompts.filter((item) => item.quick_access)).slice(0, QUICK_PROMPT_COUNT);
@@ -919,19 +935,22 @@ export function ImageComposer({
   }, [bananaPromptRetryKey]);
 
   useEffect(() => {
-    if (!isSizeMenuOpen) {
+    if (!isSizeMenuOpen && !isQualityMenuOpen) {
       return;
     }
     const handlePointerDown = (event: MouseEvent) => {
       if (!sizeMenuRef.current?.contains(event.target as Node)) {
         setIsSizeMenuOpen(false);
       }
+      if (!qualityMenuRef.current?.contains(event.target as Node)) {
+        setIsQualityMenuOpen(false);
+      }
     };
     window.addEventListener("mousedown", handlePointerDown);
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [isSizeMenuOpen]);
+  }, [isQualityMenuOpen, isSizeMenuOpen]);
 
   const handleTextareaPaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
     const imageFiles = Array.from(event.clipboardData.files).filter((file) => file.type.startsWith("image/"));
@@ -980,7 +999,7 @@ export function ImageComposer({
           </div>
           <div>
             <div className="text-xs text-stone-500">生成张数</div>
-            <div className="mt-1 text-sm font-bold text-stone-950">{Math.max(1, Math.min(10, Number(imageCount) || 1))} / 最多 10</div>
+            <div className="mt-1 text-sm font-bold text-stone-950">{Math.max(1, Math.min(4, Number(imageCount) || 1))} / 最多 4</div>
           </div>
           <div>
             <div className="text-xs text-stone-500">本地额度</div>
@@ -1278,7 +1297,11 @@ export function ImageComposer({
               className="min-h-[220px] resize-y rounded-lg border-0 bg-transparent px-4 pt-4 pb-4 text-[15px] leading-7 text-stone-900 shadow-none placeholder:text-stone-400 focus-visible:ring-0"
             />
 
-            <div className="border-t border-[#e2e8f0] bg-white/80 px-3 py-3">
+            <div
+              className="border-t border-[#e2e8f0] bg-white/80 px-3 py-3"
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
               <div className="flex flex-col gap-3">
                 <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
                   {mode === "edit" && (
@@ -1306,7 +1329,7 @@ export function ImageComposer({
                     <Input
                       type="number"
                       min="1"
-                      max="10"
+                      max="4"
                       step="1"
                       value={imageCount}
                       onChange={(event) => onImageCountChange(event.target.value)}
@@ -1314,14 +1337,58 @@ export function ImageComposer({
                     />
                   </div>
                   <div
-                    ref={sizeMenuRef}
-                    className="relative col-span-2 flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/85 px-3 text-sm"
+                    ref={qualityMenuRef}
+                    className="relative flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/85 px-3 text-sm"
                   >
-                    <span className="font-medium text-stone-700">比例</span>
+                    <span className="text-sm font-medium text-stone-700">质量</span>
                     <button
                       type="button"
                       className="flex h-7 min-w-0 flex-1 items-center justify-between bg-transparent text-left text-sm font-bold text-stone-700"
-                      onClick={() => setIsSizeMenuOpen((open) => !open)}
+                      onClick={() => {
+                        setIsSizeMenuOpen(false);
+                        setIsQualityMenuOpen((open) => !open);
+                      }}
+                    >
+                      <span className="truncate">{imageQualityLabel}</span>
+                      <ChevronDown className={cn("size-4 shrink-0 opacity-60 transition", isQualityMenuOpen && "rotate-180")} />
+                    </button>
+                    {isQualityMenuOpen ? (
+                      <div className="absolute bottom-[calc(100%+10px)] left-0 z-50 w-full overflow-hidden rounded-lg border border-[#e2e8f0] bg-white p-2 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.18)]">
+                        {imageQualityOptions.map((option) => {
+                          const active = option.value === (imageQuality || "auto");
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className={cn(
+                                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-stone-700 transition hover:bg-[#eff6ff]",
+                                active && "bg-[#eff6ff] font-medium text-stone-950",
+                              )}
+                              onClick={() => {
+                                onImageQualityChange(option.value);
+                                setIsQualityMenuOpen(false);
+                              }}
+                            >
+                              <span>{option.label}</span>
+                              {active ? <Check className="size-4" /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div
+                    ref={sizeMenuRef}
+                    className="relative col-span-2 flex h-9 items-center gap-2 rounded-lg border border-[#dbeafe] bg-white/85 px-3 text-sm"
+                  >
+                    <span className="font-medium text-stone-700">尺寸</span>
+                    <button
+                      type="button"
+                      className="flex h-7 min-w-0 flex-1 items-center justify-between bg-transparent text-left text-sm font-bold text-stone-700"
+                      onClick={() => {
+                        setIsQualityMenuOpen(false);
+                        setIsSizeMenuOpen((open) => !open);
+                      }}
                     >
                       <span className="truncate">{imageSizeLabel}</span>
                       <ChevronDown className={cn("size-4 shrink-0 opacity-60 transition", isSizeMenuOpen && "rotate-180")} />

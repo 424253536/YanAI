@@ -176,19 +176,30 @@ def assistant_history_messages(messages: list[dict[str, Any]]) -> list[str]:
     ]
 
 
-def build_image_prompt(prompt: str, size: str | None) -> str:
-    if not size:
-        return prompt
-    if size not in {"1:1", "16:9", "9:16", "4:3", "3:4"}:
-        return f"{prompt.strip()}\n\n输出图片，宽高比为 {size}。"
-    hint = {
-        "1:1": "输出为 1:1 正方形构图，主体居中，适合正方形画幅。",
-        "16:9": "输出为 16:9 横屏构图，适合宽画幅展示。",
-        "9:16": "输出为 9:16 竖屏构图，适合竖版画幅展示。",
-        "4:3": "输出为 4:3 比例，兼顾宽度与高度，适合展示画面细节。",
-        "3:4": "输出为 3:4 比例，纵向构图，适合人物肖像或竖向场景。",
-    }[size]
-    return f"{prompt.strip()}\n\n{hint}"
+def build_image_prompt(prompt: str, size: str | None, quality: str = "auto") -> str:
+    parts = [prompt.strip()]
+    if size:
+        if re.match(r"^\d{2,5}x\d{2,5}$", str(size)):
+            parts.append(f"输出图片尺寸为 {size}。")
+        elif size in {"1:1", "16:9", "9:16", "4:3", "3:4"}:
+            parts.append({
+                "1:1": "输出 1:1 正方形构图，主体居中，适合正方形画幅。",
+                "16:9": "输出 16:9 横屏构图，适合宽画幅展示。",
+                "9:16": "输出 9:16 竖屏构图，适合竖版画幅展示。",
+                "4:3": "输出 4:3 比例，兼顾宽度与高度，适合展示画面细节。",
+                "3:4": "输出 3:4 比例，纵向构图，适合人物肖像或竖向场景。",
+            }[size])
+        else:
+            parts.append(f"输出图片宽高比为 {size}。")
+    normalized_quality = str(quality or "auto").strip().lower()
+    if normalized_quality and normalized_quality != "auto":
+        quality_label = {
+            "low": "低质量草稿",
+            "medium": "中等质量",
+            "high": "高质量",
+        }.get(normalized_quality, normalized_quality)
+        parts.append(f"输出图片质量为 {quality_label}。")
+    return "\n\n".join(part for part in parts if part)
 
 
 def encoding_for_model(model: str):
@@ -260,6 +271,7 @@ class ConversationRequest:
     images: list[str] | None = None
     n: int = 1
     size: str | None = None
+    quality: str = "auto"
     response_format: str = "b64_json"
     base_url: str | None = None
     request_id: str = ""
@@ -554,12 +566,13 @@ def conversation_events(
     prompt: str = "",
     images: list[str] | None = None,
     size: str | None = None,
+    quality: str = "auto",
 ) -> Iterator[dict[str, Any]]:
     normalized = normalize_messages(messages or ([{"role": "user", "content": prompt}] if prompt else []))
     image_model = str(model or "").strip() in IMAGE_MODELS
     history_text = "" if image_model else assistant_history_text(normalized)
     history_messages = [] if image_model else assistant_history_messages(normalized)
-    final_prompt = build_image_prompt(prompt, size) if image_model else prompt
+    final_prompt = build_image_prompt(prompt, size, quality) if image_model else prompt
     payloads = backend.stream_conversation(
         messages=normalized,
         model=model,
@@ -600,6 +613,7 @@ def stream_image_outputs(
             model=request.model,
             images=request.images or [],
             size=request.size,
+            quality=request.quality,
     ):
         last = event
         if event.get("type") == "conversation.delta":

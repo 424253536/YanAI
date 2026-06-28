@@ -784,7 +784,7 @@ class ChannelService:
         body = {
             key: value
             for key, value in payload.items()
-            if key in {"model", "n", "response_format"} and value is not None
+            if key in {"model", "n", "quality", "response_format"} and value is not None
         }
         if prompt is not None:
             body["prompt"] = prompt
@@ -807,6 +807,9 @@ class ChannelService:
             "n": str(int(payload.get("n") or 1)),
             "response_format": _clean(payload.get("response_format")) or "b64_json",
         }
+        quality = _clean(payload.get("quality"))
+        if quality:
+            form_data["quality"] = quality
         if size is not None:
             form_data["size"] = size
         multipart = CurlMime()

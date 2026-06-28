@@ -60,6 +60,8 @@ class OpenAIBackendAPI:
         self.client_version = DEFAULT_CLIENT_VERSION
         self.client_build_number = DEFAULT_CLIENT_BUILD_NUMBER
         self.access_token = access_token
+        self.account = account_service.get_account(self.access_token) if self.access_token else {}
+        self.account = self.account if isinstance(self.account, dict) else {}
         self.fp = self._build_fp()
         self.user_agent = self.fp["user-agent"]
         self.device_id = self.fp["oai-device-id"]
@@ -67,6 +69,8 @@ class OpenAIBackendAPI:
         self.pow_script_sources: list[str] = []
         self.pow_data_build = ""
         self.session = requests.Session(**proxy_settings.build_session_kwargs(
+            account=self.account,
+            upstream=True,
             impersonate=self.fp["impersonate"],
             verify=True,
         ))
@@ -100,8 +104,7 @@ class OpenAIBackendAPI:
             self.session.headers["Authorization"] = f"Bearer {self.access_token}"
 
     def _build_fp(self) -> Dict[str, str]:
-        account = account_service.get_account(self.access_token) if self.access_token else {}
-        account = account if isinstance(account, dict) else {}
+        account = self.account
         raw_fp = account.get("fp")
         fp = {str(k).lower(): str(v) for k, v in raw_fp.items()} if isinstance(raw_fp, dict) else {}
         for key in (
@@ -454,7 +457,13 @@ class OpenAIBackendAPI:
             url,
             headers={"User-Agent": self.user_agent, "Accept": "image/*,*/*;q=0.8"},
             timeout=120,
-            **proxy_settings.build_session_kwargs(impersonate=self.fp["impersonate"], verify=True),
+            **proxy_settings.build_session_kwargs(
+                account=self.account,
+                resource=True,
+                upstream=True,
+                impersonate=self.fp["impersonate"],
+                verify=True,
+            ),
         )
         ensure_ok(response, "input_image_url_download")
         return response.content

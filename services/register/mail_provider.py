@@ -331,34 +331,61 @@ class GptMailProvider(BaseMailProvider):
 
     def __init__(self, entry: dict, conf: dict):
         super().__init__(conf, str(entry.get("provider_ref") or ""))
-        self.api_key = str(entry["api_key"]).strip()
-        self.default_domain = str(entry.get("default_domain") or "").strip()
+        self.provider_type = str(entry.get("type") or self.name).strip() or self.name
+        self.name = self.provider_type
+        self.api_key = str(entry.get("api_key") or "").strip()
+        if not self.api_key:
+            raise RuntimeError("GPTMail api_key is required")
+        self.api_base = "https://mail.chatgpt.org.uk/api" if self.provider_type == "chatgpt_mail" else str(entry.get("api_base") or "https://mail.chatgpt.org.uk/api").rstrip("/")
+        self.default_domain = "" if self.provider_type == "chatgpt_mail" else str(entry.get("default_domain") or "").strip()
         self.session = requests.Session()
         self.session.trust_env = False
-        self.session.headers.update({"User-Agent": conf["user_agent"], "Accept": "application/json", "Content-Type": "application/json", "X-API-Key": self.api_key})
+        self.session.headers.update({
+            "User-Agent": conf["user_agent"],
+            "Accept": "application/json, text/plain, */*",
+            "Content-Type": "application/json",
+            "Origin": "https://mail.chatgpt.org.uk",
+            "Referer": "https://mail.chatgpt.org.uk/",
+            "X-API-Key": self.api_key,
+        })
 
     def _request(self, method: str, path: str, params: dict | None = None, payload: dict | None = None):
         query = dict(params or {})
-        resp = self.session.request(method.upper(), f"https://mail.chatgpt.org.uk{path}", params=query, json=payload, timeout=self.conf["request_timeout"], verify=False)
+        resp = self.session.request(method.upper(), f"{self.api_base}{path}", params=query, json=payload, timeout=self.conf["request_timeout"], verify=False)
         if resp.status_code != 200:
             raise RuntimeError(f"GPTMail 请求失败: {method} {path}, HTTP {resp.status_code}, body={resp.text[:300]}")
         data = resp.json()
         return data["data"] if isinstance(data, dict) and "data" in data else data
 
     def create_mailbox(self, username: str | None = None) -> dict[str, Any]:
-        payload = {key: value for key, value in {"prefix": username, "domain": self.default_domain}.items() if value}
-        data = self._request("POST" if payload else "GET", "/api/generate-email", payload=payload or None)
-        return {"provider": self.name, "provider_ref": self.provider_ref, "address": str(data["email"])}
+        if self.provider_type == "chatgpt_mail":
+            data = self._request("GET", "/generate-email")
+            address = str(data.get("email") if isinstance(data, dict) else "").strip()
+            if not address:
+                raise RuntimeError(f"GPTMail missing email: {data}")
+            return {"provider": self.name, "provider_ref": self.provider_ref, "address": address}
+        payload = {"domain": self.default_domain}
+        if self.default_domain and username:
+            payload["prefix"] = username
+        payload = {key: value for key, value in payload.items() if value}
+        data = self._request("POST" if payload else "GET", "/generate-email", payload=payload or None)
+        address = str(data.get("email") if isinstance(data, dict) else "").strip()
+        if not address:
+            raise RuntimeError(f"GPTMail missing email: {data}")
+        return {"provider": self.name, "provider_ref": self.provider_ref, "address": address}
 
     def fetch_latest_message(self, mailbox: dict[str, Any]) -> dict[str, Any] | None:
-        data = self._request("GET", "/api/emails", params={"email": mailbox["address"]})
+        data = self._request("GET", "/emails", params={"email": mailbox["address"], "_t": int(time.time() * 1000)})
         emails = data if isinstance(data, list) else data.get("emails") or []
         if not emails:
             return None
-        item = max(emails, key=lambda value: (float(value.get("timestamp") or 0), str(value.get("id") or "")))
-        if item.get("id"):
-            item = self._request("GET", f"/api/email/{item['id']}")
-        return {"provider": self.name, "mailbox": mailbox["address"], "message_id": str(item.get("id") or ""), "subject": str(item.get("subject") or ""), "sender": str(item.get("from_address") or ""), "text_content": str(item.get("content") or ""), "html_content": str(item.get("html_content") or ""), "received_at": _parse_received_at(item.get("timestamp") or item.get("created_at")), "raw": item}
+        messages = [item for item in emails if isinstance(item, dict)]
+        if not messages:
+            return None
+        item = max(messages, key=lambda value: (str(value.get("created_at") or ""), str(value.get("id") or "")))
+        text_content, html_content = _extract_content(item)
+        sender = item.get("from_address") or item.get("from") or item.get("sender") or ""
+        return {"provider": self.name, "mailbox": mailbox["address"], "message_id": str(item.get("id") or item.get("created_at") or ""), "subject": str(item.get("subject") or ""), "sender": str(sender), "text_content": text_content, "html_content": html_content, "received_at": _parse_received_at(item.get("timestamp") or item.get("created_at")), "raw": item}
 
     def close(self) -> None:
         self.session.close()
@@ -470,7 +497,7 @@ def _create_provider(mail_config: dict, provider: str = "", provider_ref: str = 
         return TempMailLolProvider(entry, conf)
     if entry["type"] == "duckmail":
         return DuckMailProvider(entry, conf)
-    if entry["type"] == "gptmail":
+    if entry["type"] in {"gptmail", "chatgpt_mail"}:
         return GptMailProvider(entry, conf)
     if entry["type"] == "moemail":
         return MoeMailProvider(entry, conf)

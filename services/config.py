@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -16,8 +17,35 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 CONFIG_FILE = BASE_DIR / "config.json"
 VERSION_FILE = BASE_DIR / "VERSION"
-SYSTEM_SETTING_SECRET_KEYS = {"auth-key", "smtp_password", "linuxdo_client_secret", "image_webdav_config"}
+SYSTEM_SETTING_SECRET_KEYS = {"auth-key", "smtp_password", "linuxdo_client_secret", "image_webdav_config", "proxy_runtime"}
 SYSTEM_SETTING_TRANSIENT_KEYS = {"smtp_password_set", "linuxdo_client_secret_set", "image_webdav_password_set"}
+
+DEFAULT_PROXY_RUNTIME_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/145.0.0.0 Safari/537.36"
+)
+
+DEFAULT_PROXY_RUNTIME = {
+    "enabled": False,
+    "egress_mode": "direct",
+    "proxy_url": "",
+    "resource_proxy_url": "",
+    "skip_ssl_verify": False,
+    "reset_session_status_codes": [403],
+    "clearance": {
+        "enabled": False,
+        "mode": "none",
+        "cf_cookies": "",
+        "cf_clearance": "",
+        "user_agent": DEFAULT_PROXY_RUNTIME_USER_AGENT,
+        "browser": "chrome",
+        "flaresolverr_url": "",
+        "timeout_sec": 60,
+        "refresh_interval": 3600,
+        "warm_up_on_start": False,
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -40,6 +68,79 @@ def _bool(value: object, default: bool = False) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "on"}
     return bool(value)
+
+
+def _normalize_positive_int(value: object, default: int, minimum: int = 0) -> int:
+    try:
+        normalized = int(value)
+    except (OverflowError, TypeError, ValueError):
+        normalized = default
+    return max(minimum, normalized)
+
+
+def _normalize_status_codes(value: object) -> list[int]:
+    items = value if isinstance(value, list) else DEFAULT_PROXY_RUNTIME["reset_session_status_codes"]
+    normalized: list[int] = []
+    for item in items:
+        if isinstance(item, bool):
+            continue
+        try:
+            status = int(item)
+        except (OverflowError, TypeError, ValueError):
+            continue
+        if 100 <= status <= 599 and status not in normalized:
+            normalized.append(status)
+    return normalized or list(DEFAULT_PROXY_RUNTIME["reset_session_status_codes"])
+
+
+def _normalize_proxy_runtime_settings(value: object) -> dict[str, object]:
+    source = value if isinstance(value, dict) else {}
+    default_clearance = DEFAULT_PROXY_RUNTIME["clearance"]
+    clearance_source = source.get("clearance") if isinstance(source.get("clearance"), dict) else {}
+
+    egress_mode = str(source.get("egress_mode") or DEFAULT_PROXY_RUNTIME["egress_mode"]).strip().lower()
+    if egress_mode not in {"direct", "single_proxy"}:
+        egress_mode = str(DEFAULT_PROXY_RUNTIME["egress_mode"])
+
+    clearance_mode = str(clearance_source.get("mode") or default_clearance["mode"]).strip().lower()
+    if clearance_mode not in {"none", "manual", "flaresolverr"}:
+        clearance_mode = str(default_clearance["mode"])
+
+    existing_cf_cookies = str(source.get("_existing_cf_cookies") or "").strip()
+    existing_cf_clearance = str(source.get("_existing_cf_clearance") or "").strip()
+    cf_cookies = str(clearance_source.get("cf_cookies") or "").strip()
+    cf_clearance = str(clearance_source.get("cf_clearance") or "").strip()
+    if not cf_cookies and _bool(clearance_source.get("has_cf_cookies"), False):
+        cf_cookies = existing_cf_cookies
+    if not cf_clearance and _bool(clearance_source.get("has_cf_clearance"), False):
+        cf_clearance = existing_cf_clearance
+
+    return {
+        "enabled": _bool(source.get("enabled"), bool(DEFAULT_PROXY_RUNTIME["enabled"])),
+        "egress_mode": egress_mode,
+        "proxy_url": str(source.get("proxy_url") or "").strip(),
+        "resource_proxy_url": str(source.get("resource_proxy_url") or "").strip(),
+        "skip_ssl_verify": _bool(source.get("skip_ssl_verify"), bool(DEFAULT_PROXY_RUNTIME["skip_ssl_verify"])),
+        "reset_session_status_codes": _normalize_status_codes(source.get("reset_session_status_codes")),
+        "clearance": {
+            "enabled": _bool(clearance_source.get("enabled"), bool(default_clearance["enabled"])),
+            "mode": clearance_mode,
+            "cf_cookies": cf_cookies,
+            "cf_clearance": cf_clearance,
+            "user_agent": str(clearance_source.get("user_agent") or default_clearance["user_agent"]).strip()
+            or str(default_clearance["user_agent"]),
+            "browser": str(clearance_source.get("browser") or default_clearance["browser"]).strip()
+            or str(default_clearance["browser"]),
+            "flaresolverr_url": str(clearance_source.get("flaresolverr_url") or "").strip(),
+            "timeout_sec": _normalize_positive_int(clearance_source.get("timeout_sec"), int(default_clearance["timeout_sec"]), 1),
+            "refresh_interval": _normalize_positive_int(
+                clearance_source.get("refresh_interval"),
+                int(default_clearance["refresh_interval"]),
+                60,
+            ),
+            "warm_up_on_start": _bool(clearance_source.get("warm_up_on_start"), bool(default_clearance["warm_up_on_start"])),
+        },
+    }
 
 
 def _clean_list(value: object) -> list[str]:
@@ -227,6 +328,16 @@ class ConfigStore:
         return [level for item in levels if (level := str(item or "").strip().lower()) in allowed]
 
     @property
+    def sensitive_words(self) -> list[str]:
+        words = self._get_config_value("sensitive_words")
+        return [word for item in words if (word := str(item or "").strip())] if isinstance(words, list) else []
+
+    @property
+    def ai_review(self) -> dict[str, object]:
+        value = self._get_config_value("ai_review")
+        return value if isinstance(value, dict) else {}
+
+    @property
     def allow_user_registration(self) -> bool:
         return _bool(self._get_config_value("allow_user_registration"), True)
 
@@ -407,6 +518,8 @@ class ConfigStore:
         data["auto_remove_invalid_accounts"] = self.auto_remove_invalid_accounts
         data["auto_remove_rate_limited_accounts"] = self.auto_remove_rate_limited_accounts
         data["log_levels"] = self.log_levels
+        data["sensitive_words"] = self.sensitive_words
+        data["ai_review"] = self.ai_review
         data["allow_user_registration"] = self.allow_user_registration
         data["new_user_initial_quota"] = self.new_user_initial_quota
         data["email_verification_enabled"] = self.email_verification_enabled
@@ -426,6 +539,7 @@ class ConfigStore:
         data["linuxdo_minimum_trust_level"] = self.linuxdo_minimum_trust_level
         data["linuxdo_client_secret_set"] = bool(self.linuxdo_client_secret)
         data["image_model_mappings"] = self.image_model_mappings
+        data["proxy_runtime"] = self.get_public_proxy_runtime_settings()
         data.pop("auth-key", None)
         data.pop("smtp_password", None)
         data.pop("linuxdo_client_secret", None)
@@ -434,6 +548,21 @@ class ConfigStore:
 
     def get_proxy_settings(self) -> str:
         return str(self._get_config_value("proxy") or "").strip()
+
+    def get_proxy_runtime_settings(self) -> dict[str, object]:
+        return _normalize_proxy_runtime_settings(self.data.get("proxy_runtime"))
+
+    def get_public_proxy_runtime_settings(self) -> dict[str, object]:
+        runtime = copy.deepcopy(self.get_proxy_runtime_settings())
+        clearance = runtime.get("clearance") if isinstance(runtime.get("clearance"), dict) else {}
+        if isinstance(clearance, dict):
+            cf_cookies = str(clearance.get("cf_cookies") or "").strip()
+            cf_clearance = str(clearance.get("cf_clearance") or "").strip()
+            clearance["cf_cookies"] = ""
+            clearance["cf_clearance"] = ""
+            clearance["has_cf_cookies"] = bool(cf_cookies)
+            clearance["has_cf_clearance"] = bool(cf_clearance)
+        return runtime
 
     def update(self, data: dict[str, object]) -> dict[str, object]:
         updates = dict(data or {})
@@ -452,6 +581,15 @@ class ConfigStore:
                 provider.system_config.set_setting(key, value)
         next_data = dict(self.data)
         next_data.update(updates)
+        if "proxy_runtime" in next_data:
+            incoming_runtime = next_data.get("proxy_runtime")
+            if isinstance(incoming_runtime, dict):
+                previous_clearance = self.get_proxy_runtime_settings().get("clearance")
+                if isinstance(previous_clearance, dict):
+                    incoming_runtime = dict(incoming_runtime)
+                    incoming_runtime["_existing_cf_cookies"] = previous_clearance.get("cf_cookies")
+                    incoming_runtime["_existing_cf_clearance"] = previous_clearance.get("cf_clearance")
+            next_data["proxy_runtime"] = _normalize_proxy_runtime_settings(incoming_runtime)
         self.data = next_data
         self._save()
         return self.get()

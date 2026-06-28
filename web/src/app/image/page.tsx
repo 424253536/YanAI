@@ -55,6 +55,7 @@ import type { StoredAuthSession } from "@/store/auth";
 
 const ACTIVE_CONVERSATION_STORAGE_KEY = "chatgpt2api:image_active_conversation_id";
 const IMAGE_SIZE_STORAGE_KEY = "chatgpt2api:image_last_size";
+const IMAGE_QUALITY_STORAGE_KEY = "chatgpt2api:image_last_quality";
 const COMPOSER_PANEL_WIDTH_STORAGE_KEY = "chatgpt2api:image_composer_panel_width";
 const COMPOSER_PANEL_DEFAULT_WIDTH = 420;
 const COMPOSER_PANEL_MIN_WIDTH = 360;
@@ -332,6 +333,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
   const [imageCount, setImageCount] = useState("1");
   const [imageMode, setImageMode] = useState<ImageConversationMode>("generate");
   const [imageSize, setImageSize] = useState("");
+  const [imageQuality, setImageQuality] = useState("auto");
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
   const [referenceImages, setReferenceImages] = useState<StoredReferenceImage[]>([]);
@@ -356,7 +358,11 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
     () => getScopedStorageKey(IMAGE_SIZE_STORAGE_KEY, imageConversationOwnerKey),
     [imageConversationOwnerKey],
   );
-  const parsedCount = useMemo(() => Math.max(1, Math.min(10, Number(imageCount) || 1)), [imageCount]);
+  const imageQualityStorageKey = useMemo(
+    () => getScopedStorageKey(IMAGE_QUALITY_STORAGE_KEY, imageConversationOwnerKey),
+    [imageConversationOwnerKey],
+  );
+  const parsedCount = useMemo(() => Math.max(1, Math.min(4, Number(imageCount) || 1)), [imageCount]);
   const selectedConversation = useMemo(
     () => conversations.find((item) => item.id === selectedConversationId) ?? null,
     [conversations, selectedConversationId],
@@ -511,7 +517,10 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
       try {
         if (resetBeforeLoad) {
           const storedSize = typeof window !== "undefined" ? window.localStorage.getItem(imageSizeStorageKey) : null;
+          const storedQuality =
+            typeof window !== "undefined" ? window.localStorage.getItem(imageQualityStorageKey) : null;
           setImageSize(storedSize || "");
+          setImageQuality(storedQuality || "auto");
         }
 
         const items = await listImageConversations(imageConversationOwnerKey);
@@ -563,7 +572,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
       cancelled = true;
       window.removeEventListener(IMAGE_CONVERSATIONS_CHANGED_EVENT, handleConversationsChanged);
     };
-  }, [activeConversationStorageKey, imageConversationOwnerKey, imageSizeStorageKey]);
+  }, [activeConversationStorageKey, imageConversationOwnerKey, imageQualityStorageKey, imageSizeStorageKey]);
 
   const loadQuota = useCallback(async () => {
     if (!isAdmin) {
@@ -640,6 +649,16 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
     }
     window.localStorage.removeItem(imageSizeStorageKey);
   }, [imageSize, imageSizeStorageKey, isLoadingHistory]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    if (isLoadingHistory) {
+      return;
+    }
+    window.localStorage.setItem(imageQualityStorageKey, imageQuality || "auto");
+  }, [imageQuality, imageQualityStorageKey, isLoadingHistory]);
 
   useEffect(() => {
     if (selectedConversationId && !conversations.some((conversation) => conversation.id === selectedConversationId)) {
@@ -911,87 +930,92 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
           return;
         }
 
-        const tasks = pendingImages.map(async (pendingImage) => {
-          try {
-            const data =
-              queuedTurn.mode === "edit"
-                ? await editImage(referenceFiles, queuedTurn.prompt, queuedTurn.model, queuedTurn.size)
-                : await generateImage(queuedTurn.prompt, queuedTurn.model, queuedTurn.size);
-            const first = data.data?.[0];
-            if (!first?.b64_json && !first?.url) {
-              throw new Error("未返回图片数据");
-            }
-
-            const nextImage: StoredImage = first.url
-              ? {
-                  id: pendingImage.id,
-                  status: "success",
-                  url: first.url,
-                }
-              : {
-                  id: pendingImage.id,
-                  status: "success",
-                  b64_json: first.b64_json,
-                };
-
-            await updateConversation(
-              conversationId,
-              (current) => {
-                const conversation = current ?? snapshot;
-                return {
-                  ...conversation,
-                  updatedAt: new Date().toISOString(),
-                  turns: conversation.turns.map((turn) =>
-                    turn.id === queuedTurn.id
-                      ? {
-                          ...turn,
-                          images: turn.images.map((image) => (image.id === nextImage.id ? nextImage : image)),
-                        }
-                      : turn,
-                  ),
-                };
-              },
-              { persist: false },
-            );
-
-            return nextImage;
-          } catch (error) {
-            const message = error instanceof Error ? error.message : "生成失败";
-            const failedImage: StoredImage = {
-              id: pendingImage.id,
-              status: "error",
-              error: message,
-            };
-
-            await updateConversation(
-              conversationId,
-              (current) => {
-                const conversation = current ?? snapshot;
-                return {
-                  ...conversation,
-                  updatedAt: new Date().toISOString(),
-                  turns: conversation.turns.map((turn) =>
-                    turn.id === queuedTurn.id
-                      ? {
-                          ...turn,
-                          images: turn.images.map((image) => (image.id === failedImage.id ? failedImage : image)),
-                        }
-                      : turn,
-                  ),
-                };
-              },
-              { persist: false },
-            );
-
-            throw error;
+        let resumedSuccessCount = 0;
+        let resumedFailedCount = 0;
+        try {
+          const data =
+            queuedTurn.mode === "edit"
+              ? await editImage(referenceFiles, queuedTurn.prompt, queuedTurn.model, queuedTurn.size, queuedTurn.quality, pendingImages.length)
+              : await generateImage(queuedTurn.prompt, queuedTurn.model, queuedTurn.size, queuedTurn.quality, pendingImages.length);
+          const returnedImages = (data.data || []).filter((item) => item?.b64_json || item?.url);
+          if (returnedImages.length === 0) {
+            throw new Error("未返回图片数据");
           }
-        });
+          const generatedImages = pendingImages.map((pendingImage, index): StoredImage => {
+            const item = returnedImages[index];
+            if (!item) {
+              return {
+                id: pendingImage.id,
+                status: "error",
+                error: "返回图片数量不足",
+              };
+            }
+            if (item.url) {
+              return {
+                id: pendingImage.id,
+                status: "success",
+                url: item.url,
+              };
+            }
+            return {
+              id: pendingImage.id,
+              status: "success",
+              b64_json: item.b64_json,
+            };
+          });
+          resumedSuccessCount = generatedImages.filter((image) => image.status === "success").length;
+          resumedFailedCount = generatedImages.length - resumedSuccessCount;
 
-        const settled = await Promise.allSettled(tasks);
-        const resumedSuccessCount = settled.filter(
-          (item): item is PromiseFulfilledResult<StoredImage> => item.status === "fulfilled",
-        ).length;
-        const resumedFailedCount = settled.length - resumedSuccessCount;
+          await updateConversation(
+            conversationId,
+            (current) => {
+              const conversation = current ?? snapshot;
+              const imageById = new Map(generatedImages.map((image) => [image.id, image]));
+              return {
+                ...conversation,
+                updatedAt: new Date().toISOString(),
+                turns: conversation.turns.map((turn) =>
+                  turn.id === queuedTurn.id
+                    ? {
+                        ...turn,
+                        images: turn.images.map((image) => imageById.get(image.id) || image),
+                      }
+                    : turn,
+                ),
+              };
+            },
+            { persist: false },
+          );
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "生成失败";
+          const failedImages = pendingImages.map((pendingImage): StoredImage => ({
+            id: pendingImage.id,
+            status: "error",
+            error: message,
+          }));
+          resumedFailedCount = failedImages.length;
+
+          await updateConversation(
+            conversationId,
+            (current) => {
+              const conversation = current ?? snapshot;
+              const imageById = new Map(failedImages.map((image) => [image.id, image]));
+              return {
+                ...conversation,
+                updatedAt: new Date().toISOString(),
+                turns: conversation.turns.map((turn) =>
+                  turn.id === queuedTurn.id
+                    ? {
+                        ...turn,
+                        images: turn.images.map((image) => imageById.get(image.id) || image),
+                      }
+                    : turn,
+                ),
+              };
+            },
+            { persist: false },
+          );
+        }
         const existingSuccessCount = queuedTurn.images.filter((image) => image.status === "success").length;
         const existingFailedCount = queuedTurn.images.filter((image) => image.status === "error").length;
         const successCount = existingSuccessCount + resumedSuccessCount;
@@ -1091,6 +1115,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
       referenceImages: imageMode === "edit" ? referenceImages : [],
       count: parsedCount,
       size: imageSize,
+      quality: imageQuality || "auto",
       images: Array.from({ length: parsedCount }, (_, index) => ({
         id: `${turnId}-${index}`,
         status: "loading" as const,
@@ -1269,6 +1294,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
             prompt={imagePrompt}
             imageCount={imageCount}
             imageSize={imageSize}
+            imageQuality={imageQuality}
             availableQuota={availableQuota}
             activeTaskCount={activeTaskCount}
             referenceImages={referenceImages}
@@ -1278,6 +1304,7 @@ function ImagePageContent({ session }: { session: StoredAuthSession }) {
             onPromptChange={setImagePrompt}
             onImageCountChange={setImageCount}
             onImageSizeChange={setImageSize}
+            onImageQualityChange={setImageQuality}
             onSubmit={handleSubmit}
             onPickReferenceImage={() => fileInputRef.current?.click()}
             onReferenceImageChange={handleReferenceImageChange}

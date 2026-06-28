@@ -18,6 +18,9 @@ const appVersion = process.env.NEXT_PUBLIC_APP_VERSION || readAppVersion()
 
 const nextConfig: NextConfig = {
     allowedDevOrigins: ['127.0.0.1'],
+    experimental: {
+        cpus: Number(process.env.NEXT_BUILD_CPUS || 2),
+    },
     env: {
         NEXT_PUBLIC_APP_VERSION: appVersion,
     },

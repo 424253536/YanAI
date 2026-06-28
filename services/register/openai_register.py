@@ -19,6 +19,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from services.account_service import account_service
+from services.proxy_service import proxy_settings
 from services.register import mail_provider
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -323,9 +324,10 @@ def create_session(proxy: str = "") -> requests.Session:
     adapter = HTTPAdapter(max_retries=retry, pool_connections=50, pool_maxsize=50)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
-    session.verify = False
-    if proxy:
-        session.proxies.update({"http": proxy, "https": proxy})
+    profile = proxy_settings.get_profile(proxy=proxy, upstream=True)
+    session.verify = not profile.skip_ssl_verify
+    if profile.proxy_url:
+        session.proxies.update({"http": profile.proxy_url, "https": profile.proxy_url})
     return session
 
 

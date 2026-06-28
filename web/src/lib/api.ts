@@ -74,6 +74,50 @@ type AccountUpdateResponse = {
   items: Account[];
 };
 
+export type ProxyRuntimeEgressMode = "direct" | "single_proxy";
+export type ProxyRuntimeClearanceMode = "none" | "manual" | "flaresolverr";
+
+export type ProxyRuntimeClearanceSettings = {
+  enabled: boolean;
+  mode: ProxyRuntimeClearanceMode;
+  cf_cookies: string;
+  cf_clearance: string;
+  user_agent: string;
+  browser: string;
+  flaresolverr_url: string;
+  timeout_sec: number | string;
+  refresh_interval: number | string;
+  warm_up_on_start: boolean;
+  has_cf_cookies?: boolean;
+  has_cf_clearance?: boolean;
+};
+
+export type ProxyRuntimeSettings = {
+  enabled: boolean;
+  egress_mode: ProxyRuntimeEgressMode;
+  proxy_url: string;
+  resource_proxy_url: string;
+  skip_ssl_verify: boolean;
+  reset_session_status_codes: number[];
+  clearance: ProxyRuntimeClearanceSettings;
+};
+
+export type ProxyRuntimeStatus = {
+  enabled: boolean;
+  egress_mode: ProxyRuntimeEgressMode | string;
+  proxy_source: string;
+  has_proxy: boolean;
+  clearance_enabled: boolean;
+  clearance_mode: ProxyRuntimeClearanceMode | string;
+  has_clearance_bundle: boolean;
+  cached_clearance_hosts: string[];
+};
+
+export type ProxyRuntimeResponse = {
+  runtime: ProxyRuntimeSettings;
+  status: ProxyRuntimeStatus;
+};
+
 export type SettingsConfig = {
   proxy: string;
   base_url?: string;
@@ -103,6 +147,9 @@ export type SettingsConfig = {
   auto_remove_invalid_accounts?: boolean;
   auto_remove_rate_limited_accounts?: boolean;
   log_levels?: string[];
+  sensitive_words?: string[];
+  ai_review?: Record<string, unknown>;
+  proxy_runtime?: ProxyRuntimeSettings;
   [key: string]: unknown;
 };
 
@@ -505,7 +552,7 @@ export async function updateAccount(
   });
 }
 
-export async function generateImage(prompt: string, model?: ImageModel, size?: string) {
+export async function generateImage(prompt: string, model?: ImageModel, size?: string, quality = "auto", n = 1) {
   return httpRequest<ImageResponse>(
     "/v1/images/generations",
     {
@@ -514,14 +561,15 @@ export async function generateImage(prompt: string, model?: ImageModel, size?: s
         prompt,
         ...(model ? { model } : {}),
         ...(size ? { size } : {}),
-        n: 1,
+        ...(quality ? { quality } : {}),
+        n,
         response_format: "url",
       },
     },
   );
 }
 
-export async function editImage(files: File | File[], prompt: string, model?: ImageModel, size?: string) {
+export async function editImage(files: File | File[], prompt: string, model?: ImageModel, size?: string, quality = "auto", n = 1) {
   const formData = new FormData();
   const uploadFiles = Array.isArray(files) ? files : [files];
 
@@ -535,7 +583,10 @@ export async function editImage(files: File | File[], prompt: string, model?: Im
   if (size) {
     formData.append("size", size);
   }
-  formData.append("n", "1");
+  if (quality) {
+    formData.append("quality", quality);
+  }
+  formData.append("n", String(n));
   formData.append("response_format", "url");
 
   return httpRequest<ImageResponse>(
@@ -1289,6 +1340,18 @@ export type ProxyTestResult = {
   status: number;
   latency_ms: number;
   error: string | null;
+  proxy_source?: string;
+  has_proxy?: boolean;
+};
+
+export type ClearanceTestResult = {
+  ok: boolean;
+  status: string;
+  latency_ms: number;
+  has_cookies: boolean;
+  user_agent: string;
+  error: string | null;
+  runtime: ProxyRuntimeStatus;
 };
 
 export async function fetchProxy() {
@@ -1306,5 +1369,23 @@ export async function testProxy(url?: string) {
   return httpRequest<{ result: ProxyTestResult }>("/api/proxy/test", {
     method: "POST",
     body: { url: url ?? "" },
+  });
+}
+
+export async function fetchProxyRuntime() {
+  return httpRequest<ProxyRuntimeResponse>("/api/proxy/runtime");
+}
+
+export async function updateProxyRuntime(runtime: ProxyRuntimeSettings) {
+  return httpRequest<ProxyRuntimeResponse>("/api/proxy/runtime", {
+    method: "POST",
+    body: runtime,
+  });
+}
+
+export async function testProxyClearance(targetUrl?: string) {
+  return httpRequest<{ result: ClearanceTestResult }>("/api/proxy/clearance/test", {
+    method: "POST",
+    body: { target_url: targetUrl ?? "https://chatgpt.com" },
   });
 }

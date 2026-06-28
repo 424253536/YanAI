@@ -10,7 +10,7 @@ from services.auth_service import auth_service
 from services.config import config
 from services.image_service import delete_images, list_images
 from services.log_service import LOG_TYPE_AUDIT, audit_service, log_service
-from services.proxy_service import test_proxy
+from services.proxy_service import proxy_settings, test_clearance, test_proxy
 from services.webdav_service import get_webdav_config, save_webdav_config, sync_images_to_webdav
 
 
@@ -20,6 +20,10 @@ class SettingsUpdateRequest(BaseModel):
 
 class ProxyTestRequest(BaseModel):
     url: str = ""
+
+
+class ClearanceTestRequest(BaseModel):
+    target_url: str = "https://chatgpt.com"
 
 
 class LoginRequest(BaseModel):
@@ -94,6 +98,7 @@ def create_router(app_version: str) -> APIRouter:
             "version": app_version,
             "storage": storage_health,
             "account_pool": pool,
+            "proxy_runtime": proxy_settings.get_runtime_status(),
         }
 
     @router.post("/auth/login")
@@ -310,9 +315,30 @@ def create_router(app_version: str) -> APIRouter:
     async def test_proxy_endpoint(body: ProxyTestRequest, authorization: str | None = Header(default=None)):
         require_admin(authorization)
         candidate = (body.url or "").strip() or config.get_proxy_settings()
-        if not candidate:
-            raise HTTPException(status_code=400, detail={"error": "proxy url is required"})
         return {"result": await run_in_threadpool(test_proxy, candidate)}
+
+    @router.get("/api/proxy/runtime")
+    async def get_proxy_runtime(authorization: str | None = Header(default=None)):
+        require_admin(authorization)
+        return {
+            "runtime": config.get_public_proxy_runtime_settings(),
+            "status": proxy_settings.get_runtime_status(),
+        }
+
+    @router.post("/api/proxy/runtime")
+    async def save_proxy_runtime(body: SettingsUpdateRequest, authorization: str | None = Header(default=None)):
+        require_admin(authorization)
+        updates = body.model_dump(mode="python")
+        runtime = updates.get("proxy_runtime", updates)
+        return {
+            "runtime": config.update({"proxy_runtime": runtime}).get("proxy_runtime"),
+            "status": proxy_settings.get_runtime_status(),
+        }
+
+    @router.post("/api/proxy/clearance/test")
+    async def test_proxy_clearance_endpoint(body: ClearanceTestRequest, authorization: str | None = Header(default=None)):
+        require_admin(authorization)
+        return {"result": await run_in_threadpool(test_clearance, body.target_url)}
 
     @router.get("/api/storage/info")
     async def get_storage_info(authorization: str | None = Header(default=None)):

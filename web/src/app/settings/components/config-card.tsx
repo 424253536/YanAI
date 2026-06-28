@@ -236,6 +236,48 @@ export function ConfigCard() {
           </div>
           <div className="space-y-4 rounded-xl border border-stone-200 bg-white px-4 py-4 md:col-span-2">
             <div>
+              <h2 className="text-sm font-semibold text-stone-900">内容过滤</h2>
+              <p className="mt-1 text-xs leading-5 text-stone-500">本地敏感词会直接拦截；AI 审核开启后会调用 OpenAI 兼容接口返回 ALLOW / REJECT。</p>
+            </div>
+            <Textarea
+              value={Array.isArray(config?.sensitive_words) ? config.sensitive_words.join("\n") : ""}
+              onChange={(event) => patchConfig({
+                sensitive_words: event.target.value.split(/[\n,;]/).map((item) => item.trim()).filter(Boolean),
+              })}
+              placeholder="每行一个敏感词"
+              className="min-h-24 rounded-xl border-stone-200 bg-stone-50 font-mono text-xs"
+            />
+            <label className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
+              <Checkbox
+                checked={Boolean(config?.ai_review && (config.ai_review as { enabled?: unknown }).enabled)}
+                onCheckedChange={(checked) => patchConfig({ ai_review: { ...(config?.ai_review || {}), enabled: Boolean(checked) } })}
+              />
+              启用 AI 内容审核
+            </label>
+            <div className="grid gap-4 md:grid-cols-3">
+              <Input
+                value={String((config?.ai_review as { base_url?: unknown } | undefined)?.base_url || "")}
+                onChange={(event) => patchConfig({ ai_review: { ...(config?.ai_review || {}), base_url: event.target.value } })}
+                placeholder="审核接口 Base URL"
+                className="h-10 rounded-xl border-stone-200 bg-stone-50"
+              />
+              <Input
+                value={String((config?.ai_review as { model?: unknown } | undefined)?.model || "")}
+                onChange={(event) => patchConfig({ ai_review: { ...(config?.ai_review || {}), model: event.target.value } })}
+                placeholder="审核模型"
+                className="h-10 rounded-xl border-stone-200 bg-stone-50"
+              />
+              <Input
+                type="password"
+                value={String((config?.ai_review as { api_key?: unknown } | undefined)?.api_key || "")}
+                onChange={(event) => patchConfig({ ai_review: { ...(config?.ai_review || {}), api_key: event.target.value } })}
+                placeholder="审核 API Key"
+                className="h-10 rounded-xl border-stone-200 bg-stone-50"
+              />
+            </div>
+          </div>
+          <div className="space-y-4 rounded-xl border border-stone-200 bg-white px-4 py-4 md:col-span-2">
+            <div>
               <h2 className="text-sm font-semibold text-stone-900">注册邮箱验证</h2>
               <p className="mt-1 text-xs leading-5 text-stone-500">开启后，邮箱注册必须先通过验证码；域名白名单只影响用户自助注册。</p>
             </div>
