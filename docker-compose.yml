@@ -1,21 +1,47 @@
+name: yanai
+
 services:
   app:
-    image: ${YANAI_IMAGE:-huaiyuechusan/yanai:latest}
+    image: ${YANAI_IMAGE:?请在 .env 中设置 YANAI_IMAGE，例如 ghcr.io/your-github-user/yanai:latest}
     container_name: yanai
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "${YANAI_PORT:-3000}:80"
     volumes:
-      # Keep secrets and mutable runtime state outside of the public image.
       - ./data:/app/data
       - ./config.json:/app/config.json
     environment:
-      STORAGE_BACKEND: ${STORAGE_BACKEND:-json}
-      # DATABASE_URL: sqlite:////app/data/accounts.db
-      # DATABASE_URL: postgresql://user:password@host:5432/dbname
-      # GIT_REPO_URL: https://github.com/user/private-data-repo.git
-      # GIT_TOKEN: your_git_token_here
-      # GIT_BRANCH: main
-      # GIT_FILE_PATH: accounts.json
-      # CHATGPT2API_AUTH_KEY: your_secret_key_here
-      # CHATGPT2API_BASE_URL: https://your-domain.com
+      TZ: ${TZ:-Asia/Shanghai}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-sqlite}
+      DATABASE_URL: ${DATABASE_URL:-}
+      CHATGPT2API_AUTH_KEY: ${CHATGPT2API_AUTH_KEY:-}
+      CHATGPT2API_BASE_URL: ${CHATGPT2API_BASE_URL:-}
+      GIT_REPO_URL: ${GIT_REPO_URL:-}
+      GIT_TOKEN: ${GIT_TOKEN:-}
+      GIT_BRANCH: ${GIT_BRANCH:-main}
+      GIT_FILE_PATH: ${GIT_FILE_PATH:-accounts.json}
+      GIT_AUTH_KEYS_FILE_PATH: ${GIT_AUTH_KEYS_FILE_PATH:-auth_keys.json}
+      GIT_USERS_FILE_PATH: ${GIT_USERS_FILE_PATH:-users.json}
+      GIT_SESSIONS_FILE_PATH: ${GIT_SESSIONS_FILE_PATH:-sessions.json}
+      GIT_REDEEM_CODES_FILE_PATH: ${GIT_REDEEM_CODES_FILE_PATH:-redeem_codes.json}
+      GIT_CHANNELS_FILE_PATH: ${GIT_CHANNELS_FILE_PATH:-channels.json}
+      GIT_PROMPT_LIBRARY_FILE_PATH: ${GIT_PROMPT_LIBRARY_FILE_PATH:-prompt_library.json}
+      GIT_IMAGE_RECORDS_FILE_PATH: ${GIT_IMAGE_RECORDS_FILE_PATH:-image_records.json}
+      CHATGPT2API_SMTP_HOST: ${CHATGPT2API_SMTP_HOST:-}
+      CHATGPT2API_SMTP_PORT: ${CHATGPT2API_SMTP_PORT:-}
+      CHATGPT2API_SMTP_USERNAME: ${CHATGPT2API_SMTP_USERNAME:-}
+      CHATGPT2API_SMTP_PASSWORD: ${CHATGPT2API_SMTP_PASSWORD:-}
+      CHATGPT2API_SMTP_FROM: ${CHATGPT2API_SMTP_FROM:-}
+      LINUX_DO_CLIENT_ID: ${LINUX_DO_CLIENT_ID:-}
+      LINUX_DO_CLIENT_SECRET: ${LINUX_DO_CLIENT_SECRET:-}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1/health', timeout=5).read()"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

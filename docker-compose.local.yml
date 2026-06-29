@@ -1,0 +1,22 @@
+name: yanai-local
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    image: yanai:local
+    container_name: yanai-local
+    restart: unless-stopped
+    ports:
+      - "${YANAI_PORT:-3000}:80"
+    volumes:
+      - ./data:/app/data
+      - ./config.json:/app/config.json
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-sqlite}
+      DATABASE_URL: ${DATABASE_URL:-}
+      CHATGPT2API_AUTH_KEY: ${CHATGPT2API_AUTH_KEY:-}
+      CHATGPT2API_BASE_URL: ${CHATGPT2API_BASE_URL:-}

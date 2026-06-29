@@ -15,7 +15,6 @@ data/
 config.json
 edit
 
-docker-compose.local.yml
 docker-compose-local.yml
 
 .claude/settings.local.json
