@@ -208,6 +208,21 @@ class AccountService:
             normalized["quota"] = 0
         normalized["image_quota_unknown"] = bool(normalized.get("image_quota_unknown"))
         normalized["email"] = self._clean_token(normalized.get("email")) or None
+        registration_email_provider = self._clean_token(
+            normalized.get("registration_email_provider")
+            or normalized.get("registration_email_type")
+            or normalized.get("email_provider")
+            or normalized.get("mail_provider")
+        )
+        normalized["registration_email_provider"] = registration_email_provider or None
+        normalized["registration_email_type"] = self._clean_token(
+            normalized.get("registration_email_type")
+        ) or registration_email_provider or None
+        normalized["registration_email_provider_ref"] = self._clean_token(
+            normalized.get("registration_email_provider_ref")
+            or normalized.get("email_provider_ref")
+            or normalized.get("mail_provider_ref")
+        ) or None
         normalized["user_id"] = self._clean_token(normalized.get("user_id")) or None
         limits_progress = normalized.get("limits_progress")
         normalized["limits_progress"] = limits_progress if isinstance(limits_progress, list) else []
@@ -222,6 +237,7 @@ class AccountService:
         normalized["leased_until"] = self._clean_token(normalized.get("leased_until")) or None
         normalized["lease_owners"] = self._lease_owners(normalized)
         normalized["updated_at"] = self._clean_token(normalized.get("updated_at")) or None
+        normalized["last_recovered_at"] = self._clean_token(normalized.get("last_recovered_at")) or None
         return normalized
 
     @staticmethod
@@ -254,6 +270,7 @@ class AccountService:
             "password": self._credential_preview(account.get("password")),
             "createdAt": self._clean_token(account.get("created_at")) or None,
             "expiresAt": self._clean_token(account.get("expires_at")) or None,
+            "lastRecoveredAt": self._clean_token(account.get("last_recovered_at")) or None,
             "chatgptAccountId": self._clean_token(account.get("chatgpt_account_id")) or None,
             "chatgptUserId": self._clean_token(account.get("chatgpt_user_id")) or None,
         }
@@ -347,6 +364,154 @@ class AccountService:
         log_service.add(LOG_TYPE_ACCOUNT, "自动移除限流账号", {"token": anonymize_token(access_token)})
         return None
 
+    def _registration_email_provider(self, account: dict | None) -> str:
+        if not isinstance(account, dict):
+            return ""
+        return self._clean_token(
+            account.get("registration_email_provider")
+            or account.get("registration_email_type")
+            or account.get("email_provider")
+            or account.get("mail_provider")
+        )
+
+    def _can_recover_invalid_token(self, account: dict | None) -> bool:
+        if not isinstance(account, dict):
+            return False
+        return (
+            self._registration_email_provider(account) == "chatgpt_mail"
+            and bool(self._clean_token(account.get("email")))
+            and bool(self._clean_token(account.get("password")))
+        )
+
+    def _replace_recovered_account_token(self, old_access_token: str, updates: dict[str, Any]) -> dict | None:
+        old_access_token = self._clean_token(old_access_token)
+        new_access_token = self._clean_token(updates.get("access_token"))
+        if not old_access_token or not new_access_token:
+            return None
+        now = self._format_timestamp(self._now_utc())
+
+        repo = self._account_repository()
+        if repo is not None:
+            current = self._get_current_account(old_access_token)
+            if current is None:
+                return None
+            existing = self._get_current_account(new_access_token) if new_access_token != old_access_token else None
+            account = self._normalize_account(
+                {
+                    **(existing or {}),
+                    **current,
+                    **updates,
+                    "access_token": new_access_token,
+                    "updated_at": now,
+                    "last_recovered_at": self._clean_token(updates.get("last_recovered_at")) or now,
+                }
+            )
+            if account is None:
+                return None
+            repo.upsert(account)
+            if new_access_token != old_access_token:
+                repo.delete(old_access_token)
+            return dict(account)
+
+        with self._lock:
+            old_index = self._find_account_index(old_access_token)
+            if old_index < 0:
+                return None
+            new_index = self._find_account_index(new_access_token)
+            current = dict(self._accounts[old_index])
+            existing = dict(self._accounts[new_index]) if new_index >= 0 and new_index != old_index else {}
+            account = self._normalize_account(
+                {
+                    **existing,
+                    **current,
+                    **updates,
+                    "access_token": new_access_token,
+                    "updated_at": now,
+                    "last_recovered_at": self._clean_token(updates.get("last_recovered_at")) or now,
+                }
+            )
+            if account is None:
+                return None
+            if new_index >= 0 and new_index != old_index:
+                self._accounts[new_index] = account
+                del self._accounts[old_index]
+            else:
+                self._accounts[old_index] = account
+            if self._accounts:
+                self._index %= len(self._accounts)
+            else:
+                self._index = 0
+            self._save_accounts()
+            return dict(account)
+
+    def _recover_invalid_token_if_configured(self, access_token: str, event: str) -> dict | None:
+        if not config.auto_remove_invalid_accounts:
+            return None
+        account = self._get_current_account(access_token)
+        if not self._can_recover_invalid_token(account):
+            return None
+        token_ref = anonymize_token(access_token)
+        try:
+            from services.register.openai_register import recover_registered_chatgpt_mail_account
+
+            recovered = recover_registered_chatgpt_mail_account(account or {}, index=0)
+            restored = self._replace_recovered_account_token(access_token, recovered)
+            if restored is None:
+                raise RuntimeError("failed to persist recovered access_token")
+            new_token = self._clean_token(restored.get("access_token"))
+            log_service.add(
+                LOG_TYPE_ACCOUNT,
+                "auto recovered invalid account",
+                {
+                    "source": event,
+                    "old_token": token_ref,
+                    "new_token": anonymize_token(new_token),
+                    "email": self._clean_token(restored.get("email")),
+                    "registration_email_provider": self._registration_email_provider(restored),
+                },
+            )
+            print(f"[account-recovery] recovered {token_ref} -> {anonymize_token(new_token)}")
+            return restored
+        except Exception as exc:
+            log_service.add(
+                LOG_TYPE_ACCOUNT,
+                "auto recover invalid account failed",
+                {
+                    "source": event,
+                    "token": token_ref,
+                    "email": self._clean_token((account or {}).get("email")),
+                    "error": str(exc),
+                },
+            )
+            print(f"[account-recovery] fail {token_ref} {exc}")
+            return None
+
+    def _remove_invalid_token_if_configured(self, access_token: str, event: str) -> bool:
+        if not config.auto_remove_invalid_accounts:
+            return False
+        removed = self.remove_token(access_token)
+        if removed:
+            log_service.add(LOG_TYPE_ACCOUNT, "鑷姩绉婚櫎寮傚父璐﹀彿", {"source": event, "token": anonymize_token(access_token)})
+        return removed
+
+    def _handle_invalid_token_for_refresh(self, access_token: str, event: str) -> tuple[dict | None, str, str]:
+        recovered = self._recover_invalid_token_if_configured(access_token, event)
+        if recovered is not None:
+            new_access_token = self._clean_token(recovered.get("access_token"))
+            try:
+                remote_info = self.fetch_remote_info(new_access_token)
+                refreshed = self.update_account(new_access_token, remote_info)
+                return refreshed or recovered, "recovered", ""
+            except Exception as exc:
+                message = self._format_refresh_error(exc)
+                print(f"[account-recovery] recovered token refresh fail {anonymize_token(new_access_token)} {message}")
+                return recovered, "recovered_refresh_failed", message
+
+        if self._remove_invalid_token_if_configured(access_token, event):
+            return None, "removed", ""
+        updated = self.update_account(access_token, {"status": "寮傚父", "quota": 0})
+        return updated, "marked_abnormal", ""
+
     def _build_remote_headers(self, access_token: str) -> tuple[dict[str, str], str]:
         account = self.get_account(access_token) or {}
         user_agent = self._clean_token(account.get("user-agent") or account.get("user_agent"))
@@ -388,6 +553,10 @@ class AccountService:
                 "quota": account.get("quota") if account.get("quota") is not None else 0,
                 "imageQuotaUnknown": bool(account.get("image_quota_unknown")),
                 "email": account.get("email"),
+                "registrationEmailProvider": account.get("registration_email_provider"),
+                "registrationEmailType": account.get("registration_email_type"),
+                "registrationEmailProviderRef": account.get("registration_email_provider_ref"),
+                "autoRecoverInvalidToken": self._can_recover_invalid_token(account),
                 "user_id": account.get("user_id"),
                 "limits_progress": account.get("limits_progress") or [],
                 "default_model_slug": account.get("default_model_slug"),
@@ -436,6 +605,8 @@ class AccountService:
             message = self._format_refresh_error(exc)
             print(f"[account-available] refresh token={token_ref} fail {message}")
             if "/backend-api/me failed: HTTP 401" in raw_message:
+                account, _, _ = self._handle_invalid_token_for_refresh(access_token, "refresh_account_state")
+                return account
                 if self.remove_invalid_token(access_token, "refresh_account_state"):
                     return None
                 return self.update_account(
@@ -595,13 +766,18 @@ class AccountService:
                 return self._clean_token(account.get("access_token"))
         return ""
 
-    def remove_invalid_token(self, access_token: str, event: str) -> bool:
+    def _legacy_remove_invalid_token(self, access_token: str, event: str) -> bool:
         if not config.auto_remove_invalid_accounts:
             return False
         removed = self.remove_token(access_token)
         if removed:
             log_service.add(LOG_TYPE_ACCOUNT, "自动移除异常账号", {"source": event, "token": anonymize_token(access_token)})
         return removed
+
+    def remove_invalid_token(self, access_token: str, event: str) -> bool:
+        if self._recover_invalid_token_if_configured(access_token, event) is not None:
+            return False
+        return self._remove_invalid_token_if_configured(access_token, event)
 
     def next_token(self) -> str:
         return self.get_available_access_token()
@@ -961,6 +1137,18 @@ class AccountService:
                     message = self._format_refresh_error(exc)
                     print(f"[account-refresh] fail {anonymize_token(access_token)} {message}")
                     if "/backend-api/me failed: HTTP 401" in raw_message:
+                        account, action, recovery_error = self._handle_invalid_token_for_refresh(access_token, "refresh_accounts")
+                        if action == "recovered" and account is not None:
+                            refreshed += 1
+                            continue
+                        if action == "recovered_refresh_failed":
+                            message = recovery_error or "recovered token refresh failed"
+                        elif action == "removed":
+                            message = "invalid token removed"
+                        else:
+                            message = "invalid token"
+                        errors.append({"access_token": access_token, "error": message})
+                        continue
                         if not self.remove_invalid_token(access_token, "refresh_accounts"):
                             self.update_account(access_token, {"status": "异常", "quota": 0})
                         message = "检测到封号"

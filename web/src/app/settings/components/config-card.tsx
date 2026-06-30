@@ -24,6 +24,8 @@ export function ConfigCard() {
   const isSavingConfig = useSettingsStore((state) => state.isSavingConfig);
   const setRefreshAccountIntervalMinute = useSettingsStore((state) => state.setRefreshAccountIntervalMinute);
   const setImageRetentionDays = useSettingsStore((state) => state.setImageRetentionDays);
+  const setImageTimeoutControlEnabled = useSettingsStore((state) => state.setImageTimeoutControlEnabled);
+  const setImagePollTimeoutSecs = useSettingsStore((state) => state.setImagePollTimeoutSecs);
   const setAutoRemoveInvalidAccounts = useSettingsStore((state) => state.setAutoRemoveInvalidAccounts);
   const setAutoRemoveRateLimitedAccounts = useSettingsStore((state) => state.setAutoRemoveRateLimitedAccounts);
   const setLogLevel = useSettingsStore((state) => state.setLogLevel);
@@ -171,6 +173,27 @@ export function ConfigCard() {
               className="h-10 rounded-xl border-stone-200 bg-white"
             />
             <p className="text-xs text-stone-500">自动删除多少天前的本地图片。</p>
+          </div>
+          <div className="space-y-2 rounded-xl border border-stone-200 bg-white px-4 py-3">
+            <label className="flex items-center gap-3 text-sm text-stone-700">
+              <Checkbox
+                checked={config?.image_timeout_control_enabled !== false}
+                onCheckedChange={(checked) => setImageTimeoutControlEnabled(Boolean(checked))}
+              />
+              启用生图超时控制
+            </label>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              value={String(config?.image_poll_timeout_secs || "")}
+              onChange={(event) => setImagePollTimeoutSecs(event.target.value)}
+              placeholder="300"
+              disabled={config?.image_timeout_control_enabled === false}
+              className="h-10 rounded-xl border-stone-200 bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            <p className="text-xs text-stone-500">单位秒；控制创作面板等待 ChatGPT 图片结果的最长时间，关闭后使用默认 300 秒。</p>
           </div>
           <div className="space-y-2">
             <label className="text-sm text-stone-700">默认图像通道映射</label>

@@ -308,6 +308,42 @@ class ConfigStore:
             return 30
 
     @property
+    def image_timeout_control_enabled(self) -> bool:
+        return _bool(self._get_config_value("image_timeout_control_enabled"), True)
+
+    @property
+    def image_poll_timeout_secs(self) -> int:
+        try:
+            return max(1, int(self._get_config_value("image_poll_timeout_secs", 300)))
+        except (TypeError, ValueError):
+            return 300
+
+    @property
+    def effective_image_poll_timeout_secs(self) -> int:
+        return self.image_poll_timeout_secs if self.image_timeout_control_enabled else 300
+
+    @property
+    def image_poll_interval_secs(self) -> float:
+        try:
+            return max(0.5, float(self._get_config_value("image_poll_interval_secs", 10.0)))
+        except (TypeError, ValueError):
+            return 10.0
+
+    @property
+    def image_poll_initial_wait_secs(self) -> float:
+        try:
+            return max(0.0, float(self._get_config_value("image_poll_initial_wait_secs", 10.0)))
+        except (TypeError, ValueError):
+            return 10.0
+
+    @property
+    def image_poll_settle_secs(self) -> float:
+        try:
+            return max(0.0, float(self._get_config_value("image_poll_settle_secs", 2.0)))
+        except (TypeError, ValueError):
+            return 2.0
+
+    @property
     def internal_pool_enabled(self) -> bool:
         return _bool(self._get_config_value("internal_pool_enabled"), True)
 
@@ -514,6 +550,11 @@ class ConfigStore:
         data["refresh_account_interval_minute"] = self.refresh_account_interval_minute
         data["account_lease_ttl_seconds"] = self.account_lease_ttl_seconds
         data["image_retention_days"] = self.image_retention_days
+        data["image_timeout_control_enabled"] = self.image_timeout_control_enabled
+        data["image_poll_timeout_secs"] = self.image_poll_timeout_secs
+        data["image_poll_interval_secs"] = self.image_poll_interval_secs
+        data["image_poll_initial_wait_secs"] = self.image_poll_initial_wait_secs
+        data["image_poll_settle_secs"] = self.image_poll_settle_secs
         data["internal_pool_enabled"] = self.internal_pool_enabled
         data["auto_remove_invalid_accounts"] = self.auto_remove_invalid_accounts
         data["auto_remove_rate_limited_accounts"] = self.auto_remove_rate_limited_accounts

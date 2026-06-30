@@ -220,6 +220,17 @@ def wait_for_code(mailbox: dict) -> str | None:
     return mail_provider.wait_for_code(config["mail"], mailbox)
 
 
+def _mailbox_registration_metadata(mailbox: dict) -> dict[str, str]:
+    provider = str(mailbox.get("provider") or "").strip()
+    provider_ref = str(mailbox.get("provider_ref") or "").strip()
+    metadata = {
+        "registration_email_provider": provider,
+        "registration_email_type": provider,
+        "registration_email_provider_ref": provider_ref,
+    }
+    return {key: value for key, value in metadata.items() if value}
+
+
 class SentinelTokenGenerator:
     MAX_ATTEMPTS = 500000
     ERROR_PREFIX = "wQ8Lk5FbGpA2NcR9dShT6gYjU7VxZ4D"
@@ -611,7 +622,50 @@ class PlatformRegistrar:
             "refresh_token": str(tokens.get("refresh_token") or "").strip(),
             "id_token": str(tokens.get("id_token") or "").strip(),
             "created_at": datetime.now(timezone.utc).isoformat(),
+            **_mailbox_registration_metadata(mailbox),
         }
+
+
+def recover_registered_chatgpt_mail_account(account: dict, index: int = 0) -> dict:
+    email = str(account.get("email") or "").strip()
+    password = str(account.get("password") or "").strip()
+    provider = str(
+        account.get("registration_email_provider")
+        or account.get("registration_email_type")
+        or account.get("email_provider")
+        or ""
+    ).strip()
+    provider_ref = str(account.get("registration_email_provider_ref") or "").strip()
+    if provider != "chatgpt_mail":
+        raise RuntimeError("account was not registered with chatgpt_mail")
+    if not email or not password:
+        raise RuntimeError("chatgpt_mail recovery requires saved email and password")
+
+    mailbox = {
+        "provider": provider,
+        "provider_ref": provider_ref,
+        "address": email,
+    }
+    registrar = PlatformRegistrar(config["proxy"])
+    try:
+        tokens = registrar._login_and_exchange_tokens(email, password, mailbox, index)
+    finally:
+        registrar.close()
+
+    access_token = str(tokens.get("access_token") or "").strip()
+    if not access_token:
+        raise RuntimeError("chatgpt_mail recovery returned empty access_token")
+    return {
+        "email": str(tokens.get("email") or email).strip(),
+        "password": password,
+        "access_token": access_token,
+        "refresh_token": str(tokens.get("refresh_token") or "").strip(),
+        "id_token": str(tokens.get("id_token") or "").strip(),
+        "last_recovered_at": datetime.now(timezone.utc).isoformat(),
+        "registration_email_provider": provider,
+        "registration_email_type": provider,
+        "registration_email_provider_ref": provider_ref,
+    }
 
 
 def _add_registered_account(result: dict) -> None:
@@ -629,6 +683,9 @@ def _add_registered_account(result: dict) -> None:
                     "email": str(result.get("email") or "").strip() or None,
                     "password": str(result.get("password") or "").strip(),
                     "created_at": str(result.get("created_at") or "").strip(),
+                    "registration_email_provider": str(result.get("registration_email_provider") or "").strip(),
+                    "registration_email_type": str(result.get("registration_email_type") or "").strip(),
+                    "registration_email_provider_ref": str(result.get("registration_email_provider_ref") or "").strip(),
                 }
             ]
         )

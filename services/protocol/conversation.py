@@ -16,7 +16,7 @@ from services.account_service import account_service
 from services.config import config
 from services.log_service import LOG_TYPE_ACCOUNT, log_service
 from services.observability import get_current_request_id
-from services.openai_backend_api import OpenAIBackendAPI
+from services.openai_backend_api import ImagePollTimeoutError, OpenAIBackendAPI
 from utils.helper import IMAGE_MODELS, anonymize_token
 from utils.log import logger
 from utils.timezone import china_now_text
@@ -658,7 +658,20 @@ def stream_image_outputs(
         yield ImageOutput(kind="message", model=request.model, index=index, total=total, text=message)
         return
 
-    image_urls = backend.resolve_conversation_image_urls(conversation_id, file_ids, sediment_ids)
+    try:
+        image_urls = backend.resolve_conversation_image_urls(
+            conversation_id,
+            file_ids,
+            sediment_ids,
+            poll_timeout_secs=config.effective_image_poll_timeout_secs,
+        )
+    except ImagePollTimeoutError as exc:
+        raise ImageGenerationError(
+            str(exc) or "image generation timed out before returning an image result",
+            status_code=504,
+            error_type="server_error",
+            code="image_generation_timeout",
+        ) from exc
     if image_urls:
         image_items = [
             {"b64_json": base64.b64encode(image_data).decode("ascii")}

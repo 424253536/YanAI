@@ -116,6 +116,19 @@ function formatQuota(account: Account) {
   return String(Math.max(0, account.quota));
 }
 
+function formatRegistrationEmailProvider(account?: Account | null) {
+  const provider = String(
+    account?.registrationEmailProvider || account?.registrationEmailType || "",
+  ).trim();
+  if (!provider) {
+    return "";
+  }
+  if (provider === "chatgpt_mail") {
+    return "chatgpt mail";
+  }
+  return provider;
+}
+
 function formatRestoreAt(value?: string | null) {
   if (!value) {
     return { absolute: "—", relative: "" };
@@ -256,7 +269,9 @@ function AccountsPageContent() {
     const normalizedQuery = query.trim().toLowerCase();
     return accounts.filter((account) => {
       const searchMatched =
-        normalizedQuery.length === 0 || (account.email ?? "").toLowerCase().includes(normalizedQuery);
+        normalizedQuery.length === 0 ||
+        (account.email ?? "").toLowerCase().includes(normalizedQuery) ||
+        formatRegistrationEmailProvider(account).toLowerCase().includes(normalizedQuery);
       const typeMatched = typeFilter === "all" || account.type === typeFilter;
       const statusMatched = statusFilter === "all" || account.status === statusFilter;
       return searchMatched && typeMatched && statusMatched;
@@ -631,6 +646,31 @@ function AccountsPageContent() {
                 </div>
                 <div className="rounded-lg bg-white px-3 py-2">
                   <div className="flex items-center justify-between gap-2 text-stone-400">
+                    <span>mail provider</span>
+                    {renderVisibleCopyButton("mail provider", formatRegistrationEmailProvider(editingAccount))}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    {formatRegistrationEmailProvider(editingAccount) ? (
+                      <Badge variant="outline" className="rounded-md bg-white text-stone-600">
+                        {formatRegistrationEmailProvider(editingAccount)}
+                      </Badge>
+                    ) : (
+                      <span className="font-mono text-xs text-stone-700">-</span>
+                    )}
+                    {editingAccount?.registrationEmailProviderRef ? (
+                      <Badge variant="secondary" className="rounded-md">
+                        {editingAccount.registrationEmailProviderRef}
+                      </Badge>
+                    ) : null}
+                    {editingAccount?.autoRecoverInvalidToken ? (
+                      <Badge variant="success" className="rounded-md">
+                        recover
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-white px-3 py-2">
+                  <div className="flex items-center justify-between gap-2 text-stone-400">
                     <span>created_at</span>
                     {renderVisibleCopyButton("created_at", editingAccount?.oauthCredentials?.createdAt)}
                   </div>
@@ -962,6 +1002,18 @@ function AccountsPageContent() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-xs leading-5 text-stone-500">{account.email ?? "—"}</div>
+                          {formatRegistrationEmailProvider(account) ? (
+                            <div className="mt-1 flex flex-wrap items-center gap-1">
+                              <Badge variant="outline" className="rounded-md bg-white px-1.5 py-0 text-[10px] text-stone-600">
+                                {formatRegistrationEmailProvider(account)}
+                              </Badge>
+                              {account.autoRecoverInvalidToken ? (
+                                <Badge variant="success" className="rounded-md px-1.5 py-0 text-[10px]">
+                                  recover
+                                </Badge>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant="info" className="rounded-md">

@@ -19,6 +19,10 @@ export type Account = {
   quota: number;
   imageQuotaUnknown?: boolean;
   email?: string | null;
+  registrationEmailProvider?: string | null;
+  registrationEmailType?: string | null;
+  registrationEmailProviderRef?: string | null;
+  autoRecoverInvalidToken?: boolean;
   user_id?: string | null;
   limits_progress?: Array<{
     feature_name?: string;
@@ -33,6 +37,7 @@ export type Account = {
     password: CredentialPreview;
     createdAt?: string | null;
     expiresAt?: string | null;
+    lastRecoveredAt?: string | null;
     chatgptAccountId?: string | null;
     chatgptUserId?: string | null;
   };
@@ -144,6 +149,11 @@ export type SettingsConfig = {
   image_model_mappings?: Record<string, string>;
   refresh_account_interval_minute?: number | string;
   image_retention_days?: number | string;
+  image_timeout_control_enabled?: boolean;
+  image_poll_timeout_secs?: number | string;
+  image_poll_interval_secs?: number | string;
+  image_poll_initial_wait_secs?: number | string;
+  image_poll_settle_secs?: number | string;
   auto_remove_invalid_accounts?: boolean;
   auto_remove_rate_limited_accounts?: boolean;
   log_levels?: string[];

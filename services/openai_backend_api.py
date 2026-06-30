@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import random
 import re
 import time
 from dataclasses import dataclass
@@ -36,6 +37,13 @@ DEFAULT_CLIENT_VERSION = "prod-be885abbfcfe7b1f511e88b3003d9ee44757fbad"
 DEFAULT_CLIENT_BUILD_NUMBER = "5955942"
 DEFAULT_POW_SCRIPT = "https://chatgpt.com/backend-api/sentinel/sdk.js"
 CODEX_IMAGE_MODEL = "codex-gpt-image-2"
+FILE_SERVICE_ID_RE = re.compile(r"file-service://([A-Za-z0-9_-]+)")
+REAL_IMAGE_FILE_ID_RE = re.compile(r"\bfile_00000000[a-f0-9]{24}\b")
+SEDIMENT_ID_RE = re.compile(r"sediment://([A-Za-z0-9_-]+)")
+
+
+class ImagePollTimeoutError(RuntimeError):
+    pass
 
 
 class OpenAIBackendAPI:
@@ -617,7 +625,7 @@ class OpenAIBackendAPI:
         ensure_ok(response, path)
         return response.json()
 
-    def _extract_image_tool_records(self, data: Dict[str, Any]) -> list[Dict[str, Any]]:
+    def _legacy_extract_image_tool_records(self, data: Dict[str, Any]) -> list[Dict[str, Any]]:
         """从 conversation 明细里提取图片工具输出记录。"""
         mapping = data.get("mapping") or {}
         file_pat = re.compile(r"file-service://([A-Za-z0-9_-]+)")
@@ -649,7 +657,7 @@ class OpenAIBackendAPI:
                  "sediment_ids": sediment_ids})
         return sorted(records, key=lambda item: item["create_time"])
 
-    def _poll_image_results(self, conversation_id: str, timeout_secs: float = 120.0) -> tuple[list[str], list[str]]:
+    def _legacy_poll_image_results(self, conversation_id: str, timeout_secs: float = 120.0) -> tuple[list[str], list[str]]:
         """轮询 conversation，直到拿到图片文件 id 或超时。"""
         start = time.time()
         attempt = 0
@@ -658,7 +666,7 @@ class OpenAIBackendAPI:
             attempt += 1
             conversation = self._get_conversation(conversation_id)
             file_ids, sediment_ids = [], []
-            for record in self._extract_image_tool_records(conversation):
+            for record in self._legacy_extract_image_tool_records(conversation):
                 for file_id in record["file_ids"]:
                     if file_id not in file_ids:
                         file_ids.append(file_id)
@@ -676,6 +684,201 @@ class OpenAIBackendAPI:
             time.sleep(4)
         logger.info({"event": "image_poll_timeout", "conversation_id": conversation_id, "timeout_secs": timeout_secs})
         return [], []
+
+    @staticmethod
+    def _add_unique(target: list[str], values: list[str]) -> None:
+        for value in values:
+            if value and value not in target:
+                target.append(value)
+
+    @classmethod
+    def _extract_image_reference_ids(cls, payload: Any) -> tuple[list[str], list[str]]:
+        file_ids: list[str] = []
+        sediment_ids: list[str] = []
+
+        def walk(value: Any) -> None:
+            if isinstance(value, str):
+                cls._add_unique(file_ids, FILE_SERVICE_ID_RE.findall(value))
+                cls._add_unique(file_ids, REAL_IMAGE_FILE_ID_RE.findall(value))
+                cls._add_unique(sediment_ids, SEDIMENT_ID_RE.findall(value))
+                return
+            if isinstance(value, dict):
+                for item in value.values():
+                    walk(item)
+                return
+            if isinstance(value, list):
+                for item in value:
+                    walk(item)
+
+        walk(payload)
+        return file_ids, sediment_ids
+
+    @classmethod
+    def _has_image_asset_pointer(cls, payload: Any) -> bool:
+        if isinstance(payload, dict):
+            if str(payload.get("content_type") or "") == "image_asset_pointer":
+                return True
+            asset_pointer = str(payload.get("asset_pointer") or "")
+            if asset_pointer.startswith(("file-service://", "sediment://")):
+                return True
+            return any(cls._has_image_asset_pointer(item) for item in payload.values())
+        if isinstance(payload, list):
+            return any(cls._has_image_asset_pointer(item) for item in payload)
+        return False
+
+    def _extract_image_tool_records(self, data: Dict[str, Any]) -> list[Dict[str, Any]]:
+        """Extract generated image ids from both old and current conversation payload shapes."""
+        mapping = data.get("mapping") or {}
+        records = []
+        for message_id, node in mapping.items():
+            message = (node or {}).get("message") or {}
+            author = message.get("author") or {}
+            metadata = message.get("metadata") or {}
+            content = message.get("content") or {}
+            role = str(author.get("role") or "").strip().lower()
+            if role not in {"tool", "assistant"}:
+                continue
+            is_image_gen = metadata.get("async_task_type") == "image_gen"
+            has_asset_pointer = self._has_image_asset_pointer(content) or self._has_image_asset_pointer(metadata)
+            if role == "assistant" and not (is_image_gen or has_asset_pointer):
+                continue
+            file_ids, sediment_ids = self._extract_image_reference_ids({"content": content, "metadata": metadata})
+            if not is_image_gen and not has_asset_pointer and not file_ids and not sediment_ids:
+                continue
+            records.append({
+                "message_id": message_id,
+                "create_time": message.get("create_time") or 0,
+                "file_ids": file_ids,
+                "sediment_ids": sediment_ids,
+            })
+        return sorted(records, key=lambda item: item["create_time"])
+
+    @staticmethod
+    def _is_retryable_poll_error(exc: Exception) -> bool:
+        text = str(exc).lower()
+        retryable_status = any(f"status={status}" in text or f"status_code={status}" in text for status in (429, 500, 502, 503, 504))
+        retryable_text = any(
+            marker in text
+            for marker in (
+                "timeout",
+                "timed out",
+                "connection",
+                "temporarily unavailable",
+                "remote end closed",
+                "tls",
+                "ssl",
+            )
+        )
+        return retryable_status or retryable_text
+
+    def _poll_image_results(
+            self,
+            conversation_id: str,
+            timeout_secs: float | None = None,
+            initial_file_ids: list[str] | None = None,
+            initial_sediment_ids: list[str] | None = None,
+    ) -> tuple[list[str], list[str]]:
+        """Poll until image ids are visible in the conversation document."""
+        timeout = float(timeout_secs if timeout_secs is not None else config.effective_image_poll_timeout_secs)
+        start = time.time()
+        attempt = 0
+        interval = float(config.image_poll_interval_secs)
+        initial_wait = float(config.image_poll_initial_wait_secs)
+        file_ids: list[str] = []
+        sediment_ids: list[str] = []
+        self._add_unique(file_ids, initial_file_ids or [])
+        self._add_unique(sediment_ids, initial_sediment_ids or [])
+        has_initial_ids = bool(file_ids or sediment_ids)
+        last_hit_key: tuple[tuple[str, ...], tuple[str, ...]] | None = (
+            (tuple(file_ids), tuple(sediment_ids)) if has_initial_ids else None
+        )
+        logger.info({
+            "event": "image_poll_start",
+            "conversation_id": conversation_id,
+            "timeout_secs": timeout,
+            "initial_wait_secs": initial_wait,
+            "interval_secs": interval,
+            "initial_file_ids": file_ids,
+            "initial_sediment_ids": sediment_ids,
+        })
+
+        def remaining() -> float:
+            return timeout - (time.time() - start)
+
+        def bounded_sleep(seconds: float) -> None:
+            sleep_for = min(max(0.0, seconds), max(0.0, remaining()))
+            if sleep_for > 0:
+                time.sleep(sleep_for)
+
+        if has_initial_ids:
+            bounded_sleep(config.image_poll_settle_secs)
+        elif initial_wait > 0:
+            jitter = random.uniform(0, min(2.0, initial_wait * 0.2))
+            bounded_sleep(initial_wait + jitter)
+
+        def retry_sleep(reason: str, error: Exception) -> bool:
+            if remaining() <= 0:
+                return False
+            backoff = min(2 ** min(attempt, 4), 16) + random.uniform(0, 0.5)
+            sleep_for = min(backoff, max(0.0, remaining()))
+            logger.warning({
+                "event": "image_poll_retry",
+                "conversation_id": conversation_id,
+                "attempt": attempt,
+                "reason": reason,
+                "sleep_secs": round(sleep_for, 2),
+                "error": repr(error)[:300],
+            })
+            if sleep_for > 0:
+                time.sleep(sleep_for)
+            return remaining() > 0
+
+        while remaining() > 0:
+            attempt += 1
+            try:
+                conversation = self._get_conversation(conversation_id)
+            except Exception as exc:
+                if self._is_retryable_poll_error(exc):
+                    if retry_sleep("upstream_or_network", exc):
+                        continue
+                    break
+                raise
+
+            for record in self._extract_image_tool_records(conversation):
+                self._add_unique(file_ids, [str(item) for item in record["file_ids"]])
+                self._add_unique(sediment_ids, [str(item) for item in record["sediment_ids"]])
+
+            logger.debug({"event": "image_poll_check", "conversation_id": conversation_id, "attempt": attempt, "file_ids": file_ids, "sediment_ids": sediment_ids})
+            if file_ids or sediment_ids:
+                hit_key = (tuple(file_ids), tuple(sediment_ids))
+                if last_hit_key == hit_key or config.image_poll_settle_secs <= 0:
+                    logger.info({"event": "image_poll_hit", "conversation_id": conversation_id, "file_ids": file_ids, "sediment_ids": sediment_ids})
+                    return file_ids, sediment_ids
+                last_hit_key = hit_key
+                logger.info({
+                    "event": "image_poll_hit_pending_settle",
+                    "conversation_id": conversation_id,
+                    "file_ids": file_ids,
+                    "sediment_ids": sediment_ids,
+                    "settle_secs": config.image_poll_settle_secs,
+                })
+                bounded_sleep(config.image_poll_settle_secs)
+                continue
+            logger.debug({"event": "image_poll_wait", "conversation_id": conversation_id, "elapsed_secs": round(time.time() - start, 1)})
+            bounded_sleep(interval)
+
+        logger.info({
+            "event": "image_poll_timeout",
+            "conversation_id": conversation_id,
+            "timeout_secs": timeout,
+            "attempts_made": attempt,
+        })
+        if file_ids or sediment_ids:
+            return file_ids, sediment_ids
+        raise ImagePollTimeoutError(
+            f"ChatGPT image generation timed out after waiting {int(timeout)} seconds. "
+            "You can adjust this in Settings -> image generation timeout."
+        )
 
     def _get_file_download_url(self, file_id: str) -> str:
         """获取文件下载地址。"""
@@ -695,7 +898,7 @@ class OpenAIBackendAPI:
         data = response.json()
         return data.get("download_url") or data.get("url") or ""
 
-    def _resolve_image_urls(self, conversation_id: str, file_ids: list[str], sediment_ids: list[str]) -> list[str]:
+    def _legacy_resolve_image_urls(self, conversation_id: str, file_ids: list[str], sediment_ids: list[str]) -> list[str]:
         """把图片结果 id 解析成可下载 URL。"""
         urls = []
         skip_patterns = {"file_upload"}
@@ -767,7 +970,7 @@ class OpenAIBackendAPI:
         })
         return urls
 
-    def resolve_conversation_image_urls(
+    def legacy_resolve_conversation_image_urls(
             self,
             conversation_id: str,
             file_ids: list[str],
@@ -781,14 +984,126 @@ class OpenAIBackendAPI:
             polled_file_ids, polled_sediment_ids = self._poll_image_results(conversation_id)
             file_ids.extend(item for item in polled_file_ids if item and item not in file_ids)
             sediment_ids.extend(item for item in polled_sediment_ids if item and item not in sediment_ids)
-        return self._resolve_image_urls(conversation_id, file_ids, sediment_ids)
+        return self._legacy_resolve_image_urls(conversation_id, file_ids, sediment_ids)
 
-    def download_image_bytes(self, urls: list[str]) -> list[bytes]:
+    def legacy_download_image_bytes(self, urls: list[str]) -> list[bytes]:
         images = []
         for url in urls:
             response = self.session.get(url, timeout=120)
             ensure_ok(response, "image_download")
             images.append(response.content)
+        return images
+
+    def _resolve_image_urls(self, conversation_id: str, file_ids: list[str], sediment_ids: list[str]) -> list[str]:
+        """Resolve generated image ids to download URLs, preserving all unique results."""
+        urls: list[str] = []
+        skip_patterns = {"file_upload"}
+        for file_id in file_ids:
+            if file_id in skip_patterns:
+                logger.debug({
+                    "event": "image_file_id_skipped",
+                    "source": "file",
+                    "conversation_id": conversation_id,
+                    "id": file_id,
+                })
+                continue
+            try:
+                url = self._get_file_download_url(file_id)
+            except Exception as exc:
+                logger.debug({
+                    "event": "image_download_url_failed",
+                    "source": "file",
+                    "conversation_id": conversation_id,
+                    "id": file_id,
+                    "error": repr(exc),
+                })
+                continue
+            if url and url not in urls:
+                urls.append(url)
+
+        if conversation_id:
+            for sediment_id in sediment_ids:
+                try:
+                    url = self._get_attachment_download_url(conversation_id, sediment_id)
+                except Exception as exc:
+                    logger.debug({
+                        "event": "image_download_url_failed",
+                        "source": "sediment",
+                        "conversation_id": conversation_id,
+                        "id": sediment_id,
+                        "error": repr(exc),
+                    })
+                    continue
+                if url and url not in urls:
+                    urls.append(url)
+
+        logger.debug({
+            "event": "image_urls_resolved",
+            "conversation_id": conversation_id,
+            "file_ids": file_ids,
+            "sediment_ids": sediment_ids,
+            "urls": urls,
+        })
+        return urls
+
+    def resolve_conversation_image_urls(
+            self,
+            conversation_id: str,
+            file_ids: list[str],
+            sediment_ids: list[str],
+            poll: bool = True,
+            poll_timeout_secs: float | None = None,
+    ) -> list[str]:
+        file_ids = [item for item in file_ids if item != "file_upload"]
+        sediment_ids = list(sediment_ids)
+        had_initial_ids = bool(file_ids or sediment_ids)
+        if poll and conversation_id:
+            timeout = poll_timeout_secs if poll_timeout_secs is not None else config.effective_image_poll_timeout_secs
+            logger.info({
+                "event": "image_resolve_poll_needed",
+                "conversation_id": conversation_id,
+                "initial_file_ids": file_ids,
+                "initial_sediment_ids": sediment_ids,
+                "poll_timeout_secs": timeout,
+            })
+            try:
+                polled_file_ids, polled_sediment_ids = self._poll_image_results(
+                    conversation_id,
+                    timeout,
+                    file_ids,
+                    sediment_ids,
+                )
+            except ImagePollTimeoutError:
+                if not had_initial_ids:
+                    raise
+                logger.warning({
+                    "event": "image_resolve_poll_partial_timeout",
+                    "conversation_id": conversation_id,
+                    "file_ids": file_ids,
+                    "sediment_ids": sediment_ids,
+                })
+            except Exception as exc:
+                if not had_initial_ids:
+                    raise
+                logger.warning({
+                    "event": "image_resolve_poll_partial_error",
+                    "conversation_id": conversation_id,
+                    "file_ids": file_ids,
+                    "sediment_ids": sediment_ids,
+                    "error": repr(exc),
+                })
+            else:
+                self._add_unique(file_ids, [item for item in polled_file_ids if item])
+                self._add_unique(sediment_ids, [item for item in polled_sediment_ids if item])
+        return self._resolve_image_urls(conversation_id, file_ids, sediment_ids)
+
+    def download_image_bytes(self, urls: list[str]) -> list[bytes]:
+        images: list[bytes] = []
+        for url in urls:
+            response = self.session.get(url, timeout=120)
+            ensure_ok(response, "image_download")
+            if response.content not in images:
+                images.append(response.content)
         return images
 
     def stream_conversation(

@@ -112,6 +112,11 @@ function normalizeConfig(config: SettingsConfig): SettingsConfig {
     ...config,
     refresh_account_interval_minute: Number(config.refresh_account_interval_minute || 5),
     image_retention_days: Number(config.image_retention_days || 30),
+    image_timeout_control_enabled: config.image_timeout_control_enabled !== false,
+    image_poll_timeout_secs: Number(config.image_poll_timeout_secs || 300),
+    image_poll_interval_secs: Number(config.image_poll_interval_secs || 10),
+    image_poll_initial_wait_secs: Number(config.image_poll_initial_wait_secs || 10),
+    image_poll_settle_secs: Number(config.image_poll_settle_secs || 2),
     allow_user_registration: config.allow_user_registration !== false,
     new_user_initial_quota: Number(config.new_user_initial_quota || 0),
     email_verification_enabled: Boolean(config.email_verification_enabled),
@@ -202,6 +207,8 @@ type SettingsStore = {
   saveConfig: () => Promise<void>;
   setRefreshAccountIntervalMinute: (value: string) => void;
   setImageRetentionDays: (value: string) => void;
+  setImageTimeoutControlEnabled: (value: boolean) => void;
+  setImagePollTimeoutSecs: (value: string) => void;
   setAutoRemoveInvalidAccounts: (value: boolean) => void;
   setAutoRemoveRateLimitedAccounts: (value: boolean) => void;
   setLogLevel: (level: string, enabled: boolean) => void;
@@ -312,6 +319,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         ...config,
         refresh_account_interval_minute: Math.max(1, Number(config.refresh_account_interval_minute) || 1),
         image_retention_days: Math.max(1, Number(config.image_retention_days) || 30),
+        image_timeout_control_enabled: config.image_timeout_control_enabled !== false,
+        image_poll_timeout_secs: Math.max(1, Number(config.image_poll_timeout_secs) || 300),
+        image_poll_interval_secs: Math.max(0.5, Number(config.image_poll_interval_secs) || 10),
+        image_poll_initial_wait_secs: Math.max(0, Number(config.image_poll_initial_wait_secs) || 10),
+        image_poll_settle_secs: Math.max(0, Number(config.image_poll_settle_secs) || 2),
         allow_user_registration: config.allow_user_registration !== false,
         new_user_initial_quota: Math.max(0, Number(config.new_user_initial_quota) || 0),
         email_verification_enabled: Boolean(config.email_verification_enabled),
@@ -370,6 +382,14 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   setImageRetentionDays: (value) => {
     set((state) => state.config ? { config: { ...state.config, image_retention_days: value } } : {});
+  },
+
+  setImageTimeoutControlEnabled: (value) => {
+    set((state) => state.config ? { config: { ...state.config, image_timeout_control_enabled: value } } : {});
+  },
+
+  setImagePollTimeoutSecs: (value) => {
+    set((state) => state.config ? { config: { ...state.config, image_poll_timeout_secs: value } } : {});
   },
 
   setAutoRemoveInvalidAccounts: (value) => {
