@@ -37,18 +37,29 @@ def create_storage_backend(data_dir: Path, settings: Mapping[str, object] | None
         print(f"[storage] Using JSON storage: {file_path}")
         return JSONStorageBackend(file_path, auth_keys_path)
     
-    elif backend_type in ("sqlite", "postgres", "postgresql", "mysql", "database"):
+    elif backend_type in ("sqlite", "database"):
         # 数据库存储
         database_url = _get_setting("DATABASE_URL", "", resolved_settings)
-        
+
         if not database_url:
-            # 如果没有指定 DATABASE_URL，使用本地 SQLite
+            # SQLite 未显式指定时，默认落到挂载的 data 目录，避免容器重建丢数据。
             database_url = f"sqlite:///{data_dir / 'accounts.db'}"
             print(f"[storage] No DATABASE_URL provided, using local SQLite: {database_url}")
         else:
             database_url = _normalize_database_url(database_url)
             print(f"[storage] Using database storage: {_mask_password(database_url)}")
-        
+
+        return DatabaseStorageBackend(database_url)
+
+    elif backend_type in ("postgres", "postgresql", "mysql"):
+        database_url = _get_setting("DATABASE_URL", "", resolved_settings)
+        if not database_url:
+            raise ValueError(
+                f"DATABASE_URL is required when STORAGE_BACKEND={backend_type}. "
+                "Use STORAGE_BACKEND=sqlite to use the local /app/data/accounts.db database."
+            )
+        database_url = _normalize_database_url(database_url)
+        print(f"[storage] Using database storage: {_mask_password(database_url)}")
         return DatabaseStorageBackend(database_url)
     
     elif backend_type == "git":

@@ -41,8 +41,10 @@ def test_storage():
                         username, _ = credentials.split(":", 1)
                         database_url = f"{protocol}://{username}:****@{host}"
             print(f"数据库连接: {database_url}")
+        elif backend_type in ("postgres", "postgresql", "mysql"):
+            print("数据库连接: 未设置 DATABASE_URL，当前后端会启动失败")
         else:
-            print(f"数据库连接: 本地 SQLite (data/accounts.db)")
+            print("数据库连接: 本地 SQLite (data/accounts.db)")
     
     elif backend_type == "git":
         repo_url = os.getenv("GIT_REPO_URL", "")

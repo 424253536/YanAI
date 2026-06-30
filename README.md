@@ -18,35 +18,49 @@
 
 ## 快速开始
 
-已发布镜像支持 `linux/amd64` 与 `linux/arm64`，在 x86 服务器和 Apple Silicon / ARM Linux 设备上都会自动拉取匹配架构的版本。
+正式服务器推荐使用“本地或 CI 构建并发布镜像，服务器只拉镜像运行”的方式；服务器无需 clone 本仓库源码。已发布镜像支持 `linux/amd64` 与 `linux/arm64`，在 x86 服务器和 ARM Linux 设备上会自动拉取匹配架构的版本。
 
-```bash
-git clone git@github.com:huaiyuechusan/YanAI.git
-cd YanAI
-docker build -t your-registry/yanai:latest .
-docker push your-registry/yanai:latest
+### 发布自己的镜像
+
+本仓库内置 GitHub Actions：推送 `v*` 标签或手动运行 `Publish Docker Image` workflow 后，会发布到：
+
+```text
+ghcr.io/<你的 GitHub 用户名或组织>/yanai:<tag>
 ```
 
-当前仓库的 Docker 镜像不会包含 `config.json`、`data/`、`.env`、数据库文件或本地虚拟环境。服务器部署时请通过宿主机挂载提供运行时配置和数据：
-
-```yaml
-volumes:
-  - ./data:/app/data
-  - ./config.json:/app/config.json
-```
-
-服务器上准备配置和数据目录：
+也可以在开发机手动发布：
 
 ```bash
+docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/<owner>/yanai:latest --push .
+```
+
+### 服务器免 clone 部署
+
+只需要把以下运行时文件放到服务器同一目录，例如 `/opt/yanai`：
+
+- `docker-compose.yml`
+- `.env`
+- `config.json`
+- `data/` 目录
+- 可选：`docker-compose.postgres.yml`（使用内置 PostgreSQL 时需要）
+
+当前镜像不会包含 `config.json`、`data/`、`.env`、数据库文件或本地虚拟环境；这些都通过宿主机挂载或环境变量提供。
+
+最小 SQLite 部署示例：
+
+```bash
+mkdir -p /opt/yanai/data
+cd /opt/yanai
+# 从本仓库复制 docker-compose.yml、.env.example、config.example.json 到当前目录
+cp .env.example .env
 cp config.example.json config.json
-# 编辑 config.json，将 auth-key 改成你自己的长随机密钥
-mkdir -p data
-YANAI_IMAGE=your-registry/yanai:latest docker compose up -d
+# 编辑 .env：设置 YANAI_IMAGE、CHATGPT2API_AUTH_KEY，保持 STORAGE_BACKEND=sqlite
+docker compose up -d
 ```
 
-也可以用环境变量 `CHATGPT2API_AUTH_KEY` 覆盖 `config.json` 中的 `auth-key`，但不要把真实密钥写进 Dockerfile、镜像构建参数或公开 compose 文件。
+完整步骤见 [`docs/deploy-docker-compose.md`](docs/deploy-docker-compose.md)。
 
-本地直接用当前代码启动容器可运行：
+本地直接用当前代码构建并启动容器可运行：
 
 ```bash
 docker compose -f docker-compose.local.yml up -d --build
@@ -70,13 +84,19 @@ npm run dev
 - `postgres` - 外部 PostgreSQL（需配置 `DATABASE_URL`）
 - `git` - Git 私有仓库（需配置 `GIT_REPO_URL` 和 `GIT_TOKEN`）
 
-多人稳定并发部署建议使用 `postgres`。`sqlite` 适合本地开发和轻量验证；`json` / `git` 更适合单实例低并发、备份导入导出或过渡场景，不建议作为多人生产并发的主存储。PostgreSQL 后端启动时会自动检查目标数据库，不存在时会尝试通过 `postgres` / `template1` 维护库创建目标库，并继续自动初始化业务表。
+多人稳定并发部署建议使用 `postgres`。`sqlite` 适合单实例轻量部署和低并发验证；`json` / `git` 更适合单实例低并发、备份导入导出或过渡场景，不建议作为多人生产并发的主存储。SQLite 未设置 `DATABASE_URL` 时会自动使用 `/app/data/accounts.db`；PostgreSQL 必须设置 `DATABASE_URL`，后端启动时会自动检查目标数据库，不存在时会尝试通过 `postgres` / `template1` 维护库创建目标库，并继续自动初始化业务表。
 
 示例：使用 PostgreSQL
 ```yaml
 environment:
   - STORAGE_BACKEND=postgres
   - DATABASE_URL=postgresql://user:password@host:5432/dbname
+```
+
+如果使用仓库内置 PostgreSQL Compose 覆盖文件，则在 `.env` 设置 `POSTGRES_PASSWORD` 后运行：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.postgres.yml up -d
 ```
 
 ### 反向代理与流式输出

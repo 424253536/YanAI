@@ -124,6 +124,27 @@ class StorageFactoryTest(unittest.TestCase):
 
         backend_cls.assert_called_once_with("postgresql://yanai:pass@127.0.0.1:5432/yanai_from_config")
 
+    def test_sqlite_without_database_url_defaults_to_data_accounts_db(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            data_dir = Path(tmp_dir) / "data"
+            data_dir.mkdir()
+
+            with mock.patch.dict("os.environ", {"STORAGE_BACKEND": "sqlite"}, clear=True), mock.patch(
+                "services.storage.factory.DatabaseStorageBackend"
+            ) as backend_cls:
+                create_storage_backend(data_dir)
+
+        backend_cls.assert_called_once_with(f"sqlite:///{data_dir / 'accounts.db'}")
+
+    def test_postgres_without_database_url_fails_fast(self) -> None:
+        with mock.patch.dict("os.environ", {"STORAGE_BACKEND": "postgres"}, clear=True), mock.patch(
+            "services.storage.factory.DatabaseStorageBackend"
+        ) as backend_cls:
+            with self.assertRaisesRegex(ValueError, "DATABASE_URL is required"):
+                create_storage_backend(Path("data"))
+
+        backend_cls.assert_not_called()
+
     def test_env_storage_backend_overrides_config_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

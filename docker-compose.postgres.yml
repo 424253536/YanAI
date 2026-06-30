@@ -1,0 +1,28 @@
+services:
+  app:
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      STORAGE_BACKEND: postgres
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-yanai}:${POSTGRES_PASSWORD:?请在 .env 中设置 POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-yanai}}
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: yanai-postgres
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      POSTGRES_DB: ${POSTGRES_DB:-yanai}
+      POSTGRES_USER: ${POSTGRES_USER:-yanai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 中设置 POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
